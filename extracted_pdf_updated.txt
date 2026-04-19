@@ -1,0 +1,318 @@
+Master Context Document — Sistem Evaluasi Layanan MBG
+Halaman 1
+Master Context Document — Sistem Evaluasi Layanan  
+MBG
+Saya sedang membangun sistem digital untuk mendukung evaluasi layanan program MBG (Makan 
+Bergizi Gratis). Sistem ini dibuat untuk membantu operasional dan evaluasi layanan makanan di 
+lapangan, terutama dari sisi distribusi, konsumsi, penilaian makanan, feedback penerima manfaat, dan 
+monitoring hasil evaluasi oleh tim dapur.
+1. Tujuan Sistem
+Tujuan utama sistem ini adalah:
+ mencatat distribusi makanan dari dapur ke sekolah/lokasi penerima manfaat
+ mencatat presensi konsumsi oleh penerima manfaat
+ mengumpulkan evaluasi makanan dari penerima manfaat
+ membantu tim dapur memahami menu mana yang disukai, kurang disukai, atau sering tidak habis
+ menyediakan dashboard evaluasi untuk perbaikan layanan dan menu berikutnya
+ memudahkan monitoring data secara digital, terstruktur, dan tidak lagi dominan manual
+Sistem ini bukan sistem supplier management, bukan sistem tracking publik real-time, dan bukan sistem 
+IoT.
+2. Fokus Utama Sistem
+Fokus utama sistem ada pada 5 hal:
+1. manajemen data master
+2. perencanaan menu
+3. distribusi dan konfirmasi penerimaan
+4. presensi konsumsi dan evaluasi makanan
+5. dashboard evaluasi dan pelaporan
+3. Aktor Sistem
+Sistem memiliki 4 role utama:Master Context Document — Sistem Evaluasi Layanan MBG
+Halaman 2
+A. Admin
+Role administratif global.
+Tugas utama:
+ mengelola akun semua role
+ mengelola data master global
+ mengelola mapping antara dapur dan sekolah
+ mengelola data user, sekolah, dapur, kelas, dan penerima manfaat
+Admin tidak fokus pada operasional harian menu dan evaluasi.
+B. Tim Dapur
+Role operasional utama yang mewakili fungsi internal dapur, termasuk kepala SPPG, ahli gizi, dan tim 
+operasional, tetapi disederhanakan menjadi satu role sistem bernama Tim Dapur.
+Tugas utama:
+ mengelola menu dan komposisi menu
+ mengatur distribusi makanan ke sekolah
+ memantau status distribusi
+ melihat hasil presensi konsumsi
+ melihat rating makanan dan keterhabisan tiap komponen
+ meninjau feedback dan foto validasi
+ melihat dashboard evaluasi
+ membuat laporan
+C. Guru
+Role perwakilan sekolah/lokasi penerima manfaat.
+Tugas utama:
+ mengonfirmasi penerimaan makanan dari dapur
+ memantau pengisian oleh penerima manfaat
+ membantu input jika diperlukan, terutama untuk kelompok yang belum mandiri
+ memberi catatan tambahan dari sekolah jika ada kendala
+Guru tidak boleh mengelola menu atau data lintas dapur.
+D. Penerima Manfaat
+Role pengguna akhir yang menerima makanan.
+Tugas utama:
+ mengisi presensi konsumsi
+ memberi rating makanan keseluruhanMaster Context Document — Sistem Evaluasi Layanan MBG
+Halaman 3
+ memberi nilai keterhabisan tiap komponen menu
+ dapat memberi feedback teks
+ dapat mengunggah foto ompreng
+ wajib memberi feedback/foto hanya jika sistem memicu validasi tambahan
+Penerima Manfaat tidak boleh melihat data user lain atau dashboard manajemen.
+4. Konsep Evaluasi Makanan
+Sistem membedakan 2 jenis penilaian yang berbeda dan tidak boleh dicampur:
+A. Rating makanan keseluruhan
+Skala 1–5 untuk menilai kepuasan umum terhadap makanan hari itu.
+Contoh arti:
+ 1 = sangat tidak suka
+ 2 = tidak suka
+ 3 = biasa saja
+ 4 = suka
+ 5 = sangat suka
+B. Skala keterhabisan tiap komponen menu
+Skala 1–5 untuk menilai seberapa habis masing-masing komponen makanan dikonsumsi.
+Contoh arti:
+ 1 = hampir tidak dimakan
+ 2 = dimakan sedikit
+ 3 = dimakan sekitar setengah
+ 4 = hampir habis
+ 5 = habis
+Contoh komponen menu:
+ nasi
+ lauk utama
+ sayur
+ buah
+ susu
+Catatan penting:
+ rating keseluruhan mengukur kepuasan umum
+ keterhabisan per komponen mengukur pola konsumsi aktual per itemMaster Context Document — Sistem Evaluasi Layanan MBG
+Halaman 4
+Keduanya harus disimpan sebagai field yang berbeda.
+5. Konsep Feedback dan Foto
+Feedback teks
+ bersifat opsional pada kondisi normal
+ menjadi wajib jika sistem memicu validasi tambahan
+Foto ompreng
+ bersifat opsional pada kondisi normal
+ menjadi wajib jika sistem memicu validasi tambahan
+Validasi tambahan dipicu jika misalnya:
+ rating keseluruhan rendah, misalnya <= 2
+ salah satu komponen menu bernilai rendah, misalnya <= 2
+ penerima manfaat memilih tidak mengonsumsi makanan
+ sistem melakukan sampling acak
+ atau rule lain yang setara
+Saat validasi dipicu, sistem dapat:
+ mewajibkan feedback teks
+ atau mewajibkan foto
+ atau mewajibkan keduanya
+Ini penting agar data tetap ringan untuk mayoritas user, tetapi tetap punya bukti pendukung pada data 
+yang dianggap anomali.
+6. Hal yang Tidak Menjadi Scope Utama
+AI developer jangan mengasumsikan fitur berikut termasuk scope utama, kecuali diminta eksplisit pada 
+prompt tahap tertentu:
+ manajemen supplier
+ pembelian bahan baku
+ inventory gudang kompleks
+ tracking publik real-time
+ IoT/sensor suhu
+ AI sentiment analysis kompleks
+ chatbotMaster Context Document — Sistem Evaluasi Layanan MBG
+Halaman 5
+ notifikasi pintar kompleks
+ machine learning recommendation engine
+ analisis gambar otomatis
+ geolocation live tracking publik
+7. Arsitektur Teknis yang Digunakan
+Gunakan stack berikut:
+Frontend
+ Next.js
+ TypeScript
+ Tailwind CSS
+Backend
+ NestJS
+ TypeScript
+Database
+ PostgreSQL
+ORM
+ Prisma
+File storage
+ Supabase Storage atau storage setara untuk upload foto
+API style
+ REST API
+Dokumentasi API
+ Swagger / OpenAPI di backend
+Authentication
+ JWT-based auth atau mekanisme auth yang konsisten dengan role-based access controlMaster Context Document — Sistem Evaluasi Layanan MBG
+Halaman 6
+8. Prinsip Pengembangan
+Semua implementasi harus mengikuti prinsip berikut:
+1. modular dan bertahap
+2. jangan mengerjakan fitur di luar scope tahap
+3. role dan hak akses harus ketat
+4. struktur kode harus rapi dan scalable
+5. validasi form harus jelas
+6. error handling harus eksplisit
+7. mudah di-debug
+8. jangan membuat asumsi bisnis baru tanpa dasar dari dokumen ini atau prompt tahap
+Jika ada ambiguitas, prioritaskan konsistensi dengan dokumen ini.
+9. Data Relasi Inti yang Harus Dipahami
+Minimal ada entitas berikut dalam sistem:
+ User
+ Role
+ Dapur
+ Sekolah
+ Kelas/Kelompok
+ PenerimaManfaat
+ MappingDapurSekolah
+ Menu
+ KomponenMenu
+ Distribusi
+ KonfirmasiPenerimaan
+ PresensiKonsumsi
+ PenilaianMakanan
+ Feedback
+ FotoValidasi
+Relasi penting:
+ satu dapur dapat melayani banyak sekolah
+ satu sekolah terhubung ke satu atau lebih kelas/kelompok
+ satu penerima manfaat terhubung ke satu sekolah/kelas
+ satu menu punya banyak komponen menu
+ distribusi dilakukan dari dapur ke sekolah
+ penilaian makanan dilakukan oleh penerima manfaat berdasarkan menu aktif pada hari ituMaster Context Document — Sistem Evaluasi Layanan MBG
+Halaman 7
+10. Gambaran Tampilan per Role
+Admin
+Tampilan utama:
+ dashboard admin
+ manajemen user
+ manajemen dapur
+ manajemen sekolah
+ mapping dapur-sekolah
+ manajemen penerima manfaat
+Tim Dapur
+Tampilan utama:
+ dashboard tim dapur
+ manajemen menu
+ manajemen komposisi menu
+ distribusi
+ monitoring konfirmasi sekolah
+ evaluasi makanan
+ feedback & foto validasi
+ laporan
+Guru
+Tampilan utama:
+ dashboard guru
+ konfirmasi penerimaan makanan
+ monitoring pengisian penerima manfaat
+ catatan/kendala sekolah
+Penerima Manfaat
+Tampilan utama:
+ beranda menu hari ini
+ form presensi konsumsi
+ form rating keseluruhan
+ form keterhabisan tiap komponen
+ feedback opsional
+ upload foto opsional
+ validasi tambahan jika dipicu
+ riwayat isian sendiriMaster Context Document — Sistem Evaluasi Layanan MBG
+Halaman 8
+11. Aturan Hak Akses Umum
+Admin
+Boleh:
+ CRUD data master global
+ kelola akun
+ mapping data
+Tidak perlu:
+ mengisi evaluasi makanan harian
+Tim Dapur
+Boleh:
+ kelola menu
+ kelola distribusi
+ lihat hasil evaluasi
+ lihat feedback/foto
+ lihat laporan
+Tidak boleh:
+ mengelola semua akun global seperti admin
+Guru
+Boleh:
+ konfirmasi penerimaan
+ memantau pengisian
+ memberi catatan
+Tidak boleh:
+ mengelola menu
+ melihat data lintas dapur yang bukan kewenangannya
+Penerima Manfaat
+Boleh:
+ mengisi form evaluasi sendiri
+ melihat riwayat isian sendiri
+Tidak boleh:
+ melihat data orang lain
+ melihat dashboard manajemenMaster Context Document — Sistem Evaluasi Layanan MBG
+Halaman 9
+12. Prinsip UI/UX dan Mobile-First Requirements
+Aplikasi ini harus dibangun sebagai web mobile-first. Prioritas utama pengalaman pengguna adalah 
+browser di layar HP, bukan desktop terlebih dahulu.
+Ketentuan wajib:
+ desain dimulai dari layar mobile lalu diskalakan ke tablet/desktop
+ semua halaman inti harus nyaman dipakai pada lebar 360 px hingga 430 px
+ semua tampilan utama harus usable pada browser mobile modern
+ seluruh form penting harus mudah dipakai dengan ibu jari dan satu tangan
+ target utama adalah web app, bukan aplikasi native Android/iOS
+Prinsip UI/UX yang wajib dijaga:
+ sederhana
+ jelas
+ cocok untuk input cepat
+ tidak terlalu banyak langkah
+ mudah digunakan oleh user non-teknis
+ loading state ada
+ error message jelas
+ validasi form jelas
+ mobile-friendly secara nyata, bukan hanya responsive pasif
+Aturan desain mobile-first:
+ utamakan single-column layout untuk layar HP
+ hindari tabel lebar; jika ada data tabular, tampilkan sebagai card list, accordion, atau stacked rows di 
+mobile
+ gunakan tombol dan input yang cukup besar untuk disentuh
+ gunakan jarak/spasi yang cukup agar tidak rawan salah tap
+ navigasi harus sederhana, misalnya top bar ringkas, tab sederhana, drawer, atau bottom navigation 
+jika relevan
+ dashboard jangan terlalu padat; prioritaskan kartu ringkas, metrik inti, dan daftar singkat
+ form evaluasi penerima manfaat harus sangat ringan dan cepat diisi di HP
+ upload foto ompreng harus dioptimalkan untuk mobile browser
+ hindari modal kompleks bertingkat pada mobile
+ setiap halaman utama harus memikirkan empty state, loading state, success state, dan error state
+Ekspektasi per role di mobile:
+ Penerima Manfaat: pengalaman terbaik harus ada di mobile karena mereka target utama input harian
+ Guru: harus mudah konfirmasi penerimaan dan memantau pengisian lewat HP
+ Tim Dapur: dashboard dan form distribusi/evaluasi harus tetap usable dari HP, walau bisa juga 
+nyaman di desktop
+ Admin: boleh lebih kaya di desktop, tetapi tetap harus minimal usable di mobile browser
+Jika ada konflik antara desain desktop dan mobile, prioritaskan mobile usability untuk fitur inti.Master Context Document — Sistem Evaluasi Layanan MBG
+Halaman 10
+13. Aturan Implementasi per Tahap
+Setiap kali saya memberi prompt tahap tertentu:
+ kerjakan hanya scope tahap itu
+ jangan implementasi fitur masa depan
+ jangan refactor besar di luar kebutuhan tahap
+ jangan menambahkan asumsi fitur yang belum diminta
+ kalau perlu placeholder, gunakan placeholder sederhana
+ jaga backward compatibility dengan tahap sebelumnya
+14. Target Akhir Sistem
+Target akhir sistem adalah aplikasi web berbasis role yang memungkinkan:
+ admin mengelola user dan data master
+ tim dapur mengelola menu, distribusi, dan evaluasi
+ guru mengonfirmasi penerimaan dan memantau pengisian
+ penerima manfaat mengisi presensi konsumsi dan penilaian makanan
+ sistem menghasilkan data evaluasi yang berguna untuk perbaikan layanan MBG
+15. Instruksi Penting untuk AI Developer
+Sebelum mengerjakan prompt tahap berikutnya:
+ pahami dulu dokumen konteks ini
+ jangan membuat asumsi yang bertentangan dengan konteks ini
+ jika ada bagian prompt tahap yang ambigu, prioritaskan konteks global ini
+ fokus pada implementasi yang maintainable, testable, dan mudah di-debug
