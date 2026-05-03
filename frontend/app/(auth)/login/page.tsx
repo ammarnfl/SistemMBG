@@ -2,6 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../../../components/ui/Card';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
+import { Badge } from '../../../components/ui/Badge';
+import { ShieldCheck } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -40,62 +45,62 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex bg-neutral-100 min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-md">
-        <div className="mb-6 text-center">
-          <h1 className="text-xl font-bold text-neutral-800">Sistem MBG</h1>
-          <p className="text-sm text-neutral-500">Evaluasi Layanan Makan Bergizi</p>
-        </div>
-
-        {error && (
-          <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">
-            {error}
+    <div className="flex min-h-screen items-center justify-center bg-background p-4 sm:p-8">
+      <Card className="w-full max-w-md shadow-lg border-none sm:border-solid sm:border-border">
+        <CardHeader className="text-center space-y-2 pb-6">
+          <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <ShieldCheck size={32} className="text-primary" />
           </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 p-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="admin@example.com"
-              required
-            />
+          <CardTitle className="text-2xl text-foreground">Sistem MBG</CardTitle>
+          <CardDescription>Evaluasi Layanan Makan Bergizi Gratis</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <div className="mb-6 rounded-md bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20">
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Email</label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="masukkan email anda"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Password</label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <div className="pt-2">
+              <Button type="submit" disabled={loading} className="w-full h-12 text-sm font-bold">
+                {loading ? 'Memproses...' : 'Masuk'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+        <CardFooter className="flex flex-col border-t pt-6 bg-secondary/30 mt-2 rounded-b-xl">
+          <div className="w-full text-xs text-muted-foreground space-y-2">
+            <p className="font-medium text-foreground">Akses Akun Demo:</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Badge variant="outline" className="justify-center py-1">admin@example.com</Badge>
+              <Badge variant="outline" className="justify-center py-1">dapur@example.com</Badge>
+              <Badge variant="outline" className="justify-center py-1">guru@example.com</Badge>
+              <Badge variant="outline" className="justify-center py-1">pm@example.com</Badge>
+            </div>
+            <p className="pt-2 text-center">Password: <span className="font-mono bg-background px-1.5 py-0.5 rounded border">Password123!</span></p>
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 p-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-blue-600 p-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Memproses...' : 'Masuk'}
-          </button>
-        </form>
-
-        <div className="mt-6 border-t pt-4 text-xs text-neutral-400">
-          <p>Petunjuk dummy login:</p>
-          <ul className="mt-1 list-inside list-disc">
-            <li>admin@example.com</li>
-            <li>dapur@example.com</li>
-            <li>guru@example.com</li>
-            <li>pm@example.com</li>
-          </ul>
-          <p className="mt-1">Pass: Password123!</p>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

@@ -46,4 +46,24 @@ export class AuthController {
   async getMe(@Request() req: any) {
     return this.authService.getMe(req.user.id as string);
   }
+
+  @Get('fix-dapur')
+  async fixDapur() {
+    const prisma = this.authService['prisma'];
+    const users = await prisma.user.findMany({ where: { role: 'TIM_DAPUR' } });
+    let count = 0;
+    for (const user of users) {
+      const profile = await prisma.timDapurProfile.findUnique({ where: { userId: user.id } });
+      if (!profile) {
+        const dapur = await prisma.dapur.create({
+          data: { nama: `Dapur ${user.name}`, alamat: 'Alamat default' }
+        });
+        await prisma.timDapurProfile.create({
+          data: { userId: user.id, dapurId: dapur.id }
+        });
+        count++;
+      }
+    }
+    return { fixed: count };
+  }
 }
