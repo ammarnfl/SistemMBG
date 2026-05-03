@@ -56,7 +56,7 @@ export default function AdminUsersPage() {
     try {
       const payload: any = { ...form };
       if (form.role !== 'TIM_DAPUR') delete payload.dapurId;
-      if (form.role !== 'GURU') delete payload.sekolahId;
+      if (form.role !== 'GURU' && form.role !== 'PENERIMA_MANFAAT') delete payload.sekolahId;
       
       const res = await fetch('/api/proxy/admin-users', {
         method: 'POST',
@@ -262,14 +262,18 @@ export default function AdminUsersPage() {
                   </div>
                 )}
 
-                {form.role === 'GURU' && (
+                {(form.role === 'GURU' || form.role === 'PENERIMA_MANFAAT') && (
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-medium">Pilih Sekolah (Opsional)</label>
+                    <label className="text-sm font-medium">
+                      Pilih Sekolah {form.role === 'PENERIMA_MANFAAT' ? '(Wajib)' : '(Opsional)'}
+                    </label>
                     <select 
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
-                      value={form.sekolahId} onChange={e => setForm({...form, sekolahId: e.target.value})}
+                      value={form.sekolahId} 
+                      onChange={e => setForm({...form, sekolahId: e.target.value})}
+                      required={form.role === 'PENERIMA_MANFAAT'}
                     >
-                      <option value="">-- Buat akun saja, tanpa sekolah --</option>
+                      <option value="">{form.role === 'PENERIMA_MANFAAT' ? '-- Pilih Sekolah --' : '-- Buat akun saja, tanpa sekolah --'}</option>
                       {sekolahList.map(s => <option key={s.id} value={s.id}>{s.nama}</option>)}
                     </select>
                   </div>

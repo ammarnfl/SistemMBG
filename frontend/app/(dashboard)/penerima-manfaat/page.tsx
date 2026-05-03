@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../../../components/ui/Card';
+import { Button } from '../../../components/ui/Button';
 import { Loader2, Utensils, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from '../../../components/ui/FormComponents';
 
 export default function BerandaPenerimaManfaat() {
   const [distribusi, setDistribusi] = useState<any>(null);
@@ -21,9 +21,9 @@ export default function BerandaPenerimaManfaat() {
           const errData = await res.json();
           throw new Error(errData.message || 'Gagal memuat menu hari ini');
         }
-        const data = await res.json();
-        // data could be empty string if no distribusi
-        setDistribusi(data ? data : null);
+        const json = await res.json();
+        const actualData = json?.data !== undefined ? json.data : json;
+        setDistribusi(actualData ? actualData : null);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -49,15 +49,13 @@ export default function BerandaPenerimaManfaat() {
         <p className="text-muted-foreground mt-1">Cek makanan yang dibagikan hari ini.</p>
       </div>
 
-      {error && (
+      {error ? (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-      )}
-
-      {!distribusi ? (
+      ) : !distribusi ? (
         <Card className="border-dashed shadow-sm">
           <CardContent className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground space-y-4">
             <div className="p-4 bg-muted/50 rounded-full">

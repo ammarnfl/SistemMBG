@@ -18,16 +18,22 @@ export class EvaluasiService {
 
     const sekolahId = user.penerimaManfaatProfile?.sekolahId;
     if (!sekolahId) {
-      throw new BadRequestException('User belum di-mapping ke sekolah');
+      return null;
     }
 
+    // Normalize tanggal ke UTC midnight untuk konsistensi dengan data tersimpan
     const today = new Date(dateStr);
+    today.setUTCHours(0, 0, 0, 0);
     
     const distribusi = await this.prisma.distribusi.findFirst({
       where: {
         sekolahId,
         tanggal: today,
-        status: { in: ['DIKIRIM', 'DITERIMA', 'SELESAI'] } // asalkan sudah didistribusikan
+        // Tampilkan semua status kecuali BERMASALAH, agar penerima manfaat bisa
+        // melihat menu meskipun distribusi masih DRAFT atau sudah DIKIRIM
+        status: { in: ['DRAFT', 'DIKIRIM', 'DITERIMA', 'SELESAI'] },
+        // Wajib ada menu yang di-assign
+        menuId: { not: null },
       },
       include: {
         menu: {

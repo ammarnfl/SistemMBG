@@ -2,8 +2,8 @@ import { Controller, Get, Post, Body, UseGuards, Request, Query } from '@nestjs/
 import { EvaluasiService } from './evaluasi.service';
 import { CreateEvaluasiDto } from './dto/create-evaluasi.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import { RolesGuard } from '../auth/guards/role.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 
@@ -16,20 +16,21 @@ export class EvaluasiController {
 
   @Roles(Role.PENERIMA_MANFAAT)
   @Get('today')
-  getMenuToday(@Request() req, @Query('date') dateStr: string) {
-    const today = dateStr || new Date().toISOString().split('T')[0];
+  getMenuToday(@Request() req: any, @Query('date') dateStr: string) {
+    // Gunakan date dari query atau ambil tanggal hari ini di timezone lokal server
+    const today = dateStr || new Date().toLocaleDateString('sv-SE'); // Format: YYYY-MM-DD
     return this.evaluasiService.getMenuToday(req.user.id, today);
   }
 
   @Roles(Role.PENERIMA_MANFAAT)
   @Post()
-  createEvaluasi(@Request() req, @Body() dto: CreateEvaluasiDto) {
+  createEvaluasi(@Request() req: any, @Body() dto: CreateEvaluasiDto) {
     return this.evaluasiService.createEvaluasi(req.user.id, dto);
   }
 
   @Roles(Role.PENERIMA_MANFAAT)
   @Get('riwayat')
-  getRiwayat(@Request() req) {
+  getRiwayat(@Request() req: any) {
     return this.evaluasiService.getRiwayat(req.user.id);
   }
 }

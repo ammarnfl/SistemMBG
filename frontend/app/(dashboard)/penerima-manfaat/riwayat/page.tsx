@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Calendar, Star, CheckCircle2, ThumbsDown, Camera, Check } from 'lucide-react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from '../../../../components/ui/Card';
+import { Loader2, Calendar, Star, CheckCircle2, Camera } from 'lucide-react';
+import { Alert, AlertDescription } from '../../../../components/ui/FormComponents';
+import { Badge } from '../../../../components/ui/Badge';
 
 export default function RiwayatEvaluasiPage() {
   const [riwayat, setRiwayat] = useState<any[]>([]);
@@ -22,8 +22,9 @@ export default function RiwayatEvaluasiPage() {
         if (!res.ok) {
           throw new Error('Gagal memuat riwayat evaluasi');
         }
-        const data = await res.json();
-        setRiwayat(data);
+        const json = await res.json();
+        const actualData = json?.data !== undefined ? json.data : json;
+        setRiwayat(Array.isArray(actualData) ? actualData : []);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -58,13 +59,11 @@ export default function RiwayatEvaluasiPage() {
         </Alert>
       )}
 
-      {error && (
+      {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-      )}
-
-      {!error && riwayat.length === 0 ? (
+      ) : riwayat.length === 0 ? (
         <Card className="border-dashed bg-muted/10 shadow-sm">
           <CardContent className="flex flex-col items-center justify-center p-10 text-center">
             <Calendar className="h-10 w-10 text-muted-foreground/40 mb-3" />

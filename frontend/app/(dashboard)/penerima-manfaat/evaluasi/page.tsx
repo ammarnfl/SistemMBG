@@ -2,13 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../../../../components/ui/Card';
+import { Button } from '../../../../components/ui/Button';
 import { Loader2, Star, CheckCircle2, ArrowLeft, AlertCircle, Camera, MessageSquare } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle, Label, RadioGroup, RadioGroupItem, Textarea } from '../../../../components/ui/FormComponents';
 
 export default function FormEvaluasiPage() {
   const router = useRouter();
@@ -37,9 +34,10 @@ export default function FormEvaluasiPage() {
           const errData = await res.json();
           throw new Error(errData.message || 'Gagal memuat menu');
         }
-        const data = await res.json();
-        if (!data) throw new Error('Tidak ada data distribusi hari ini');
-        setDistribusi(data);
+        const json = await res.json();
+        const actualData = json?.data !== undefined ? json.data : json;
+        if (!actualData) throw new Error('Tidak ada data distribusi hari ini');
+        setDistribusi(actualData);
       } catch (err: any) {
         setError(err.message);
       } finally {
