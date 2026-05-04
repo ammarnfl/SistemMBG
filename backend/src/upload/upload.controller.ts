@@ -1,10 +1,13 @@
 import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { SupabaseService } from './supabase.service';
 
 @ApiTags('Upload')
 @Controller('upload')
 export class UploadController {
+  constructor(private readonly supabaseService: SupabaseService) {}
+
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
@@ -19,15 +22,17 @@ export class UploadController {
       },
     },
   })
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new Error('File not uploaded');
     }
-    // Return URL for accessing the uploaded file
-    // Assuming backend is running on process.env.BACKEND_URL or simple relative path
+    
+    const result = await this.supabaseService.uploadFile(file);
+    
     return {
-      message: 'File uploaded successfully',
-      url: `/uploads/${file.filename}`,
+      message: 'File uploaded successfully to Supabase',
+      url: result.url,
+      filename: result.filename,
     };
   }
 }

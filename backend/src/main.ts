@@ -6,13 +6,11 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
-async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+let cachedApp: any;
 
-  // Serve static files from uploads folder
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/',
-  });
+async function bootstrap() {
+  if (!cachedApp) {
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // CORS
   app.enableCors({
@@ -45,11 +43,29 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  const port = process.env.PORT ?? 3001;
-  await app.listen(port);
+    const port = process.env.PORT ?? 3001;
+    
+    // Hanya jalankan app.listen() jika TIDAK sedang berjalan di Vercel
+    if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+      await app.listen(port);
+      console.log(`🚀 Backend berjalan di http://localhost:${port}`);
+      console.log(`📚 Swagger tersedia di http://localhost:${port}/api`);
+    } else {
+      // Untuk Vercel, cukup init() saja
+      await app.init();
+    }
 
-  console.log(`🚀 Backend berjalan di http://localhost:${port}`);
-  console.log(`📚 Swagger tersedia di http://localhost:${port}/api`);
+    cachedApp = app.getHttpAdapter().getInstance();
+  }
+  return cachedApp;
 }
 
-bootstrap();
+// Untuk deployment Vercel
+export default async (req: any, res: any) => {
+  const app = await bootstrap();
+  return app(req, res);
+};
+
+if (process.env.NODE_ENV !== 'production') {
+  bootstrap();
+}
