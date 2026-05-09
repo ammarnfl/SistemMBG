@@ -1,12 +1,12 @@
-import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Post, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { SupabaseService } from './supabase.service';
+import { UploadService } from './upload.service';
 
 @ApiTags('Upload')
 @Controller('upload')
 export class UploadController {
-  constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(private readonly uploadService: UploadService) {}
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))
@@ -24,13 +24,13 @@ export class UploadController {
   })
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
-      throw new Error('File not uploaded');
+      throw new BadRequestException('File not uploaded');
     }
     
-    const result = await this.supabaseService.uploadFile(file);
+    const result = await this.uploadService.handleUpload(file);
     
     return {
-      message: 'File uploaded successfully to Supabase',
+      message: 'File uploaded successfully to local storage',
       url: result.url,
       filename: result.filename,
     };

@@ -11,6 +11,8 @@ import { MenuModule } from './menu/menu.module';
 import { DistribusiModule } from './distribusi/distribusi.module';
 import { EvaluasiModule } from './evaluasi/evaluasi.module';
 import { UploadModule } from './upload/upload.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { LaporanModule } from './laporan/laporan.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { UploadModule } from './upload/upload.module';
     DistribusiModule,
     EvaluasiModule,
     UploadModule,
+    DashboardModule,
+    LaporanModule,
   ],
   controllers: [HealthController],
 })

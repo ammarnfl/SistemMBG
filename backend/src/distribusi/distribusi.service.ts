@@ -9,14 +9,31 @@ export class DistribusiService {
 
   async create(userId: string, dto: CreateDistribusiDto) {
     const tanggal = new Date(dto.tanggal);
-    tanggal.setHours(0,0,0,0);
+    tanggal.setHours(0, 0, 0, 0);
 
     let dapurId = dto.dapurId;
+
     if (!dapurId) {
+      // Try to resolve dapurId from the user's TimDapurProfile
       const profile = await this.prisma.timDapurProfile.findUnique({ where: { userId } });
       dapurId = profile?.dapurId ?? undefined;
     }
-    if (!dapurId) throw new ForbiddenException('User tidak dipetakan ke Dapur manapun');
+
+    if (!dapurId) {
+      throw new ForbiddenException(
+        'User belum dipetakan ke Dapur manapun. ' +
+        'Minta Admin untuk memetakan akun Anda ke Dapur, ' +
+        'atau sertakan dapurId secara eksplisit dalam permintaan.'
+      );
+    }
+
+    // Upsert TimDapurProfile so future calls resolve the dapurId automatically.
+    // This is a self-healing step for users whose profile wasn't created by the seed.
+    await this.prisma.timDapurProfile.upsert({
+      where: { userId },
+      update: { dapurId },
+      create: { userId, dapurId },
+    });
 
     const data: any = {
       tanggal,

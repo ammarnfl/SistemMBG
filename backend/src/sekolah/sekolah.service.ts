@@ -75,8 +75,14 @@ export class SekolahService {
     return { message: 'Batch upload selesai', data: results };
   }
 
-  async update(id: string, data: UpdateSekolahDto) {
+  async update(id: string, dto: UpdateSekolahDto) {
     await this.findOne(id);
+    // Only pick fields that exist on the Sekolah model.
+    // (email is for creating the linked GURU user on create, not stored on Sekolah)
+    const data: { nama?: string; alamat?: string; dapurId?: string } = {};
+    if (dto.nama    !== undefined) data.nama    = dto.nama;
+    if (dto.alamat  !== undefined) data.alamat  = dto.alamat;
+    if (dto.dapurId !== undefined) data.dapurId = dto.dapurId;
     return this.prisma.sekolah.update({ where: { id }, data });
   }
 

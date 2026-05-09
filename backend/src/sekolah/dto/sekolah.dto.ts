@@ -17,10 +17,33 @@ export class CreateSekolahDto {
   @IsString()
   dapurId?: string;
 
+  /**
+   * Email is used to auto-create the GURU user for this sekolah.
+   * Only required on CREATE, not on UPDATE.
+   */
   @ApiProperty()
   @IsNotEmpty()
   @IsEmail()
   email: string;
 }
 
-export class UpdateSekolahDto extends CreateSekolahDto {}
+/**
+ * On update, only sekolah model fields are allowed.
+ * Email is NOT accepted (it belongs to the User, not Sekolah model).
+ */
+export class UpdateSekolahDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nama?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  alamat?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  dapurId?: string;
+}

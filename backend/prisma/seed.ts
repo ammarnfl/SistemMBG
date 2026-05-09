@@ -1,4 +1,5 @@
-import { PrismaClient, Role, StatusDistribusi } from '@prisma/client';
+import 'dotenv/config';
+import { PrismaClient, Role, StatusDistribusi, StatusKonsumsi } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -6,97 +7,293 @@ import { PrismaPg } from '@prisma/adapter-pg';
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:root@127.0.0.1:5432/mbg_db?schema=public';
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter, log: ['query'] });
+const prisma = new PrismaClient({ adapter, log: ['warn', 'error'] });
 
 const SEED_PASSWORD = 'Password123!';
 
 async function main() {
-  console.log('🌱 Starting seed...');
+  console.log('🌱 Starting demo seed...');
 
   const hashedPassword = await bcrypt.hash(SEED_PASSWORD, 10);
 
-  const users = [
+  // ─── USERS ─────────────────────────────────────────────────────────────────
+  const usersData = [
     { email: 'admin@example.com', name: 'Admin Sistem', role: Role.ADMIN },
     { email: 'dapur@example.com', name: 'Tim Dapur Utama', role: Role.TIM_DAPUR },
-    { email: 'guru@example.com', name: 'Guru SDN 01', role: Role.GURU },
-    { email: 'pm@example.com', name: 'Andi Penerima Manfaat', role: Role.PENERIMA_MANFAAT },
+    { email: 'guru@example.com', name: 'Bu Sari (Guru SDN 01)', role: Role.GURU },
+    { email: 'guru2@example.com', name: 'Pak Budi (Guru SDN 02)', role: Role.GURU },
+    { email: 'pm@example.com', name: 'Andi Pratama', role: Role.PENERIMA_MANFAAT },
+    { email: 'pm2@example.com', name: 'Budi Santoso', role: Role.PENERIMA_MANFAAT },
+    { email: 'pm3@example.com', name: 'Citra Dewi', role: Role.PENERIMA_MANFAAT },
+    { email: 'pm4@example.com', name: 'Dinda Rahayu', role: Role.PENERIMA_MANFAAT },
   ];
 
-  const upsertedUsers = [];
-  for (const userData of users) {
+  const upsertedUsers: any[] = [];
+  for (const u of usersData) {
     const user = await prisma.user.upsert({
-      where: { email: userData.email },
-      update: {},
-      create: { ...userData, password: hashedPassword },
+      where: { email: u.email },
+      update: { password: hashedPassword, name: u.name },
+      create: { ...u, password: hashedPassword },
     });
     upsertedUsers.push(user);
-    console.log(`✅ Upserted user: ${user.email} [${user.role}]`);
+    console.log(`  ✅ User: ${user.email} [${user.role}]`);
   }
 
-  // Find Users by Role
+  const adminUser = upsertedUsers.find((u) => u.role === Role.ADMIN)!;
   const dapurUser = upsertedUsers.find((u) => u.role === Role.TIM_DAPUR)!;
-  const guruUser = upsertedUsers.find((u) => u.role === Role.GURU)!;
+  const guruUser1 = upsertedUsers.find((u) => u.email === 'guru@example.com')!;
+  const guruUser2 = upsertedUsers.find((u) => u.email === 'guru2@example.com')!;
+  const pm1 = upsertedUsers.find((u) => u.email === 'pm@example.com')!;
+  const pm2 = upsertedUsers.find((u) => u.email === 'pm2@example.com')!;
+  const pm3 = upsertedUsers.find((u) => u.email === 'pm3@example.com')!;
+  const pm4 = upsertedUsers.find((u) => u.email === 'pm4@example.com')!;
 
-  // Master Data: Dapur & Sekolah
-  const dapurPusat = await prisma.dapur.create({
-    data: { nama: 'Dapur Umum Pusat MBG', alamat: 'Jl. Merdeka No. 1' }
+  // ─── DAPUR ──────────────────────────────────────────────────────────────────
+  let dapurPusat = await prisma.dapur.findFirst({ where: { nama: 'Dapur Umum Pusat MBG' } });
+  if (!dapurPusat) {
+    dapurPusat = await prisma.dapur.create({
+      data: { nama: 'Dapur Umum Pusat MBG', alamat: 'Jl. Merdeka No. 1, Jakarta Pusat' },
+    });
+  }
+  console.log(`  ✅ Dapur: ${dapurPusat.nama}`);
+
+  // TimDapurProfile
+  await prisma.timDapurProfile.upsert({
+    where: { userId: dapurUser.id },
+    update: { dapurId: dapurPusat.id },
+    create: { userId: dapurUser.id, dapurId: dapurPusat.id },
   });
 
-  const sekolahUtama = await prisma.sekolah.create({
-    data: { nama: 'SDN 01 Merdeka', alamat: 'Jl. Merdeka No. 15', dapurId: dapurPusat.id }
+  // ─── SEKOLAH ────────────────────────────────────────────────────────────────
+  let sekolah1 = await prisma.sekolah.findFirst({ where: { nama: 'SDN 01 Merdeka' } });
+  if (!sekolah1) {
+    sekolah1 = await prisma.sekolah.create({
+      data: { nama: 'SDN 01 Merdeka', alamat: 'Jl. Merdeka No. 15', dapurId: dapurPusat.id },
+    });
+  }
+  let sekolah2 = await prisma.sekolah.findFirst({ where: { nama: 'SDN 02 Bahagia' } });
+  if (!sekolah2) {
+    sekolah2 = await prisma.sekolah.create({
+      data: { nama: 'SDN 02 Bahagia', alamat: 'Jl. Bahagia No. 8', dapurId: dapurPusat.id },
+    });
+  }
+  console.log(`  ✅ Sekolah: ${sekolah1.nama}, ${sekolah2.nama}`);
+
+  // ─── KELAS ──────────────────────────────────────────────────────────────────
+  let kelas1A = await prisma.kelas.findFirst({ where: { nama: 'Kelas 1A', sekolahId: sekolah1.id } });
+  if (!kelas1A) kelas1A = await prisma.kelas.create({ data: { nama: 'Kelas 1A', sekolahId: sekolah1.id } });
+
+  let kelas1B = await prisma.kelas.findFirst({ where: { nama: 'Kelas 1B', sekolahId: sekolah1.id } });
+  if (!kelas1B) kelas1B = await prisma.kelas.create({ data: { nama: 'Kelas 1B', sekolahId: sekolah1.id } });
+
+  let kelas2A = await prisma.kelas.findFirst({ where: { nama: 'Kelas 2A', sekolahId: sekolah2.id } });
+  if (!kelas2A) kelas2A = await prisma.kelas.create({ data: { nama: 'Kelas 2A', sekolahId: sekolah2.id } });
+
+  // ─── GURU PROFILES ──────────────────────────────────────────────────────────
+  await prisma.guruProfile.upsert({
+    where: { userId: guruUser1.id },
+    update: { sekolahId: sekolah1.id },
+    create: { userId: guruUser1.id, sekolahId: sekolah1.id },
+  });
+  await prisma.guruProfile.upsert({
+    where: { userId: guruUser2.id },
+    update: { sekolahId: sekolah2.id },
+    create: { userId: guruUser2.id, sekolahId: sekolah2.id },
   });
 
-  const kelas1A = await prisma.kelas.create({
-    data: { nama: 'Kelas 1A', sekolahId: sekolahUtama.id }
+  // ─── PM PROFILES ────────────────────────────────────────────────────────────
+  await prisma.penerimaManfaatProfile.upsert({
+    where: { userId: pm1.id },
+    update: { sekolahId: sekolah1.id, kelasId: kelas1A.id },
+    create: { userId: pm1.id, sekolahId: sekolah1.id, kelasId: kelas1A.id },
   });
-
-  // Assign GuruProfile to Guru
-  await prisma.guruProfile.create({
-    data: { userId: guruUser.id, sekolahId: sekolahUtama.id }
+  await prisma.penerimaManfaatProfile.upsert({
+    where: { userId: pm2.id },
+    update: { sekolahId: sekolah1.id, kelasId: kelas1B.id },
+    create: { userId: pm2.id, sekolahId: sekolah1.id, kelasId: kelas1B.id },
   });
-
-  // Create Menu Master & Komposisi
-  const menuNasiAyam = await prisma.menuMaster.create({
-    data: {
-      nama: 'Nasi Ayam Teriyaki', deskripsi: 'Nasi putih dengan ayam teriyaki dan sayur brokoli',
-      komponen: {
-        create: [
-          { nama: 'Nasi Putih', porsi: '150 gr' },
-          { nama: 'Ayam Teriyaki', porsi: '100 gr' },
-          { nama: 'Cah Brokoli Wortel', porsi: '50 gr' },
-          { nama: 'Susu UHT', porsi: '200 ml' }
-        ]
-      }
-    }
+  await prisma.penerimaManfaatProfile.upsert({
+    where: { userId: pm3.id },
+    update: { sekolahId: sekolah2.id, kelasId: kelas2A.id },
+    create: { userId: pm3.id, sekolahId: sekolah2.id, kelasId: kelas2A.id },
   });
+  await prisma.penerimaManfaatProfile.upsert({
+    where: { userId: pm4.id },
+    update: { sekolahId: sekolah2.id, kelasId: kelas2A.id },
+    create: { userId: pm4.id, sekolahId: sekolah2.id, kelasId: kelas2A.id },
+  });
+  console.log('  ✅ Profiles assigned (guru + penerima manfaat)');
 
-  // Create Menu Harian (Assign Menu to Today)
+  // ─── MENU MASTER ────────────────────────────────────────────────────────────
+  let menuNasiAyam = await prisma.menuMaster.findFirst({ where: { nama: 'Nasi Ayam Teriyaki' } });
+  if (!menuNasiAyam) {
+    menuNasiAyam = await prisma.menuMaster.create({
+      data: {
+        nama: 'Nasi Ayam Teriyaki',
+        deskripsi: 'Nasi putih dengan ayam teriyaki dan sayur brokoli segar',
+        dapurId: dapurPusat.id,
+        komponen: {
+          create: [
+            { nama: 'Nasi Putih', porsi: '150 gr' },
+            { nama: 'Ayam Teriyaki', porsi: '100 gr' },
+            { nama: 'Cah Brokoli Wortel', porsi: '50 gr' },
+            { nama: 'Susu UHT Coklat', porsi: '200 ml' },
+          ],
+        },
+      },
+    });
+  }
+
+  let menuNasiIkan = await prisma.menuMaster.findFirst({ where: { nama: 'Nasi Ikan Bakar Sambal' } });
+  if (!menuNasiIkan) {
+    menuNasiIkan = await prisma.menuMaster.create({
+      data: {
+        nama: 'Nasi Ikan Bakar Sambal',
+        deskripsi: 'Nasi putih dengan ikan bakar kecap, sambal tomat, dan lalapan',
+        dapurId: dapurPusat.id,
+        komponen: {
+          create: [
+            { nama: 'Nasi Putih', porsi: '150 gr' },
+            { nama: 'Ikan Bakar Kecap', porsi: '120 gr' },
+            { nama: 'Lalapan & Sambal', porsi: '30 gr' },
+            { nama: 'Air Mineral', porsi: '330 ml' },
+          ],
+        },
+      },
+    });
+  }
+  console.log(`  ✅ Menu: ${menuNasiAyam.nama}, ${menuNasiIkan.nama}`);
+
+  // ─── MENU HARIAN ─────────────────────────────────────────────────────────────
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // normalize to Date only
+  today.setUTCHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const dayBefore = new Date(today);
+  dayBefore.setDate(today.getDate() - 2);
 
-  const menuHarian = await prisma.menuHarian.create({
-    data: {
-      tanggal: today,
-      menuId: menuNasiAyam.id
-    }
+  // Assign menus to dates (upsert to avoid conflicts)
+  await prisma.menuHarian.upsert({
+    where: { tanggal_menuId: { tanggal: today, menuId: menuNasiAyam.id } },
+    update: {},
+    create: { tanggal: today, menuId: menuNasiAyam.id },
   });
-
-  // Create Sample Distribusi
-  await prisma.distribusi.create({
-    data: {
-      tanggal: today,
-      sekolahId: sekolahUtama.id,
-      dapurId: dapurPusat.id,
-      jumlahPorsi: 35,
-      status: StatusDistribusi.DIKIRIM,
-      catatanDapur: 'Diantar supir Pak Budi',
-      createdById: dapurUser.id
-    }
+  await prisma.menuHarian.upsert({
+    where: { tanggal_menuId: { tanggal: yesterday, menuId: menuNasiIkan.id } },
+    update: {},
+    create: { tanggal: yesterday, menuId: menuNasiIkan.id },
   });
+  await prisma.menuHarian.upsert({
+    where: { tanggal_menuId: { tanggal: dayBefore, menuId: menuNasiAyam.id } },
+    update: {},
+    create: { tanggal: dayBefore, menuId: menuNasiAyam.id },
+  });
+  console.log('  ✅ Menu harian scheduled (today + 2 days back)');
 
-  console.log('✅ Seeded master data (Dapur, Sekolah, Menu, Distribusi)');
+  // ─── DISTRIBUSI ──────────────────────────────────────────────────────────────
+  // Helper to upsert distribusi
+  async function upsertDistribusi(tanggal: Date, sekolahId: string, menuId: string, status: StatusDistribusi, catatan?: string) {
+    const existing = await prisma.distribusi.findFirst({ where: { tanggal, sekolahId } });
+    if (!existing) {
+      return prisma.distribusi.create({
+        data: {
+          tanggal,
+          sekolahId,
+          dapurId: dapurPusat!.id,
+          jumlahPorsi: 35,
+          status,
+          catatanDapur: catatan || 'Dikirim tepat waktu',
+          createdById: dapurUser.id,
+          menuId,
+        },
+      });
+    }
+    return existing;
+  }
+
+  const distToday1 = await upsertDistribusi(today, sekolah1.id, menuNasiAyam.id, StatusDistribusi.DIKIRIM, 'Diantar Pak Budi pukul 07.30');
+  const distToday2 = await upsertDistribusi(today, sekolah2.id, menuNasiAyam.id, StatusDistribusi.DITERIMA, 'Sudah diterima lengkap');
+  const distYesterday1 = await upsertDistribusi(yesterday, sekolah1.id, menuNasiIkan.id, StatusDistribusi.SELESAI, 'Semua makanan terdistribusi');
+  const distYesterday2 = await upsertDistribusi(yesterday, sekolah2.id, menuNasiIkan.id, StatusDistribusi.SELESAI);
+  const distDayBefore = await upsertDistribusi(dayBefore, sekolah1.id, menuNasiAyam.id, StatusDistribusi.SELESAI);
+
+  // Update catatanGuru for SELESAI
+  if (distYesterday1.status === StatusDistribusi.SELESAI && !distYesterday1.catatanGuru) {
+    await prisma.distribusi.update({
+      where: { id: distYesterday1.id },
+      data: { catatanGuru: 'Makanan diterima dalam kondisi baik', confirmedById: guruUser1.id },
+    });
+  }
+  console.log('  ✅ Distribusi created (today + 2 days back for both sekolah)');
+
+  // ─── EVALUASI (HISTORICAL) ───────────────────────────────────────────────────
+  const menuNasiAyamKomponen = await prisma.menuKomponen.findMany({ where: { menuId: menuNasiAyam.id } });
+  const menuNasiIkanKomponen = await prisma.menuKomponen.findMany({ where: { menuId: menuNasiIkan.id } });
+
+  async function upsertEvaluasi(
+    userId: string,
+    tanggal: Date,
+    distribusiId: string,
+    statusKonsumsi: StatusKonsumsi,
+    rating: number,
+    feedback: string | null,
+    komponen: { id: string; skor: number }[],
+  ) {
+    const existing = await prisma.evaluasiHarian.findUnique({
+      where: { tanggal_penerimaManfaatId: { tanggal, penerimaManfaatId: userId } },
+    });
+    if (existing) return existing;
+
+    return prisma.evaluasiHarian.create({
+      data: {
+        tanggal,
+        penerimaManfaatId: userId,
+        distribusiId,
+        statusKonsumsi,
+        ratingKeseluruhan: rating,
+        feedback,
+        penilaianKomponen: {
+          create: komponen.map((k) => ({ komponenId: k.id, skorKeterhabisan: k.skor })),
+        },
+      },
+    });
+  }
+
+  // Evaluasi yesterday - sekolah1 (pm1 good, pm2 not good)
+  await upsertEvaluasi(
+    pm1.id, yesterday, distYesterday1.id, StatusKonsumsi.KONSUMSI, 4, 'Enak, porsi cukup',
+    menuNasiIkanKomponen.map((k, i) => ({ id: k.id, skor: [5, 4, 3, 5][i] || 4 })),
+  );
+  await upsertEvaluasi(
+    pm2.id, yesterday, distYesterday1.id, StatusKonsumsi.TIDAK_KONSUMSI, 2,
+    'Ikan terlalu amis, tidak bisa makan',
+    menuNasiIkanKomponen.map((k, i) => ({ id: k.id, skor: [4, 1, 2, 4][i] || 2 })),
+  );
+
+  // Evaluasi dayBefore - sekolah1 (pm1 perfect)
+  await upsertEvaluasi(
+    pm1.id, dayBefore, distDayBefore.id, StatusKonsumsi.KONSUMSI, 5, null,
+    menuNasiAyamKomponen.map((k) => ({ id: k.id, skor: 5 })),
+  );
+
+  // Evaluasi yesterday - sekolah2 (pm3 only)
+  await upsertEvaluasi(
+    pm3.id, yesterday, distYesterday2.id, StatusKonsumsi.KONSUMSI, 3, 'Biasa saja, nasi agak dingin',
+    menuNasiIkanKomponen.map((k, i) => ({ id: k.id, skor: [4, 3, 3, 4][i] || 3 })),
+  );
+
+  console.log('  ✅ Evaluasi historical seeded (pm1, pm2, pm3 - yesterday & day before)');
+
   console.log('');
-  console.log('🎉 Seed completed!');
+  console.log('🎉 Demo seed completed! Akun tersedia:');
+  console.log('  📧 admin@example.com      | 🔑 Password123! | Role: ADMIN');
+  console.log('  📧 dapur@example.com      | 🔑 Password123! | Role: TIM_DAPUR');
+  console.log('  📧 guru@example.com       | 🔑 Password123! | Role: GURU (SDN 01 Merdeka)');
+  console.log('  📧 guru2@example.com      | 🔑 Password123! | Role: GURU (SDN 02 Bahagia)');
+  console.log('  📧 pm@example.com         | 🔑 Password123! | Role: PENERIMA_MANFAAT (belum isi hari ini)');
+  console.log('  📧 pm2@example.com        | 🔑 Password123! | Role: PENERIMA_MANFAAT');
+  console.log('  📧 pm3@example.com        | 🔑 Password123! | Role: PENERIMA_MANFAAT');
+  console.log('  📧 pm4@example.com        | 🔑 Password123! | Role: PENERIMA_MANFAAT (belum isi hari ini)');
 }
 
 main()
@@ -106,4 +303,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

@@ -18,6 +18,11 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Serve static files
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
+
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({

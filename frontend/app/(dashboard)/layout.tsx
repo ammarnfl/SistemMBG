@@ -93,6 +93,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       { title: 'Dapur', href: '/admin/dapur', icon: UtensilsCrossed },
       { title: 'Sekolah', href: '/admin/sekolah', icon: School },
       { title: 'Kelas/Grup', href: '/admin/kelas', icon: LayoutGrid },
+      { title: 'Laporan', href: '/laporan', icon: ClipboardList },
     ];
   } else if (role === 'TIM_DAPUR') {
     userRoleLabel = 'Tim Dapur';
@@ -101,12 +102,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       { title: 'Menu Master', href: '/dapur/menu', icon: BookOpen },
       { title: 'Jadwal Aktif', href: '/dapur/jadwal', icon: CalendarDays },
       { title: 'Distribusi', href: '/dapur/distribusi', icon: Truck },
+      { title: 'Laporan', href: '/laporan', icon: ClipboardList },
     ];
   } else if (role === 'GURU') {
     userRoleLabel = 'Guru';
     navItems = [
       { title: 'Dashboard', href: '/guru', icon: Home },
       { title: 'Distribusi', href: '/guru/distribusi', icon: Truck },
+      { title: 'Laporan', href: '/laporan', icon: ClipboardList },
     ];
   } else if (role === 'PENERIMA_MANFAAT') {
     userRoleLabel = 'Penerima Manfaat';
