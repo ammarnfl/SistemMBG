@@ -28,8 +28,12 @@ model User {
 
 model Dapur {
   id               String            @id @default(cuid())
-  nama             String
+  nama             String            @unique
   alamat           String?
+  kontak           String?
+  provinsi         String?
+  kabupatenKota    String?
+  kecamatan        String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   distribusi       Distribusi[]
@@ -42,8 +46,11 @@ model Dapur {
 
 model Sekolah {
   id                      String                   @id @default(cuid())
-  nama                    String
+  nama                    String                   @unique
   alamat                  String?
+  provinsi                String?
+  kabupatenKota           String?
+  kecamatan               String?
   dapurId                 String?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
@@ -95,6 +102,7 @@ model GuruProfile {
 model PenerimaManfaatProfile {
   id        String   @id @default(cuid())
   userId    String   @unique
+  nisn      String?  @unique
   sekolahId String?
   kelasId   String?
   createdAt DateTime @default(now())

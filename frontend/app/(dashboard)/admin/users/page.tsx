@@ -7,7 +7,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../../../components
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { Badge } from '../../../../components/ui/Badge';
-import { ArrowLeft, UserPlus, Users, Loader2, Edit, UserX, UserCheck, Plus, FileSpreadsheet, Upload, AlertCircle } from 'lucide-react';
+import { DataTable, Column } from '../../../../components/ui/DataTable';
+import { ArrowLeft, UserPlus, Users, Loader2, Edit, Trash2, UserCheck, UserX, Search, Plus, FileSpreadsheet, Upload, AlertCircle } from 'lucide-react';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -16,25 +17,31 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
   const [tab, setTab] = useState<'SINGLE' | 'BATCH'>('SINGLE');
   const [batchErrors, setBatchErrors] = useState<any[]>([]);
+  const [kelasList, setKelasList] = useState<any[]>([]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [resUsers, resDapur, resSekolah] = await Promise.all([
+      const [resUsers, resDapur, resSekolah, resKelas] = await Promise.all([
         fetch('/api/proxy/admin-users'),
         fetch('/api/proxy/dapur'),
-        fetch('/api/proxy/sekolah')
+        fetch('/api/proxy/sekolah'),
+        fetch('/api/proxy/kelas')
       ]);
       if (!resUsers.ok) throw new Error('Gagal mengambil data user');
       const dataUsers = await resUsers.json();
       const dataDapur = await resDapur.json();
       const dataSekolah = await resSekolah.json();
+      const dataKelas = await resKelas.json();
       
       setUsers(dataUsers.data || []);
       setDapurList(dataDapur.data || []);
       setSekolahList(dataSekolah.data || []);
+      setKelasList(dataKelas.data || []);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -44,11 +51,11 @@ export default function AdminUsersPage() {
 
   useEffect(() => { loadData(); }, []);
 
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'GURU', dapurId: '', sekolahId: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'GURU', dapurId: '', sekolahId: '', nisn: '', kelasId: '' });
   const [saving, setSaving] = useState(false);
   
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', role: '', password: '', email: '' });
+  const [editForm, setEditForm] = useState({ name: '', role: '', password: '', email: '', nisn: '', kelasId: '' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +64,10 @@ export default function AdminUsersPage() {
       const payload: any = { ...form };
       if (form.role !== 'TIM_DAPUR') delete payload.dapurId;
       if (form.role !== 'GURU' && form.role !== 'PENERIMA_MANFAAT') delete payload.sekolahId;
+      if (form.role !== 'PENERIMA_MANFAAT') {
+        delete payload.nisn;
+        delete payload.kelasId;
+      }
       
       const res = await fetch('/api/proxy/admin-users', {
         method: 'POST',
@@ -67,7 +78,7 @@ export default function AdminUsersPage() {
         const errJson = await res.json();
         throw new Error(errJson.message || 'Gagal simpan user');
       }
-      setForm({ name: '', email: '', password: '', role: 'GURU', dapurId: '', sekolahId: '' });
+      setForm({ name: '', email: '', password: '', role: 'GURU', dapurId: '', sekolahId: '', nisn: '', kelasId: '' });
       loadData();
     } catch (e: any) {
       alert(e.message);
@@ -166,7 +177,7 @@ export default function AdminUsersPage() {
 
   const startEdit = (u: any) => {
     setEditingId(u.id);
-    setEditForm({ name: u.name, role: u.role, password: '', email: u.email });
+    setEditForm({ name: u.name, role: u.role, password: '', email: u.email, nisn: u.penerimaManfaatProfile?.nisn || '', kelasId: u.penerimaManfaatProfile?.kelasId || '' });
   };
 
   const handleEdit = async () => {
@@ -174,6 +185,10 @@ export default function AdminUsersPage() {
     try {
       const payload: any = { name: editForm.name, role: editForm.role, email: editForm.email };
       if (editForm.password) payload.password = editForm.password;
+      if (editForm.role === 'PENERIMA_MANFAAT') {
+        payload.nisn = editForm.nisn;
+        payload.kelasId = editForm.kelasId;
+      }
       
       const res = await fetch(`/api/proxy/admin-users/${editingId}`, {
         method: 'PATCH',
@@ -191,7 +206,154 @@ export default function AdminUsersPage() {
     }
   };
 
-  const filteredUsers = roleFilter === 'ALL' ? users : users.filter(u => u.role === roleFilter);
+  const filteredUsers = users.filter(u => {
+    const matchRole = roleFilter === 'ALL' || u.role === roleFilter;
+    const matchStatus = statusFilter === 'ALL' || (statusFilter === 'ACTIVE' && u.isActive) || (statusFilter === 'INACTIVE' && !u.isActive);
+    const searchLower = searchQuery.toLowerCase();
+    const matchSearch = !searchQuery || u.name.toLowerCase().includes(searchLower) || u.email.toLowerCase().includes(searchLower);
+    return matchRole && matchStatus && matchSearch;
+  });
+
+  const columns: Column<any>[] = [
+    {
+      header: 'Nama & Email',
+      accessorKey: 'name',
+      sortable: true,
+      cell: (u) => (
+        <div className="flex flex-col min-w-[200px]">
+          <span className="font-semibold text-foreground text-base truncate" title={u.name}>{u.name}</span>
+          <span className="text-sm text-muted-foreground truncate" title={u.email}>{u.email}</span>
+        </div>
+      ),
+    },
+    {
+      header: 'Role',
+      accessorKey: 'role',
+      sortable: false,
+      cell: (u) => <Badge variant="outline" className="bg-secondary/40 text-xs px-2 h-6">{u.role}</Badge>,
+    },
+    {
+      header: 'NISN',
+      accessorKey: 'nisn',
+      sortable: false,
+      cell: (u) => <span className="text-sm">{u.role === 'PENERIMA_MANFAAT' ? (u.penerimaManfaatProfile?.nisn || '-') : '-'}</span>,
+    },
+    {
+      header: 'Unit Terkait',
+      accessorKey: 'unit',
+      sortAccessorFn: (u) => {
+        const dapur = u.timDapurProfile?.dapur?.nama;
+        const sekolah = u.guruProfile?.sekolah?.nama || u.penerimaManfaatProfile?.sekolah?.nama;
+        return dapur || sekolah || '';
+      },
+      sortable: false,
+      cell: (u) => {
+        const dapur = u.timDapurProfile?.dapur;
+        const sekolah = u.guruProfile?.sekolah || u.penerimaManfaatProfile?.sekolah;
+        const kelas = u.penerimaManfaatProfile?.kelas;
+
+        if (dapur) return <Badge variant="warning" className="text-xs">Dapur: {dapur.nama}</Badge>;
+        if (sekolah) {
+          return (
+            <div className="flex flex-col gap-1 items-start">
+              <Badge variant="secondary" className="text-xs">Sekolah: {sekolah.nama}</Badge>
+              {kelas && <Badge variant="outline" className="text-xs bg-muted/50">Kelas: {kelas.nama}</Badge>}
+            </div>
+          );
+        }
+        return <span className="text-xs text-muted-foreground">-</span>;
+      }
+    },
+    {
+      header: 'Status',
+      accessorKey: 'isActive',
+      sortable: true,
+      cell: (u) => (
+        u.isActive ? (
+          <Badge variant="success" className="px-2 h-6 w-fit">Aktif</Badge>
+        ) : (
+          <Badge variant="destructive" className="px-2 h-6 w-fit">Nonaktif</Badge>
+        )
+      )
+    },
+    {
+      header: 'Aksi',
+      className: 'text-center sticky right-0 bg-white shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] min-w-[120px]',
+      cell: (u) => (
+        <div className="flex justify-center gap-2">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => startEdit(u)} title="Edit">
+            <Edit size={16} />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`h-9 w-9 ${u.isActive ? 'text-destructive/80 hover:text-destructive hover:bg-destructive/10' : 'text-success hover:text-success/80 hover:bg-success/10'}`} 
+            onClick={() => handleToggleActive(u.id, u.isActive)}
+            title={u.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+          >
+            {u.isActive ? <UserX size={16} /> : <UserCheck size={16} />}
+          </Button>
+        </div>
+      )
+    }
+  ];
+
+  const renderEditRow = (u: any) => (
+    <div className="flex flex-col sm:flex-row gap-4 p-2 bg-background rounded-lg border border-border shadow-sm">
+      <div className="flex-1 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Nama Lengkap</label>
+            <Input value={u.name} readOnly placeholder="Nama Lengkap" className="bg-muted/50 h-9" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Email Login</label>
+            <Input type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} placeholder="Email Login" className="h-9" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Role</label>
+            <select 
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
+              value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})}
+            >
+              <option value="ADMIN">ADMIN</option>
+              <option value="TIM_DAPUR">TIM_DAPUR</option>
+              <option value="GURU">GURU</option>
+              <option value="PENERIMA_MANFAAT">PENERIMA_MANFAAT</option>
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Password Baru</label>
+            <Input type="password" value={editForm.password} onChange={e => setEditForm({...editForm, password: e.target.value})} placeholder="Kosongkan jika tak diubah" className="h-9" />
+          </div>
+        </div>
+        {editForm.role === 'PENERIMA_MANFAAT' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">NISN</label>
+              <Input value={editForm.nisn} onChange={e => setEditForm({...editForm, nisn: e.target.value})} placeholder="NISN Siswa" className="h-9" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Pilih Kelas/Grup</label>
+              <select 
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
+                value={editForm.kelasId} onChange={e => setEditForm({...editForm, kelasId: e.target.value})}
+              >
+                <option value="">-- Pilih Kelas --</option>
+                {kelasList.map(k => <option key={k.id} value={k.id}>{k.nama} ({k.sekolah?.nama})</option>)}
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="flex flex-row sm:flex-col justify-end gap-2 shrink-0">
+        <Button size="sm" onClick={handleEdit} className="w-full">Simpan</Button>
+        <Button size="sm" variant="outline" onClick={() => setEditingId(null)} className="w-full">Batal</Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -210,13 +372,13 @@ export default function AdminUsersPage() {
       />
 
       <Card>
-        <CardHeader className="pb-2 border-b">
-          <div className="flex gap-4">
-            <button onClick={() => setTab('SINGLE')} className={`pb-2 text-sm font-semibold border-b-2 ${tab==='SINGLE'?'border-primary text-primary':'border-transparent text-muted-foreground'}`}>
-              <div className="flex items-center gap-1"><Plus size={16}/> Input Manual</div>
+        <CardHeader className="pb-4 border-b bg-muted/10">
+          <div className="flex bg-secondary/50 p-1 rounded-lg w-fit border border-border/50">
+            <button onClick={() => setTab('SINGLE')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='SINGLE'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
+              <div className="flex items-center gap-2"><Plus size={16}/> Input Manual</div>
             </button>
-            <button onClick={() => setTab('BATCH')} className={`pb-2 text-sm font-semibold border-b-2 ${tab==='BATCH'?'border-primary text-primary':'border-transparent text-muted-foreground'}`}>
-              <div className="flex items-center gap-1"><FileSpreadsheet size={16}/> Upload CSV</div>
+            <button onClick={() => setTab('BATCH')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='BATCH'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
+              <div className="flex items-center gap-2"><FileSpreadsheet size={16}/> Upload CSV</div>
             </button>
           </div>
         </CardHeader>
@@ -251,12 +413,14 @@ export default function AdminUsersPage() {
                 
                 {form.role === 'TIM_DAPUR' && (
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-medium">Pilih Dapur (Opsional)</label>
+                    <label className="text-sm font-medium">Pilih Dapur (Wajib)</label>
                     <select 
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
-                      value={form.dapurId} onChange={e => setForm({...form, dapurId: e.target.value})}
+                      value={form.dapurId} 
+                      onChange={e => setForm({...form, dapurId: e.target.value})}
+                      required
                     >
-                      <option value="">-- Buat akun saja, tanpa dapur --</option>
+                      <option value="">-- Pilih Dapur --</option>
                       {dapurList.map(d => <option key={d.id} value={d.id}>{d.nama}</option>)}
                     </select>
                   </div>
@@ -265,18 +429,40 @@ export default function AdminUsersPage() {
                 {(form.role === 'GURU' || form.role === 'PENERIMA_MANFAAT') && (
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-sm font-medium">
-                      Pilih Sekolah {form.role === 'PENERIMA_MANFAAT' ? '(Wajib)' : '(Opsional)'}
+                      Pilih Sekolah (Wajib)
                     </label>
                     <select 
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
                       value={form.sekolahId} 
-                      onChange={e => setForm({...form, sekolahId: e.target.value})}
-                      required={form.role === 'PENERIMA_MANFAAT'}
+                      onChange={e => setForm({...form, sekolahId: e.target.value, kelasId: ''})}
+                      required
                     >
-                      <option value="">{form.role === 'PENERIMA_MANFAAT' ? '-- Pilih Sekolah --' : '-- Buat akun saja, tanpa sekolah --'}</option>
+                      <option value="">-- Pilih Sekolah --</option>
                       {sekolahList.map(s => <option key={s.id} value={s.id}>{s.nama}</option>)}
                     </select>
                   </div>
+                )}
+
+                {form.role === 'PENERIMA_MANFAAT' && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">NISN (Wajib)</label>
+                      <Input placeholder="Nomor Induk Siswa Nasional" value={form.nisn} onChange={e => setForm({...form, nisn: e.target.value})} required/>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Pilih Kelas / Grup (Wajib)</label>
+                      <select 
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
+                        value={form.kelasId} 
+                        onChange={e => setForm({...form, kelasId: e.target.value})}
+                        required
+                        disabled={!form.sekolahId}
+                      >
+                        <option value="">-- Pilih Kelas --</option>
+                        {kelasList.filter(k => k.sekolahId === form.sekolahId).map(k => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                      </select>
+                    </div>
+                  </>
                 )}
               </div>
               <div className="pt-2">
@@ -294,7 +480,7 @@ export default function AdminUsersPage() {
                 
                 <div className="flex justify-center gap-4 mt-4">
                    <Button variant="outline" type="button" onClick={() => {
-                     const csvContent = "data:text/csv;charset=utf-8,Nama Lengkap,Email,Password,Role,ID Sekolah (Opsional),ID Dapur (Opsional)\nBudi Guru,budiguru@example.com,mbg12345,GURU,SEKOLAH_ID_OPSIONAL,\nTim Dapur B,dapurB@example.com,mbg12345,TIM_DAPUR,,DAPUR_ID_OPSIONAL";
+                     const csvContent = "data:text/csv;charset=utf-8,Nama Lengkap,Email,Password,Role,ID Sekolah,ID Dapur\nBudi Guru,budiguru@example.com,mbg12345,GURU,SEKOLAH_ID,\nTim Dapur B,dapurB@example.com,mbg12345,TIM_DAPUR,,DAPUR_ID";
                      const encodedUri = encodeURI(csvContent);
                      const link = document.createElement("a");
                      link.setAttribute("href", encodedUri);
@@ -333,19 +519,35 @@ export default function AdminUsersPage() {
       </Card>
 
       <div className="pt-10 space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-1 mb-2">
-          <h3 className="font-bold text-lg text-foreground">Daftar User</h3>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">Filter Role:</span>
+        <div className="flex flex-col gap-3 px-1 mb-4">
+          <h3 className="font-bold text-xl text-foreground">Daftar User</h3>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative w-full sm:w-[250px]">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                placeholder="Cari di sini..." 
+                value={searchQuery} 
+                onChange={e => setSearchQuery(e.target.value)}
+                className="h-9 pl-9 w-full bg-white"
+              />
+            </div>
             <select 
-              className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
+              className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors text-muted-foreground focus:text-foreground w-full sm:w-[160px]"
               value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
             >
-              <option value="ALL">Semua Role</option>
+              <option value="ALL">Pilih Role</option>
               <option value="ADMIN">ADMIN</option>
               <option value="TIM_DAPUR">TIM_DAPUR</option>
               <option value="GURU">GURU</option>
               <option value="PENERIMA_MANFAAT">PENERIMA_MANFAAT</option>
+            </select>
+            <select 
+              className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors text-muted-foreground focus:text-foreground w-full sm:w-[160px]"
+              value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="ALL">Pilih Status</option>
+              <option value="ACTIVE">Aktif</option>
+              <option value="INACTIVE">Nonaktif</option>
             </select>
           </div>
         </div>
@@ -357,69 +559,14 @@ export default function AdminUsersPage() {
         ) : filteredUsers.length === 0 ? (
           <StateCard icon={<Users size={32} />} title="Belum Ada Data" description="Tidak ada user yang sesuai dengan filter." />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {filteredUsers.map((u, i) => (
-              <Card key={i} className={`flex flex-col ${!u.isActive ? 'opacity-70' : ''}`}>
-                <CardContent className="p-6 flex-1 flex flex-col gap-4">
-                  {editingId === u.id ? (
-                    <div className="space-y-3">
-                      <Input value={u.name} readOnly placeholder="Nama Lengkap" className="bg-muted/50" />
-                      <Input type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} placeholder="Email Login" />
-                      <select 
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
-                        value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})}
-                      >
-                        <option value="ADMIN">ADMIN</option>
-                        <option value="TIM_DAPUR">TIM_DAPUR</option>
-                        <option value="GURU">GURU</option>
-                        <option value="PENERIMA_MANFAAT">PENERIMA_MANFAAT</option>
-                      </select>
-                      <Input type="password" value={editForm.password} onChange={e => setEditForm({...editForm, password: e.target.value})} placeholder="Password Baru (Kosongkan jika tak diubah)" />
-                      <div className="flex gap-2 mt-2">
-                        <Button size="sm" onClick={handleEdit}>Simpan</Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Batal</Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="min-w-0 flex-1 space-y-2">
-                          <div className="font-bold text-foreground text-lg truncate" title={u.name}>{u.name}</div>
-                          <div className="text-sm font-medium text-primary bg-primary/5 p-2 px-3 rounded-lg border border-primary/10 inline-block truncate max-w-full">
-                            {u.email}
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end shrink-0 pt-1">
-                          {u.isActive ? (
-                            <Badge variant="success" className="px-2 h-6">Aktif</Badge>
-                          ) : (
-                            <Badge variant="destructive" className="px-2 h-6">Nonaktif</Badge>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/60">
-                        <Badge variant="outline" className="bg-secondary/40 text-xs px-2 h-6">{u.role}</Badge>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" className="h-9 px-3 text-muted-foreground" onClick={() => startEdit(u)}>
-                            <Edit size={16} className="mr-1" /> Edit
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className={`h-9 px-3 ${u.isActive ? 'text-destructive/90 hover:text-destructive' : 'text-success'}`} 
-                            onClick={() => handleToggleActive(u.id, u.isActive)}
-                          >
-                            {u.isActive ? <><UserX size={16} className="mr-1" /> Matikan</> : <><UserCheck size={16} className="mr-1" /> Aktifkan</>}
-                          </Button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <DataTable 
+            data={filteredUsers}
+            columns={columns}
+            keyExtractor={(u) => u.id}
+            editingRowId={editingId}
+            renderEditRow={renderEditRow}
+            defaultSort={{ key: 'name', direction: 'asc' }}
+          />
         )}
       </div>
     </div>

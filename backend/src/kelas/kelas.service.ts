@@ -24,6 +24,29 @@ export class KelasService {
     return this.prisma.kelas.create({ data });
   }
 
+  async createBatch(items: CreateKelasDto[]) {
+    const results = { success: 0, failed: 0, errors: [] as any[] };
+    for (let i = 0; i < items.length; i++) {
+      try {
+        await this.create(items[i]);
+        results.success++;
+      } catch (error: any) {
+        results.failed++;
+        results.errors.push({ 
+          row: i + 1, 
+          nama: items[i].nama || 'Unknown', 
+          message: error.message || 'Unknown error' 
+        });
+      }
+    }
+    
+    if (results.failed > 0 && results.success === 0) {
+       throw new Error('Semua data gagal diproses');
+    }
+    
+    return { message: 'Batch upload selesai', data: results };
+  }
+
   async update(id: string, data: UpdateKelasDto) {
     await this.findOne(id);
     return this.prisma.kelas.update({ where: { id }, data });

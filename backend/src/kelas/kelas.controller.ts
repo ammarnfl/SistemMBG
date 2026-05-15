@@ -20,6 +20,12 @@ export class KelasController {
     return this.kelasService.create(createKelasDto);
   }
 
+  @Roles(Role.ADMIN)
+  @Post('batch')
+  createBatch(@Body() data: import('./dto/kelas.dto').BulkCreateKelasDto) {
+    return this.kelasService.createBatch(data.kelas);
+  }
+
   @Roles(Role.ADMIN, Role.GURU)
   @ApiQuery({ name: 'sekolahId', required: false })
   @Get()

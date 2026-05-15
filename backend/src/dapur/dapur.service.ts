@@ -19,7 +19,10 @@ export class DapurService {
 
   async create(data: CreateDapurDto) {
     const existingUser = await this.prisma.user.findUnique({ where: { email: data.email } });
-    if (existingUser) throw new BadRequestException('Email sudah terdaftar');
+    if (existingUser) throw new BadRequestException('Email sudah digunakan');
+
+    const existingDapur = await this.prisma.dapur.findUnique({ where: { nama: data.nama } });
+    if (existingDapur) throw new BadRequestException('Nama dapur sudah digunakan');
 
     const hashedPassword = await bcrypt.hash('mbg12345', 10);
 
@@ -37,6 +40,10 @@ export class DapurService {
         data: {
           nama: data.nama,
           alamat: data.alamat,
+          kontak: data.kontak,
+          provinsi: data.provinsi,
+          kabupatenKota: data.kabupatenKota,
+          kecamatan: data.kecamatan,
         }
       });
 
@@ -76,6 +83,10 @@ export class DapurService {
 
   async update(id: string, data: UpdateDapurDto) {
     await this.findOne(id);
+    if (data.nama) {
+      const existing = await this.prisma.dapur.findUnique({ where: { nama: data.nama } });
+      if (existing && existing.id !== id) throw new BadRequestException('Nama dapur sudah digunakan');
+    }
     return this.prisma.dapur.update({ where: { id }, data });
   }
 

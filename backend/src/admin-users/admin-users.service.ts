@@ -9,7 +9,17 @@ export class AdminUsersService {
 
   async findAll() {
     return this.prisma.user.findMany({ 
-      select: { id: true, email: true, name: true, role: true, isActive: true, createdAt: true },
+      select: { 
+        id: true, 
+        email: true, 
+        name: true, 
+        role: true, 
+        isActive: true, 
+        createdAt: true,
+        guruProfile: { include: { sekolah: true } },
+        penerimaManfaatProfile: { include: { sekolah: true, kelas: true } },
+        timDapurProfile: { include: { dapur: true } }
+      },
       orderBy: { createdAt: 'desc' } 
     });
   }
@@ -26,31 +36,40 @@ export class AdminUsersService {
 
   async create(data: CreateUserDto) {
     const existing = await this.prisma.user.findUnique({ where: { email: data.email } });
-    if (existing) throw new BadRequestException('Email already exists');
+    if (existing) throw new BadRequestException('Email sudah digunakan');
     
     let hashedPassword = await bcrypt.hash('mbg12345', 10);
     if (data.password) {
       hashedPassword = await bcrypt.hash(data.password, 10);
     }
 
-    const { password, sekolahId, dapurId, ...saveData } = data;
-    const user = await this.prisma.user.create({
-      data: {
-        ...saveData,
-        password: hashedPassword,
-      }
-    });
+    const { password: _, sekolahId, dapurId, nisn, kelasId, ...saveData } = data;
     
-    // Create profile with auto-mapping if provided
-    if (user.role === 'GURU') {
-      await this.prisma.guruProfile.create({ data: { userId: user.id, sekolahId: sekolahId || null } });
-    } else if (user.role === 'PENERIMA_MANFAAT') {
-      await this.prisma.penerimaManfaatProfile.create({ data: { userId: user.id, sekolahId: sekolahId || null } });
-    } else if (user.role === 'TIM_DAPUR') {
-      await this.prisma.timDapurProfile.create({ data: { userId: user.id, dapurId: dapurId || null } });
-    }
+    const result = await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          ...saveData,
+          password: hashedPassword,
+        }
+      });
+      
+      // Create profile with mandatory mapping if role requires it
+      if (user.role === 'GURU') {
+        if (!sekolahId) throw new BadRequestException('Sekolah harus dipilih untuk user dengan role GURU');
+        await tx.guruProfile.create({ data: { userId: user.id, sekolahId } });
+      } else if (user.role === 'PENERIMA_MANFAAT') {
+        if (!sekolahId) throw new BadRequestException('Sekolah harus dipilih untuk user dengan role PENERIMA_MANFAAT');
+        if (!kelasId) throw new BadRequestException('Kelas harus dipilih untuk user dengan role PENERIMA_MANFAAT');
+        await tx.penerimaManfaatProfile.create({ data: { userId: user.id, sekolahId, kelasId, nisn } });
+      } else if (user.role === 'TIM_DAPUR') {
+        if (!dapurId) throw new BadRequestException('Dapur harus dipilih untuk user dengan role TIM_DAPUR');
+        await tx.timDapurProfile.create({ data: { userId: user.id, dapurId } });
+      }
 
-    const { password: _, ...result } = user;
+      const { password: __, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    });
+
     return result;
   }
 
@@ -86,11 +105,24 @@ export class AdminUsersService {
     }
 
     const updateData: any = { ...data };
+    delete updateData.nisn;
+    delete updateData.kelasId;
+
     if (data.password) {
        updateData.password = await bcrypt.hash(data.password, 10);
     }
     
     const updatedUser = await this.prisma.user.update({ where: { id }, data: updateData });
+
+    if (user.role === 'PENERIMA_MANFAAT' && (data.nisn !== undefined || data.kelasId !== undefined)) {
+      const pmData: any = {};
+      if (data.nisn !== undefined) pmData.nisn = data.nisn;
+      if (data.kelasId !== undefined) pmData.kelasId = data.kelasId;
+      await this.prisma.penerimaManfaatProfile.update({
+        where: { userId: id },
+        data: pmData
+      });
+    }
     const { password: _, ...result } = updatedUser;
     return result;
   }

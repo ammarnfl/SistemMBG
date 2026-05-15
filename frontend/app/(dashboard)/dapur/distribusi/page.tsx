@@ -140,13 +140,13 @@ export default function DapurDistribusiPage() {
       />
 
       <Card>
-        <CardHeader className="pb-2 border-b">
-          <div className="flex gap-4">
-             <button onClick={() => setTab('SINGLE')} className={`pb-2 text-sm font-semibold border-b-2 ${tab==='SINGLE'?'border-primary text-primary':'border-transparent text-muted-foreground'}`}>
-               <div className="flex items-center gap-1"><Plus size={16}/> Input Manual</div>
+        <CardHeader className="pb-4 border-b bg-muted/10">
+          <div className="flex bg-secondary/50 p-1 rounded-lg w-fit border border-border/50">
+             <button onClick={() => setTab('SINGLE')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='SINGLE'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
+               <div className="flex items-center gap-2"><Plus size={16}/> Input Manual</div>
              </button>
-             <button onClick={() => setTab('BATCH')} className={`pb-2 text-sm font-semibold border-b-2 ${tab==='BATCH'?'border-primary text-primary':'border-transparent text-muted-foreground'}`}>
-               <div className="flex items-center gap-1"><FileSpreadsheet size={16}/> Upload CSV</div>
+             <button onClick={() => setTab('BATCH')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='BATCH'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
+               <div className="flex items-center gap-2"><FileSpreadsheet size={16}/> Upload CSV</div>
              </button>
           </div>
         </CardHeader>

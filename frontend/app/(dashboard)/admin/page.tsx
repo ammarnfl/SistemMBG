@@ -23,7 +23,7 @@ function StatCard({ icon: Icon, label, value, color, href }: {
 }) {
   const content = (
     <Card className={`hover:shadow-md transition-all group border-l-4 ${color}`}>
-      <CardContent className="p-5 flex items-center gap-4">
+      <div className="p-5 flex items-center gap-4">
         <div className="p-3 rounded-xl bg-muted/60 group-hover:bg-primary/10 transition-colors">
           <Icon size={24} className="text-muted-foreground group-hover:text-primary transition-colors" />
         </div>
@@ -32,7 +32,7 @@ function StatCard({ icon: Icon, label, value, color, href }: {
           <p className="text-3xl font-bold text-foreground mt-0.5">{value}</p>
         </div>
         {href && <ArrowRight size={16} className="text-muted-foreground/40 group-hover:text-primary transition-colors" />}
-      </CardContent>
+      </div>
     </Card>
   );
   return href ? <Link href={href}>{content}</Link> : content;

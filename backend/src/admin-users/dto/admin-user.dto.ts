@@ -35,6 +35,16 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   dapurId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nisn?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  kelasId?: string;
 }
 
 export class UpdateUserDto {
@@ -62,6 +72,16 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   password?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nisn?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  kelasId?: string;
 }
 
 export class MappingGuruDto {

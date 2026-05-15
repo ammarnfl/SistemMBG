@@ -7,10 +7,30 @@ export class CreateDapurDto {
   @IsString()
   nama: string;
 
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  alamat: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  alamat?: string;
+  kontak?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  provinsi?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  kabupatenKota?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  kecamatan?: string;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -18,4 +38,34 @@ export class CreateDapurDto {
   email: string;
 }
 
-export class UpdateDapurDto extends CreateDapurDto {}
+export class UpdateDapurDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nama?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  alamat?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  kontak?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  provinsi?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  kabupatenKota?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  kecamatan?: string;
+}

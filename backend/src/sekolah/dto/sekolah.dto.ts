@@ -7,10 +7,25 @@ export class CreateSekolahDto {
   @IsString()
   nama: string;
 
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  alamat: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  alamat?: string;
+  provinsi?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  kabupatenKota?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  kecamatan?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -41,6 +56,21 @@ export class UpdateSekolahDto {
   @IsOptional()
   @IsString()
   alamat?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  provinsi?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  kabupatenKota?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  kecamatan?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -19,7 +19,10 @@ export class SekolahService {
 
   async create(data: CreateSekolahDto) {
     const existingUser = await this.prisma.user.findUnique({ where: { email: data.email } });
-    if (existingUser) throw new BadRequestException('Email sudah terdaftar');
+    if (existingUser) throw new BadRequestException('Email sudah digunakan');
+
+    const existingSekolah = await this.prisma.sekolah.findUnique({ where: { nama: data.nama } });
+    if (existingSekolah) throw new BadRequestException('Nama sekolah sudah digunakan');
 
     const hashedPassword = await bcrypt.hash('mbg12345', 10);
 
@@ -37,6 +40,9 @@ export class SekolahService {
         data: {
           nama: data.nama,
           alamat: data.alamat,
+          provinsi: data.provinsi,
+          kabupatenKota: data.kabupatenKota,
+          kecamatan: data.kecamatan,
           dapurId: data.dapurId,
         }
       });
@@ -77,12 +83,19 @@ export class SekolahService {
 
   async update(id: string, dto: UpdateSekolahDto) {
     await this.findOne(id);
+    if (dto.nama) {
+      const existing = await this.prisma.sekolah.findUnique({ where: { nama: dto.nama } });
+      if (existing && existing.id !== id) throw new BadRequestException('Nama sekolah sudah digunakan');
+    }
     // Only pick fields that exist on the Sekolah model.
     // (email is for creating the linked GURU user on create, not stored on Sekolah)
-    const data: { nama?: string; alamat?: string; dapurId?: string } = {};
+    const data: any = {};
     if (dto.nama    !== undefined) data.nama    = dto.nama;
     if (dto.alamat  !== undefined) data.alamat  = dto.alamat;
     if (dto.dapurId !== undefined) data.dapurId = dto.dapurId;
+    if (dto.provinsi !== undefined) data.provinsi = dto.provinsi;
+    if (dto.kabupatenKota !== undefined) data.kabupatenKota = dto.kabupatenKota;
+    if (dto.kecamatan !== undefined) data.kecamatan = dto.kecamatan;
     return this.prisma.sekolah.update({ where: { id }, data });
   }
 

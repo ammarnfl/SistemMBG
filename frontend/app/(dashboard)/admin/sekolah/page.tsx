@@ -7,12 +7,17 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../../../components
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { Badge } from '../../../../components/ui/Badge';
-import { ArrowLeft, Plus, School, Loader2, Edit, Trash2, FileSpreadsheet, Upload, AlertCircle, Copy } from 'lucide-react';
+import { ArrowLeft, Plus, GraduationCap, Loader2, Edit, Trash2, FileSpreadsheet, Upload, AlertCircle, Search, Copy } from 'lucide-react';
+import { DataTable, Column } from '../../../../components/ui/DataTable';
 
 export default function AdminSekolahPage() {
   const [sekolah, setSekolah] = useState<any[]>([]);
   const [dapur, setDapur] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [provinsiFilter, setProvinsiFilter] = useState('ALL');
+  const [kabupatenFilter, setKabupatenFilter] = useState('ALL');
+  const [dapurFilter, setDapurFilter] = useState('ALL');
   const [tab, setTab] = useState<'SINGLE' | 'BATCH'>('SINGLE');
   const [batchErrors, setBatchErrors] = useState<any[]>([]);
 
@@ -36,10 +41,10 @@ export default function AdminSekolahPage() {
 
   useEffect(() => { loadData(); }, []);
 
-  const [form, setForm] = useState({ nama: '', alamat: '', dapurId: '', email: '' });
+  const [form, setForm] = useState({ nama: '', alamat: '', dapurId: '', email: '', provinsi: '', kabupatenKota: '', kecamatan: '' });
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ nama: '', alamat: '', dapurId: '' });
+  const [editForm, setEditForm] = useState({ nama: '', alamat: '', dapurId: '', provinsi: '', kabupatenKota: '', kecamatan: '' });
 
   const handleDelete = async (id: string) => {
     if (!confirm('Apakah Anda yakin ingin menghapus sekolah ini?')) return;
@@ -54,13 +59,19 @@ export default function AdminSekolahPage() {
 
   const startEdit = (s: any) => {
     setEditingId(s.id);
-    setEditForm({ nama: s.nama, alamat: s.alamat || '', dapurId: s.dapurId || '' });
+    setEditForm({ nama: s.nama, alamat: s.alamat || '', dapurId: s.dapurId || '', provinsi: s.provinsi || '', kabupatenKota: s.kabupatenKota || '', kecamatan: s.kecamatan || '' });
   };
 
   const handleEdit = async () => {
     if (!editingId) return;
     try {
-      const payload: any = { nama: editForm.nama, alamat: editForm.alamat };
+      const payload: any = { 
+        nama: editForm.nama, 
+        alamat: editForm.alamat,
+        provinsi: editForm.provinsi,
+        kabupatenKota: editForm.kabupatenKota,
+        kecamatan: editForm.kecamatan
+      };
       if (editForm.dapurId) payload.dapurId = editForm.dapurId;
       else payload.dapurId = null;
 
@@ -69,7 +80,10 @@ export default function AdminSekolahPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error('Gagal update sekolah');
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.message || 'Gagal update sekolah');
+      }
       setEditingId(null);
       loadData();
     } catch (e: any) {
@@ -81,7 +95,14 @@ export default function AdminSekolahPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload: any = { nama: form.nama, alamat: form.alamat, email: form.email };
+      const payload: any = { 
+        nama: form.nama, 
+        alamat: form.alamat, 
+        email: form.email,
+        provinsi: form.provinsi,
+        kabupatenKota: form.kabupatenKota,
+        kecamatan: form.kecamatan
+      };
       if (form.dapurId) payload.dapurId = form.dapurId;
       
       const res = await fetch('/api/proxy/sekolah', {
@@ -90,7 +111,7 @@ export default function AdminSekolahPage() {
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error('Gagal simpan sekolah');
-      setForm({ nama: '', alamat: '', dapurId: '', email: '' });
+      setForm({ nama: '', alamat: '', dapurId: '', email: '', provinsi: '', kabupatenKota: '', kecamatan: '' });
       loadData();
     } catch (e: any) {
       alert(e.message);
@@ -183,13 +204,13 @@ export default function AdminSekolahPage() {
       />
 
       <Card>
-        <CardHeader className="pb-2 border-b">
-          <div className="flex gap-4">
-            <button onClick={() => setTab('SINGLE')} className={`pb-2 text-sm font-semibold border-b-2 ${tab==='SINGLE'?'border-primary text-primary':'border-transparent text-muted-foreground'}`}>
-              <div className="flex items-center gap-1"><Plus size={16}/> Input Manual</div>
+        <CardHeader className="pb-4 border-b bg-muted/10">
+          <div className="flex bg-secondary/50 p-1 rounded-lg w-fit border border-border/50">
+            <button onClick={() => setTab('SINGLE')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='SINGLE'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
+              <div className="flex items-center gap-2"><Plus size={16}/> Input Manual</div>
             </button>
-            <button onClick={() => setTab('BATCH')} className={`pb-2 text-sm font-semibold border-b-2 ${tab==='BATCH'?'border-primary text-primary':'border-transparent text-muted-foreground'}`}>
-              <div className="flex items-center gap-1"><FileSpreadsheet size={16}/> Upload CSV</div>
+            <button onClick={() => setTab('BATCH')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='BATCH'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
+              <div className="flex items-center gap-2"><FileSpreadsheet size={16}/> Upload CSV</div>
             </button>
           </div>
         </CardHeader>
@@ -207,8 +228,30 @@ export default function AdminSekolahPage() {
                   <p className="text-xs text-muted-foreground">Sandi bawaan: <b>mbg12345</b></p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Alamat (Opsional)</label>
-                  <Input placeholder="Alamat lengkap" value={form.alamat} onChange={e => setForm({...form, alamat: e.target.value})}/>
+                  <label className="text-sm font-medium">Alamat (Wajib)</label>
+                  <Input placeholder="Alamat lengkap" value={form.alamat} onChange={e => setForm({...form, alamat: e.target.value})} required/>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Provinsi (Opsional)</label>
+                  <select 
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
+                    value={form.provinsi} onChange={e => setForm({...form, provinsi: e.target.value})}
+                  >
+                    <option value="">-- Pilih Provinsi --</option>
+                    <option value="Jawa Barat">Jawa Barat</option>
+                    <option value="DKI Jakarta">DKI Jakarta</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Kabupaten/Kota (Opsional)</label>
+                  <select 
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
+                    value={form.kabupatenKota} onChange={e => setForm({...form, kabupatenKota: e.target.value})}
+                  >
+                    <option value="">-- Pilih Kabupaten/Kota --</option>
+                    <option value="Bandung">Bandung</option>
+                    <option value="Jakarta Selatan">Jakarta Selatan</option>
+                  </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-medium">Dapur Penyedia</label>
@@ -275,75 +318,189 @@ export default function AdminSekolahPage() {
       </Card>
 
       <div className="pt-10 space-y-6">
-        <h3 className="font-bold text-lg text-foreground px-1 mb-2">Daftar Sekolah</h3>
+        <div className="flex flex-col gap-3 px-1 mb-4">
+          <h3 className="font-bold text-xl text-foreground">Daftar Sekolah</h3>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative w-full sm:w-[250px]">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                placeholder="Cari di sini..." 
+                value={searchQuery} 
+                onChange={e => setSearchQuery(e.target.value)}
+                className="h-9 pl-9 w-full bg-white"
+              />
+            </div>
+            <select 
+              className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors text-muted-foreground focus:text-foreground w-full sm:w-[160px]"
+              value={provinsiFilter} onChange={(e) => setProvinsiFilter(e.target.value)}
+            >
+              <option value="ALL">Pilih Provinsi</option>
+              <option value="Jawa Barat">Jawa Barat</option>
+              <option value="DKI Jakarta">DKI Jakarta</option>
+            </select>
+            <select 
+              className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors text-muted-foreground focus:text-foreground w-full sm:w-[180px]"
+              value={kabupatenFilter} onChange={(e) => setKabupatenFilter(e.target.value)}
+            >
+              <option value="ALL">Pilih Kabupaten/Kota</option>
+              <option value="Bandung">Bandung</option>
+              <option value="Jakarta Selatan">Jakarta Selatan</option>
+            </select>
+            <select 
+              className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors text-muted-foreground focus:text-foreground w-full sm:w-[200px]"
+              value={dapurFilter} onChange={(e) => setDapurFilter(e.target.value)}
+            >
+              <option value="ALL">Pilih Dapur Penyedia</option>
+              <option value="UNMAPPED">Belum Dipetakan</option>
+              {dapur.map(d => <option key={d.id} value={d.id}>{d.nama}</option>)}
+            </select>
+          </div>
+        </div>
         {loading ? (
           <StateCard icon={<Loader2 size={32} className="animate-spin" />} title="Memuat Data" description="Mohon tunggu sebentar..." />
         ) : sekolah.length === 0 ? (
           <StateCard icon={<School size={32} />} title="Belum Ada Data" description="Silahkan tambah data sekolah baru di atas." />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {sekolah.map((s, i) => (
-              <Card key={i} className="flex flex-col">
-                <CardContent className="p-6 flex-1 flex flex-col justify-between gap-4">
-                  {editingId === s.id ? (
-                    <div className="space-y-3">
-                      <Input value={editForm.nama} onChange={e => setEditForm({...editForm, nama: e.target.value})} placeholder="Nama Sekolah" />
-                      <Input value={editForm.alamat} onChange={e => setEditForm({...editForm, alamat: e.target.value})} placeholder="Alamat" />
+          <DataTable 
+            data={sekolah.filter(s => {
+              const matchProvinsi = provinsiFilter === 'ALL' || s.provinsi === provinsiFilter;
+              const matchKabupaten = kabupatenFilter === 'ALL' || s.kabupatenKota === kabupatenFilter;
+              const matchDapur = dapurFilter === 'ALL' || (dapurFilter === 'UNMAPPED' && !s.dapurId) || s.dapurId === dapurFilter;
+              const matchSearch = !searchQuery || s.nama.toLowerCase().includes(searchQuery.toLowerCase());
+              return matchProvinsi && matchKabupaten && matchDapur && matchSearch;
+            })}
+            columns={[
+              {
+                header: 'Nama Sekolah',
+                accessorKey: 'nama',
+                sortable: true,
+                cell: (s) => (
+                  <div className="flex flex-col min-w-[200px]">
+                    <span className="font-semibold text-foreground text-base truncate" title={s.nama}>{s.nama}</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-0.5 rounded border border-border/50">
+                        ID: {s.id.substring(0, 8)}...
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-primary" onClick={() => {
+                        navigator.clipboard.writeText(s.id);
+                        alert('ID Sekolah berhasil disalin!');
+                      }} title="Salin ID Lengkap">
+                        <Copy size={12} />
+                      </Button>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                header: 'Alamat',
+                accessorKey: 'alamat',
+                sortable: false,
+                cell: (s) => (
+                  <span className="text-sm text-muted-foreground line-clamp-2 max-w-[250px]" title={s.alamat || ''}>
+                    {s.alamat || 'Tidak ada alamat'}
+                  </span>
+                )
+              },
+              {
+                header: 'Provinsi',
+                accessorKey: 'provinsi',
+                sortable: true,
+                cell: (s) => (
+                  <span className="text-sm">{s.provinsi || '-'}</span>
+                )
+              },
+              {
+                header: 'Kabupaten/Kota',
+                accessorKey: 'kabupatenKota',
+                sortable: true,
+                cell: (s) => (
+                  <span className="text-sm">{s.kabupatenKota || '-'}</span>
+                )
+              },
+              {
+                header: 'Dapur Penyedia',
+                accessorKey: 'dapurName',
+                sortAccessorFn: (s) => s.dapur?.nama || '',
+                sortable: false,
+                cell: (s) => (
+                  s.dapur ? (
+                    <Badge variant="warning" className="text-xs h-6">Dapur: {s.dapur.nama}</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs h-6">Belum Dipetakan</Badge>
+                  )
+                )
+              },
+              {
+                header: 'Aksi',
+                className: 'text-center sticky right-0 bg-white shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] min-w-[120px]',
+                cell: (s) => (
+                  <div className="flex justify-center gap-2">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => startEdit(s)} title="Edit">
+                      <Edit size={16} />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive/80 hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(s.id)} title="Hapus">
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
+                )
+              }
+            ]}
+            keyExtractor={(s) => s.id}
+            editingRowId={editingId}
+            renderEditRow={(s) => (
+              <div className="flex flex-col sm:flex-row gap-4 p-2 bg-background rounded-lg border border-border shadow-sm">
+                <div className="flex-1 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Nama Sekolah</label>
+                      <Input value={editForm.nama} onChange={e => setEditForm({...editForm, nama: e.target.value})} placeholder="Nama Sekolah" className="h-9" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Alamat</label>
+                      <Input value={editForm.alamat} onChange={e => setEditForm({...editForm, alamat: e.target.value})} placeholder="Alamat" className="h-9" required />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Provinsi</label>
                       <select 
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
+                        value={editForm.provinsi} onChange={e => setEditForm({...editForm, provinsi: e.target.value})}
+                      >
+                        <option value="">-- Pilih --</option>
+                        <option value="Jawa Barat">Jawa Barat</option>
+                        <option value="DKI Jakarta">DKI Jakarta</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Kabupaten/Kota</label>
+                      <select 
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
+                        value={editForm.kabupatenKota} onChange={e => setEditForm({...editForm, kabupatenKota: e.target.value})}
+                      >
+                        <option value="">-- Pilih --</option>
+                        <option value="Bandung">Bandung</option>
+                        <option value="Jakarta Selatan">Jakarta Selatan</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Dapur Penyedia</label>
+                      <select 
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
                         value={editForm.dapurId} onChange={e => setEditForm({...editForm, dapurId: e.target.value})}
                       >
                         <option value="">-- Belum Dipetakan --</option>
                         {dapur.map(d => <option key={d.id} value={d.id}>{d.nama}</option>)}
                       </select>
-                      <div className="flex gap-2 mt-2">
-                        <Button size="sm" onClick={handleEdit}>Simpan</Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Batal</Button>
-                      </div>
                     </div>
-                  ) : (
-                    <>
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1.5 min-w-0">
-                          <div className="font-bold text-foreground text-lg truncate" title={s.nama}>{s.nama}</div>
-                          <div className="flex items-center gap-2">
-                             <div className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-0.5 rounded border border-border/50">
-                               ID: {s.id.substring(0, 8)}...
-                             </div>
-                             <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary" onClick={() => {
-                                navigator.clipboard.writeText(s.id);
-                                alert('ID Sekolah berhasil disalin!');
-                             }} title="Salin ID Lengkap">
-                               <Copy size={14} />
-                             </Button>
-                          </div>
-                        </div>
-                        <div className="flex gap-1 shrink-0 pt-1">
-                          <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" onClick={() => startEdit(s)}>
-                            <Edit size={18} />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive/80 hover:text-destructive" onClick={() => handleDelete(s.id)}>
-                            <Trash2 size={18} />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="text-sm text-muted-foreground bg-secondary/20 p-3 rounded-lg border border-border/40 line-clamp-2 min-h-[50px]">
-                        {s.alamat || 'Tidak ada alamat'}
-                      </div>
-                      <div className="pt-1">
-                        {s.dapur ? (
-                          <Badge variant="warning" className="text-xs px-2 h-6">Dapur: {s.dapur.nama}</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs px-2 h-6">Belum Dipetakan</Badge>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </div>
+                </div>
+                <div className="flex flex-row sm:flex-col justify-end gap-2 shrink-0">
+                  <Button size="sm" onClick={handleEdit} className="w-full">Simpan</Button>
+                  <Button size="sm" variant="outline" onClick={() => setEditingId(null)} className="w-full">Batal</Button>
+                </div>
+              </div>
+            )}
+            defaultSort={{ key: 'nama', direction: 'asc' }}
+          />
         )}
       </div>
     </div>
