@@ -22,12 +22,18 @@ export async function anyMethod(req: NextRequest, { params }: { params: Promise<
   // but we can pass the raw body.
   const hasBody = !['GET', 'HEAD'].includes(req.method);
   
-  let body;
+  let body: any;
   if (hasBody) {
     try {
-      // Must read as text so we can forward exactly
-      body = await req.text();
-      headers.set('Content-Type', req.headers.get('content-type') || 'application/json');
+      const contentType = req.headers.get('content-type') || 'application/json';
+      headers.set('Content-Type', contentType);
+      
+      if (contentType.includes('multipart/form-data')) {
+        // For file uploads, forward raw binary to preserve file integrity
+        body = Buffer.from(await req.arrayBuffer());
+      } else {
+        body = await req.text();
+      }
     } catch(e) {}
   }
 

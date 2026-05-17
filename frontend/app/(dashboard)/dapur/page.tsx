@@ -24,14 +24,13 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   SELESAI: { label: 'Selesai', color: 'bg-green-100 text-green-700' },
 };
 
-function StarRating({ value, max = 5 }: { value: number | null; max?: number }) {
+function StarRating({ value, max = 5, size = 14 }: { value: number | null; max?: number; size?: number }) {
   if (value === null) return <span className="text-muted-foreground text-sm">—</span>;
   return (
     <div className="flex items-center gap-1">
       {Array.from({ length: max }).map((_, i) => (
-        <Star key={i} size={14} className={i < Math.round(value) ? 'text-amber-400 fill-amber-400' : 'text-muted/50'} />
+        <Star key={i} size={size} className={i < Math.round(value) ? 'text-amber-400 fill-amber-400' : 'text-muted/20'} />
       ))}
-      <span className="text-sm font-semibold ml-1">{value.toFixed(1)}</span>
     </div>
   );
 }
@@ -60,138 +59,168 @@ export default function DapurDashboard() {
   useEffect(() => { fetchStats(); }, []);
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <PageHeader
-        title="Dashboard Tim Dapur"
-        description="Pantau kinerja distribusi dan evaluasi makanan dari dapur Anda."
-      />
-
-      {/* Filter */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Dari Tanggal</label>
-              <input
-                type="date"
-                value={tanggalAwal}
-                onChange={(e) => setTanggalAwal(e.target.value)}
-                className="border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Sampai Tanggal</label>
-              <input
-                type="date"
-                value={tanggalAkhir}
-                onChange={(e) => setTanggalAkhir(e.target.value)}
-                className="border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
-            <Button onClick={fetchStats} className="flex items-center gap-2 h-10">
-              <RefreshCw size={14} />
-              Terapkan Filter
-            </Button>
-            <Button variant="outline" onClick={() => { setTanggalAwal(''); setTanggalAkhir(''); }} className="h-10">
-              Reset
-            </Button>
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <PageHeader
+          title="Dashboard Tim Dapur"
+          description="Pantau kinerja distribusi dan evaluasi makanan dari dapur Anda."
+        />
+        
+        {/* Filter - Compact version */}
+        <div className="flex items-center gap-2 bg-muted/40 p-2 rounded-xl border border-border/50">
+          <div className="flex items-center gap-2 px-2">
+            <Calendar size={16} className="text-muted-foreground" />
+            <input
+              type="date"
+              value={tanggalAwal}
+              onChange={(e) => setTanggalAwal(e.target.value)}
+              className="bg-transparent border-none text-xs focus:ring-0 w-28"
+            />
+            <span className="text-muted-foreground">—</span>
+            <input
+              type="date"
+              value={tanggalAkhir}
+              onChange={(e) => setTanggalAkhir(e.target.value)}
+              className="bg-transparent border-none text-xs focus:ring-0 w-28"
+            />
           </div>
-        </CardContent>
-      </Card>
+          <Button onClick={fetchStats} size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-lg">
+            <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+            Update
+          </Button>
+          {(tanggalAwal || tanggalAkhir) && (
+            <Button variant="ghost" size="sm" onClick={() => { setTanggalAwal(''); setTanggalAkhir(''); }} className="h-8 w-8 p-0 rounded-lg">
+              ×
+            </Button>
+          )}
+        </div>
+      </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-48">
-          <Loader2 className="animate-spin text-primary" size={32} />
+        <div className="flex flex-col justify-center items-center h-64 gap-4">
+          <Loader2 className="animate-spin text-primary" size={40} />
+          <p className="text-sm text-muted-foreground animate-pulse">Menyiapkan data dashboard...</p>
         </div>
       ) : error ? (
-        <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="p-4 text-sm text-destructive">{error}</CardContent>
+        <Card className="border-destructive/30 bg-destructive/5 overflow-hidden">
+          <div className="h-1 bg-destructive/50 w-full" />
+          <CardContent className="p-6 text-center">
+            <p className="text-sm text-destructive font-medium">{error}</p>
+            <Button variant="outline" size="sm" onClick={fetchStats} className="mt-4">Coba Lagi</Button>
+          </CardContent>
         </Card>
       ) : stats ? (
         <>
           {/* Summary Stats */}
-          <div className="grid grid-cols-2 gap-3">
-            <Card className="border-l-4 border-l-blue-400">
-              <CardContent className="p-5 flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-blue-50">
-                  <Truck size={22} className="text-blue-500" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="relative overflow-hidden border-none shadow-sm hover:shadow-md transition-all group">
+              <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500 group-hover:w-2 transition-all" />
+              <div className="p-6 flex items-center gap-4">
+                <div className="p-4 rounded-2xl bg-blue-50 flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <Truck size={28} className="text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Distribusi</p>
-                  <p className="text-3xl font-bold">{stats.totalDistribusi}</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Total Distribusi</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-4xl font-extrabold text-foreground">{stats.totalDistribusi}</p>
+                    <span className="text-xs text-muted-foreground font-medium italic">Selesai</span>
+                  </div>
                 </div>
-              </CardContent>
+              </div>
             </Card>
-            <Card className="border-l-4 border-l-primary">
-              <CardContent className="p-5 flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-primary/10">
-                  <Star size={22} className="text-primary" />
+
+            <Card className="relative overflow-hidden border-none shadow-sm hover:shadow-md transition-all group">
+              <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500 group-hover:w-2 transition-all" />
+              <div className="p-6 flex items-center gap-4">
+                <div className="p-4 rounded-2xl bg-emerald-50 flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <Star size={28} className="text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Rata Evaluasi Masuk</p>
-                  <p className="text-3xl font-bold">{stats.totalEvaluasi}</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Evaluasi Masuk</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-4xl font-extrabold text-foreground">{stats.totalEvaluasi}</p>
+                    <span className="text-xs text-muted-foreground font-medium italic">Review</span>
+                  </div>
                 </div>
-              </CardContent>
+              </div>
+            </Card>
+
+            <Card className="relative overflow-hidden border-none shadow-sm bg-gradient-to-br from-amber-500/5 to-transparent">
+              <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-400" />
+              <div className="p-6">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Rating Rata-rata</p>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <span className="text-4xl font-extrabold text-foreground">
+                        {stats.rataRatingKeseluruhan?.toFixed(1) || '0.0'}
+                      </span>
+                      <div className="h-8 w-px bg-border" />
+                      <StarRating value={stats.rataRatingKeseluruhan} size={20} />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground font-medium">Skala 1.0 - 5.0 bintang</p>
+                  </div>
+                </div>
+              </div>
             </Card>
           </div>
 
-          <Card>
-            <CardContent className="p-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Rata-rata Rating Makanan</p>
-                <StarRating value={stats.rataRatingKeseluruhan} />
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">dari {stats.totalEvaluasi} evaluasi</p>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Status Distribusi */}
           {Object.keys(stats.distribusiPerStatus).length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Calendar size={16} className="text-primary" />
-                  Distribusi per Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
+            <Card className="border-border/40 shadow-sm bg-muted/20">
+              <div className="p-5">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mr-2">
+                    <Calendar size={16} />
+                    <span>Status Hari Ini:</span>
+                  </div>
                   {Object.entries(stats.distribusiPerStatus).map(([status, count]) => {
                     const cfg = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-700' };
                     return (
-                      <div key={status} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${cfg.color}`}>
+                      <div key={status} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold ${cfg.color} border border-black/5 shadow-sm`}>
                         <span>{cfg.label}</span>
-                        <span className="font-bold">{count}</span>
+                        <div className="w-px h-3 bg-current opacity-20" />
+                        <span>{count}</span>
                       </div>
                     );
                   })}
                 </div>
-              </CardContent>
+              </div>
             </Card>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Komponen Sering Tidak Habis */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <TrendingDown size={16} className="text-destructive" />
-                  Komponen Rata Keterhabisan Terendah
+            <Card className="border-border/60 shadow-sm">
+              <CardHeader className="pb-3 border-b border-border/40 mb-2">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-red-50">
+                    <TrendingDown size={18} className="text-red-500" />
+                  </div>
+                  Komponen Paling Disukai
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-1">
                 {stats.komponenSeringTidakHabis.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Belum ada data penilaian komponen.</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <div className="p-3 rounded-full bg-muted/50 mb-3">
+                      <MessageSquare size={24} className="opacity-20" />
+                    </div>
+                    <p className="text-sm">Belum ada data penilaian.</p>
+                  </div>
                 ) : (
                   stats.komponenSeringTidakHabis.map((k, i) => (
-                    <div key={k.komponenId} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-muted-foreground w-5 text-center">{i + 1}</span>
-                        <span className="text-sm font-medium">{k.nama}</span>
+                    <div key={k.komponenId} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/30 transition-colors group">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i === 0 ? 'bg-amber-100 text-amber-700' : 'bg-muted text-muted-foreground'}`}>
+                          {i + 1}
+                        </div>
+                        <span className="text-sm font-semibold text-foreground group-hover:translate-x-1 transition-transform">{k.nama}</span>
                       </div>
-                      <StarRating value={k.rataKeterhabisan} />
+                      <div className="flex items-center gap-2">
+                        <StarRating value={k.rataKeterhabisan} size={12} />
+                        <span className="text-xs font-bold text-muted-foreground w-6 text-right">{k.rataKeterhabisan?.toFixed(1)}</span>
+                      </div>
                     </div>
                   ))
                 )}
@@ -199,23 +228,38 @@ export default function DapurDashboard() {
             </Card>
 
             {/* Feedback Terbaru */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <MessageSquare size={16} className="text-primary" />
+            <Card className="border-border/60 shadow-sm">
+              <CardHeader className="pb-3 border-b border-border/40 mb-2">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-blue-50">
+                    <MessageSquare size={18} className="text-blue-500" />
+                  </div>
                   Feedback Terbaru
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4 pt-2">
                 {stats.feedbackTerbaru.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Belum ada feedback masuk.</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <div className="p-3 rounded-full bg-muted/50 mb-3">
+                      <MessageSquare size={24} className="opacity-20" />
+                    </div>
+                    <p className="text-sm">Belum ada feedback masuk.</p>
+                  </div>
                 ) : (
                   stats.feedbackTerbaru.map((f) => (
-                    <div key={f.id} className="p-3 rounded-lg bg-muted/40 border border-border/50">
-                      <p className="text-sm italic text-foreground">"{f.feedback}"</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <p className="text-xs text-muted-foreground">{f.penerimaManfaat} · {f.sekolah}</p>
-                        <p className="text-xs text-muted-foreground">
+                    <div key={f.id} className="p-4 rounded-2xl bg-muted/30 border border-border/40 hover:border-primary/30 transition-colors relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <MessageSquare size={40} />
+                      </div>
+                      <p className="text-sm italic text-foreground leading-relaxed">"{f.feedback}"</p>
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                            {f.penerimaManfaat.charAt(0)}
+                          </div>
+                          <p className="text-[11px] font-medium text-muted-foreground">{f.penerimaManfaat} · <span className="text-foreground/70">{f.sekolah}</span></p>
+                        </div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
                           {new Date(f.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                         </p>
                       </div>
@@ -228,28 +272,43 @@ export default function DapurDashboard() {
         </>
       ) : null}
 
-      {/* Quick Links */}
-      <div className="grid grid-cols-2 gap-3">
-        <a href="/dapur/menu">
-          <Button variant="outline" className="w-full h-11 justify-start gap-2 text-sm">
-            <span>📋</span> Kelola Menu
-          </Button>
-        </a>
-        <a href="/dapur/distribusi">
-          <Button variant="outline" className="w-full h-11 justify-start gap-2 text-sm">
-            <span>🚚</span> Distribusi
-          </Button>
-        </a>
-        <a href="/dapur/jadwal">
-          <Button variant="outline" className="w-full h-11 justify-start gap-2 text-sm">
-            <span>📅</span> Jadwal Menu
-          </Button>
-        </a>
-        <a href="/laporan">
-          <Button variant="outline" className="w-full h-11 justify-start gap-2 text-sm">
-            <span>📊</span> Unduh Laporan
-          </Button>
-        </a>
+      {/* Quick Links - More visual cards */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest px-1">Akses Cepat</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <a href="/dapur/menu" className="group">
+            <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
+              <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">📋</span>
+              </div>
+              <p className="text-xs font-bold text-foreground">Kelola Menu</p>
+            </div>
+          </a>
+          <a href="/dapur/distribusi" className="group">
+            <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
+              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">🚚</span>
+              </div>
+              <p className="text-xs font-bold text-foreground">Distribusi</p>
+            </div>
+          </a>
+          <a href="/dapur/jadwal" className="group">
+            <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
+              <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">📅</span>
+              </div>
+              <p className="text-xs font-bold text-foreground">Jadwal Menu</p>
+            </div>
+          </a>
+          <a href="/laporan" className="group">
+            <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
+              <div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">📊</span>
+              </div>
+              <p className="text-xs font-bold text-foreground">Unduh Laporan</p>
+            </div>
+          </a>
+        </div>
       </div>
     </div>
   );

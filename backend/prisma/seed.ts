@@ -132,15 +132,41 @@ async function main() {
         nama: 'Nasi Ayam Teriyaki',
         deskripsi: 'Nasi putih dengan ayam teriyaki dan sayur brokoli segar',
         dapurId: dapurPusat.id,
-        komponen: {
-          create: [
-            { nama: 'Nasi Putih', porsi: '150 gr' },
-            { nama: 'Ayam Teriyaki', porsi: '100 gr' },
-            { nama: 'Cah Brokoli Wortel', porsi: '50 gr' },
-            { nama: 'Susu UHT Coklat', porsi: '200 ml' },
-          ],
-        },
+        energiKkal: 480,
+        proteinGram: 28,
+        lemakGram: 12,
+        karbohidratGram: 68,
+        seratGram: 4,
       },
+    });
+    // Create komponen master entries
+    const km1 = await prisma.komponenMaster.upsert({
+      where: { dapurId_nama: { dapurId: dapurPusat.id, nama: 'Nasi Putih' } },
+      update: {},
+      create: { dapurId: dapurPusat.id, nama: 'Nasi Putih', deskripsi: '150 gr nasi putih pulen' },
+    });
+    const km2 = await prisma.komponenMaster.upsert({
+      where: { dapurId_nama: { dapurId: dapurPusat.id, nama: 'Ayam Teriyaki' } },
+      update: {},
+      create: { dapurId: dapurPusat.id, nama: 'Ayam Teriyaki', deskripsi: '100 gr ayam teriyaki' },
+    });
+    const km3 = await prisma.komponenMaster.upsert({
+      where: { dapurId_nama: { dapurId: dapurPusat.id, nama: 'Cah Brokoli Wortel' } },
+      update: {},
+      create: { dapurId: dapurPusat.id, nama: 'Cah Brokoli Wortel', deskripsi: '50 gr sayur' },
+    });
+    const km4 = await prisma.komponenMaster.upsert({
+      where: { dapurId_nama: { dapurId: dapurPusat.id, nama: 'Susu UHT Coklat' } },
+      update: {},
+      create: { dapurId: dapurPusat.id, nama: 'Susu UHT Coklat', deskripsi: '200 ml susu UHT' },
+    });
+    await prisma.menuKomponen.createMany({
+      data: [
+        { menuId: menuNasiAyam.id, komponenMasterId: km1.id, namaSnapshot: km1.nama },
+        { menuId: menuNasiAyam.id, komponenMasterId: km2.id, namaSnapshot: km2.nama },
+        { menuId: menuNasiAyam.id, komponenMasterId: km3.id, namaSnapshot: km3.nama },
+        { menuId: menuNasiAyam.id, komponenMasterId: km4.id, namaSnapshot: km4.nama },
+      ],
     });
   }
 
@@ -151,15 +177,39 @@ async function main() {
         nama: 'Nasi Ikan Bakar Sambal',
         deskripsi: 'Nasi putih dengan ikan bakar kecap, sambal tomat, dan lalapan',
         dapurId: dapurPusat.id,
-        komponen: {
-          create: [
-            { nama: 'Nasi Putih', porsi: '150 gr' },
-            { nama: 'Ikan Bakar Kecap', porsi: '120 gr' },
-            { nama: 'Lalapan & Sambal', porsi: '30 gr' },
-            { nama: 'Air Mineral', porsi: '330 ml' },
-          ],
-        },
+        energiKkal: 420,
+        proteinGram: 30,
+        lemakGram: 10,
+        karbohidratGram: 58,
+        seratGram: 3,
       },
+    });
+    const km5 = await prisma.komponenMaster.upsert({
+      where: { dapurId_nama: { dapurId: dapurPusat.id, nama: 'Ikan Bakar Kecap' } },
+      update: {},
+      create: { dapurId: dapurPusat.id, nama: 'Ikan Bakar Kecap', deskripsi: '120 gr ikan bakar' },
+    });
+    const km6 = await prisma.komponenMaster.upsert({
+      where: { dapurId_nama: { dapurId: dapurPusat.id, nama: 'Lalapan & Sambal' } },
+      update: {},
+      create: { dapurId: dapurPusat.id, nama: 'Lalapan & Sambal', deskripsi: '30 gr lalapan dan sambal' },
+    });
+    const km7 = await prisma.komponenMaster.upsert({
+      where: { dapurId_nama: { dapurId: dapurPusat.id, nama: 'Air Mineral' } },
+      update: {},
+      create: { dapurId: dapurPusat.id, nama: 'Air Mineral', deskripsi: '330 ml air mineral' },
+    });
+    // reuse km1 (Nasi Putih)
+    const km1Reuse = await prisma.komponenMaster.findUnique({
+      where: { dapurId_nama: { dapurId: dapurPusat.id, nama: 'Nasi Putih' } },
+    });
+    await prisma.menuKomponen.createMany({
+      data: [
+        { menuId: menuNasiIkan.id, komponenMasterId: km1Reuse!.id, namaSnapshot: 'Nasi Putih' },
+        { menuId: menuNasiIkan.id, komponenMasterId: km5.id, namaSnapshot: km5.nama },
+        { menuId: menuNasiIkan.id, komponenMasterId: km6.id, namaSnapshot: km6.nama },
+        { menuId: menuNasiIkan.id, komponenMasterId: km7.id, namaSnapshot: km7.nama },
+      ],
     });
   }
   console.log(`  ✅ Menu: ${menuNasiAyam.nama}, ${menuNasiIkan.nama}`);

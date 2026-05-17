@@ -38,6 +38,7 @@ model Dapur {
   updatedAt        DateTime          @updatedAt
   distribusi       Distribusi[]
   menuMaster       MenuMaster[]
+  komponenMaster   KomponenMaster[]
   sekolah          Sekolah[]
   timDapurProfiles TimDapurProfile[]
 
@@ -114,31 +115,51 @@ model PenerimaManfaatProfile {
   @@map("penerima_manfaat_profiles")
 }
 
+model KomponenMaster {
+  id        String         @id @default(cuid())
+  dapurId   String
+  nama      String
+  deskripsi String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  dapur     Dapur          @relation(fields: [dapurId], references: [id])
+  menuItems MenuKomponen[]
+
+  @@unique([dapurId, nama])
+  @@map("komponen_master")
+}
+
 model MenuMaster {
-  id         String         @id @default(cuid())
-  nama       String
-  deskripsi  String?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  dapurId    String?
-  distribusi Distribusi[]
-  jadwal     MenuHarian[]
-  komponen   MenuKomponen[]
-  dapur      Dapur?         @relation(fields: [dapurId], references: [id])
+  id              String         @id @default(cuid())
+  nama            String
+  deskripsi       String?
+  fotoUrl         String?
+  energiKkal      Float?
+  proteinGram     Float?
+  lemakGram       Float?
+  karbohidratGram Float?
+  seratGram       Float?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  dapurId         String?
+  distribusi      Distribusi[]
+  jadwal          MenuHarian[]
+  komponen        MenuKomponen[]
+  dapur           Dapur?         @relation(fields: [dapurId], references: [id])
 
   @@map("menu_master")
 }
 
 model MenuKomponen {
-  id        String              @id @default(cuid())
-  menuId    String
-  nama      String
-  deskripsi String?
-  porsi     String?
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
-  menu      MenuMaster          @relation(fields: [menuId], references: [id], onDelete: Cascade)
-  penilaian PenilaianKomponen[]
+  id               String          @id @default(cuid())
+  menuId           String
+  komponenMasterId String?
+  namaSnapshot     String          @default("")
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  menu             MenuMaster      @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  komponenMaster   KomponenMaster? @relation(fields: [komponenMasterId], references: [id])
+  penilaian        PenilaianKomponen[]
 
   @@map("menu_komponen")
 }

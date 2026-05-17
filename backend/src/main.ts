@@ -18,8 +18,8 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Serve static files
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  // Serve static files (uploads)
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
 
@@ -74,3 +74,4 @@ export default async (req: any, res: any) => {
 if (process.env.NODE_ENV !== 'production') {
   bootstrap();
 }
+// trigger restart

@@ -1,190 +1,311 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
-import { Download, Loader2, FileText, CheckCircle2 } from 'lucide-react';
-
-interface ReportItem {
-  id: string;
-  title: string;
-  desc: string;
-  endpoint: string;
-  filename: string;
-  roles: string[];
+import { Input } from '../../../components/ui/Input';
+import { DataTable, Column } from '../../../components/ui/DataTable';
+import { Download, Loader2, FileText, CheckCircle2, Search, Filter, RefreshCw } from 'lucide-react';
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
 }
 
-const REPORTS: ReportItem[] = [
-  {
-    id: 'distribusi',
-    title: 'Laporan Distribusi',
-    desc: 'Data semua distribusi makanan beserta status dan catatan pengiriman.',
-    endpoint: '/api/proxy/laporan/distribusi',
-    filename: 'laporan-distribusi.csv',
-    roles: ['ADMIN', 'TIM_DAPUR'],
-  },
-  {
-    id: 'evaluasi',
-    title: 'Laporan Evaluasi Konsumsi',
-    desc: 'Data evaluasi harian penerima manfaat: status konsumsi, rating, dan feedback.',
-    endpoint: '/api/proxy/laporan/evaluasi',
-    filename: 'laporan-evaluasi.csv',
-    roles: ['ADMIN', 'TIM_DAPUR', 'GURU'],
-  },
-  {
-    id: 'komponen',
-    title: 'Laporan Keterhabisan Komponen',
-    desc: 'Skor keterhabisan per komponen menu dari setiap evaluasi.',
-    endpoint: '/api/proxy/laporan/komponen',
-    filename: 'laporan-komponen.csv',
-    roles: ['ADMIN', 'TIM_DAPUR'],
-  },
-  {
-    id: 'feedback',
-    title: 'Laporan Feedback',
-    desc: 'Kumpulan feedback teks dan foto dari penerima manfaat.',
-    endpoint: '/api/proxy/laporan/feedback',
-    filename: 'laporan-feedback.csv',
-    roles: ['ADMIN', 'TIM_DAPUR', 'GURU'],
-  },
+type LaporanType = 'distribusi' | 'evaluasi' | 'komponen' | 'feedback';
+
+const TAB_CONFIG = [
+  { id: 'distribusi', label: 'Distribusi' },
+  { id: 'evaluasi', label: 'Evaluasi Konsumsi' },
+  { id: 'komponen', label: 'Keterhabisan Komponen' },
+  { id: 'feedback', label: 'Feedback' },
 ];
 
 export default function LaporanPage() {
+  const [activeTab, setActiveTab] = useState<LaporanType>('distribusi');
+  
+  // Filters
   const [tanggalAwal, setTanggalAwal] = useState('');
   const [tanggalAkhir, setTanggalAkhir] = useState('');
-  const [downloading, setDownloading] = useState<string | null>(null);
-  const [downloaded, setDownloaded] = useState<string[]>([]);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
 
-  const downloadCsv = async (report: ReportItem) => {
-    setDownloading(report.id);
+  // Data states
+  const [data, setData] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  
+  // Export states
+  const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+
+  const buildQueryString = useCallback((pageNum = 1) => {
+    const params = new URLSearchParams();
+    params.set('page', pageNum.toString());
+    if (tanggalAwal) params.set('tanggalAwal', tanggalAwal);
+    if (tanggalAkhir) params.set('tanggalAkhir', tanggalAkhir);
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    return params.toString();
+  }, [tanggalAwal, tanggalAkhir, debouncedSearch]);
+
+  const loadData = useCallback(async (pageNum = 1) => {
+    setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (tanggalAwal) params.set('tanggalAwal', tanggalAwal);
-      if (tanggalAkhir) params.set('tanggalAkhir', tanggalAkhir);
-      const qs = params.toString() ? `?${params.toString()}` : '';
+      const qs = buildQueryString(pageNum);
+      const res = await fetch(`/api/proxy/laporan/${activeTab}/data?${qs}`);
+      if (!res.ok) throw new Error('Gagal memuat data laporan');
+      
+      const json = await res.json();
+      const result = json.data || {};
+      
+      setData(Array.isArray(result.data) ? result.data : []);
+      setTotal(result.total || 0);
+      setPage(result.page || 1);
+      setTotalPages(result.totalPages || 1);
+    } catch (err: any) {
+      console.error(err);
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab, buildQueryString]);
 
-      const res = await fetch(`${report.endpoint}${qs}`);
+  useEffect(() => {
+    loadData(1);
+  }, [activeTab, debouncedSearch, loadData]);
+
+  const handleApplyFilter = () => {
+    loadData(1);
+  };
+
+  const handleResetFilter = () => {
+    setTanggalAwal('');
+    setTanggalAkhir('');
+    setSearch('');
+    // Data reload is handled by effect when debouncedSearch clears
+    if (!search) loadData(1);
+  };
+
+  const downloadCsv = async () => {
+    setDownloading(true);
+    setDownloaded(false);
+    try {
+      const qs = buildQueryString(1); // include filters but omit page limit in backend
+      const res = await fetch(`/api/proxy/laporan/${activeTab}?${qs}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = report.filename;
+      a.download = `laporan-${activeTab}-${new Date().toISOString().slice(0,10)}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      setDownloaded((prev) => [...prev, report.id]);
-      setTimeout(() => setDownloaded((prev) => prev.filter((id) => id !== report.id)), 3000);
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 3000);
     } catch (err) {
-      console.error('Download error:', err);
-      alert('Gagal mengunduh laporan. Pastikan Anda memiliki akses.');
+      alert('Gagal mengunduh laporan.');
     } finally {
-      setDownloading(null);
+      setDownloading(false);
     }
   };
 
+  // --- Columns Configuration ---
+  const colsDistribusi: Column<any>[] = [
+    { header: 'Tanggal', cell: (row) => new Date(row.tanggal).toLocaleDateString('id-ID') },
+    { header: 'Dapur', accessorKey: 'dapur.nama' },
+    { header: 'Sekolah', accessorKey: 'sekolah.nama', className: 'font-semibold' },
+    { header: 'Menu', accessorKey: 'menu.nama' },
+    { header: 'Porsi', accessorKey: 'jumlahPorsi' },
+    { header: 'Status', accessorKey: 'status' },
+  ];
+
+  const colsEvaluasi: Column<any>[] = [
+    { header: 'Tanggal', cell: (row) => new Date(row.tanggal).toLocaleDateString('id-ID') },
+    { header: 'Sekolah', accessorKey: 'distribusi.sekolah.nama' },
+    { header: 'Nama Siswa', accessorKey: 'penerimaManfaat.name', className: 'font-semibold' },
+    { header: 'Status', accessorKey: 'statusKonsumsi' },
+    { header: 'Rating', cell: (row) => row.ratingKeseluruhan ? `${row.ratingKeseluruhan} ⭐` : '-' },
+    { header: 'Menu', accessorKey: 'distribusi.menu.nama' },
+  ];
+
+  const colsKomponen: Column<any>[] = [
+    { header: 'Tanggal', cell: (row) => row.evaluasi?.tanggal ? new Date(row.evaluasi.tanggal).toLocaleDateString('id-ID') : '-' },
+    { header: 'Sekolah', cell: (row) => row.evaluasi?.distribusi?.sekolah?.nama || '-' },
+    { header: 'Siswa', cell: (row) => row.evaluasi?.penerimaManfaat?.name || '-' },
+    { header: 'Komponen', cell: (row) => row.komponen?.namaSnapshot || '-', className: 'font-semibold' },
+    { header: 'Skor Keterhabisan', accessorKey: 'skorKeterhabisan' },
+  ];
+
+  const colsFeedback: Column<any>[] = [
+    { header: 'Tanggal', cell: (row) => new Date(row.tanggal).toLocaleDateString('id-ID') },
+    { header: 'Siswa', accessorKey: 'penerimaManfaat.name', className: 'font-semibold' },
+    { header: 'Sekolah', accessorKey: 'distribusi.sekolah.nama' },
+    { header: 'Menu', accessorKey: 'distribusi.menu.nama' },
+    { header: 'Rating', cell: (row) => row.ratingKeseluruhan ? `${row.ratingKeseluruhan} ⭐` : '-' },
+    { header: 'Feedback', accessorKey: 'feedback', className: 'max-w-xs truncate' },
+  ];
+
+  const currentColumns = 
+    activeTab === 'distribusi' ? colsDistribusi :
+    activeTab === 'evaluasi' ? colsEvaluasi :
+    activeTab === 'komponen' ? colsKomponen :
+    colsFeedback;
+
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
       <PageHeader
         title="Laporan & Ekspor Data"
-        description="Unduh laporan dalam format CSV untuk analisis lebih lanjut."
+        description="Pantau dan unduh berbagai laporan performa sistem MBG."
       />
 
-      {/* Filter Tanggal */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Filter Periode</CardTitle>
-          <CardDescription>Opsional: batasi data laporan berdasarkan rentang tanggal.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Dari Tanggal</label>
-              <input
-                type="date"
-                value={tanggalAwal}
-                onChange={(e) => setTanggalAwal(e.target.value)}
-                className="border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
+      {/* HEADER SECTION: Filter & Search */}
+      <Card className="border-border/60 shadow-sm overflow-hidden">
+        <div className="bg-muted/30 border-b border-border/40 p-4">
+          <div className="flex flex-col md:flex-row gap-4 items-end">
+            <div className="flex-1 w-full relative">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                Pencarian
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                <Input
+                  placeholder="Cari nama sekolah, siswa, atau menu..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 w-full bg-white"
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Sampai Tanggal</label>
-              <input
-                type="date"
-                value={tanggalAkhir}
-                onChange={(e) => setTanggalAkhir(e.target.value)}
-                className="border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
+            <div className="flex gap-3 w-full md:w-auto">
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                  Dari Tanggal
+                </label>
+                <Input
+                  type="date"
+                  value={tanggalAwal}
+                  onChange={(e) => setTanggalAwal(e.target.value)}
+                  className="bg-white"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                  Sampai Tanggal
+                </label>
+                <Input
+                  type="date"
+                  value={tanggalAkhir}
+                  onChange={(e) => setTanggalAkhir(e.target.value)}
+                  className="bg-white"
+                />
+              </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => { setTanggalAwal(''); setTanggalAkhir(''); }}
-              className="h-10"
-            >
-              Reset Filter
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleResetFilter} className="gap-2">
+                <RefreshCw size={14} /> Reset
+              </Button>
+              <Button onClick={handleApplyFilter} className="gap-2">
+                <Filter size={14} /> Filter
+              </Button>
+            </div>
           </div>
-          {(tanggalAwal || tanggalAkhir) && (
-            <p className="text-xs text-primary mt-2 font-medium">
-              Filter aktif: {tanggalAwal || '—'} sampai {tanggalAkhir || '—'}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Report Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {REPORTS.map((report) => {
-          const isDownloading = downloading === report.id;
-          const isDone = downloaded.includes(report.id);
-          return (
-            <Card key={report.id} className="hover:shadow-md transition-all group">
-              <CardHeader className="pb-3">
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary mt-0.5">
-                    <FileText size={20} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-sm">{report.title}</CardTitle>
-                    <CardDescription className="text-xs mt-1 line-clamp-2">{report.desc}</CardDescription>
-                  </div>
+        {/* TABS */}
+        <div className="border-b border-border/40 bg-card">
+          <div className="flex overflow-x-auto p-1 scrollbar-none">
+            {TAB_CONFIG.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as LaporanType)}
+                className={`px-6 py-3 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${
+                  activeTab === tab.id 
+                    ? 'border-primary text-primary' 
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* TABLE HEADER & ACTIONS */}
+        <div className="p-4 flex items-center justify-between bg-card">
+          <div className="text-sm text-muted-foreground">
+            Menampilkan {total} data <span className="font-semibold text-foreground capitalize">{activeTab}</span>
+          </div>
+          <Button
+            variant="outline"
+            onClick={downloadCsv}
+            disabled={downloading || total === 0}
+            className={`gap-2 ${downloaded ? 'bg-green-50 text-green-700 border-green-200' : ''}`}
+          >
+            {downloading ? (
+              <><Loader2 size={14} className="animate-spin" /> Ekspor...</>
+            ) : downloaded ? (
+              <><CheckCircle2 size={14} /> Berhasil</>
+            ) : (
+              <><Download size={14} /> Ekspor CSV</>
+            )}
+          </Button>
+        </div>
+
+        {/* DATA TABLE */}
+        <div className="px-4 pb-4 bg-card">
+          {loading ? (
+            <div className="py-24 flex justify-center text-muted-foreground">
+              <Loader2 className="animate-spin" size={32} />
+            </div>
+          ) : (
+            <div className="border rounded-xl overflow-hidden">
+              <DataTable
+                data={data}
+                columns={currentColumns}
+                keyExtractor={(row) => row.id}
+                emptyMessage="Tidak ada data ditemukan dengan filter saat ini."
+              />
+              
+              {/* Custom Pagination Footer because we fetch paginated from backend */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-end px-6 py-4 border-t border-border/60 gap-1 bg-white">
+                  <button
+                    onClick={() => loadData(Math.max(page - 1, 1))}
+                    disabled={page === 1}
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1"
+                  >
+                    Prev
+                  </button>
+                  <span className="text-sm font-medium px-4">
+                    Halaman {page} dari {totalPages}
+                  </span>
+                  <button
+                    onClick={() => loadData(Math.min(page + 1, totalPages))}
+                    disabled={page === totalPages}
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1"
+                  >
+                    Next
+                  </button>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Button
-                  onClick={() => downloadCsv(report)}
-                  disabled={!!downloading}
-                  className={`w-full gap-2 h-10 text-sm transition-all ${isDone ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                >
-                  {isDownloading ? (
-                    <><Loader2 size={14} className="animate-spin" /> Mengunduh...</>
-                  ) : isDone ? (
-                    <><CheckCircle2 size={14} /> Berhasil Diunduh</>
-                  ) : (
-                    <><Download size={14} /> Unduh CSV</>
-                  )}
-                </Button>
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  Format: CSV · {report.filename}
-                </p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      <div className="p-4 bg-muted/50 rounded-xl border border-border/50 text-sm text-muted-foreground">
-        <p className="font-medium text-foreground mb-1">💡 Tips penggunaan</p>
-        <ul className="space-y-1 list-disc list-inside text-xs">
-          <li>File CSV bisa dibuka dengan Microsoft Excel, Google Sheets, atau LibreOffice Calc.</li>
-          <li>File menggunakan encoding UTF-8 dengan BOM agar karakter Indonesia tampil dengan benar di Excel.</li>
-          <li>Gunakan filter periode untuk membatasi jumlah data yang diunduh.</li>
-        </ul>
-      </div>
+              )}
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }

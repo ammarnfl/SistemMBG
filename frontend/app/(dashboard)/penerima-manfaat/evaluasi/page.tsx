@@ -94,7 +94,7 @@ export default function FormEvaluasiPage() {
         }
 
         const uploadData = await uploadRes.json();
-        fotoUrl = uploadData.url;
+        fotoUrl = uploadData.data?.url || uploadData.url;
       }
 
       // 2. Submit Evaluasi

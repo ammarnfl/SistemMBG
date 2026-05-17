@@ -14,7 +14,93 @@ import type { Response } from 'express';
 export class LaporanController {
   constructor(private readonly laporanService: LaporanService) {}
 
-  @Roles(Role.ADMIN, Role.TIM_DAPUR)
+  // ── JSON data endpoints (for table UI) ────────────────────────────────────
+
+  @Roles(Role.ADMIN, Role.TIM_DAPUR, Role.GURU)
+  @Get('distribusi/data')
+  @ApiOperation({ summary: 'Laporan distribusi JSON (paginated)' })
+  distribusiData(
+    @Request() req: any,
+    @Query('page') page?: string,
+    @Query('search') search?: string,
+    @Query('tanggalAwal') tanggalAwal?: string,
+    @Query('tanggalAkhir') tanggalAkhir?: string,
+    @Query('sekolahId') sekolahId?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.laporanService.distribusiData(req.user.id, req.user.role, {
+      page: page ? parseInt(page) : 1,
+      search,
+      tanggalAwal,
+      tanggalAkhir,
+      sekolahId,
+      status,
+    });
+  }
+
+  @Roles(Role.ADMIN, Role.TIM_DAPUR, Role.GURU)
+  @Get('evaluasi/data')
+  @ApiOperation({ summary: 'Laporan evaluasi JSON (paginated)' })
+  evaluasiData(
+    @Request() req: any,
+    @Query('page') page?: string,
+    @Query('search') search?: string,
+    @Query('tanggalAwal') tanggalAwal?: string,
+    @Query('tanggalAkhir') tanggalAkhir?: string,
+    @Query('sekolahId') sekolahId?: string,
+  ) {
+    return this.laporanService.evaluasiData(req.user.id, req.user.role, {
+      page: page ? parseInt(page) : 1,
+      search,
+      tanggalAwal,
+      tanggalAkhir,
+      sekolahId,
+    });
+  }
+
+  @Roles(Role.ADMIN, Role.TIM_DAPUR, Role.GURU)
+  @Get('komponen/data')
+  @ApiOperation({ summary: 'Laporan keterhabisan komponen JSON (paginated)' })
+  komponenData(
+    @Request() req: any,
+    @Query('page') page?: string,
+    @Query('search') search?: string,
+    @Query('tanggalAwal') tanggalAwal?: string,
+    @Query('tanggalAkhir') tanggalAkhir?: string,
+    @Query('sekolahId') sekolahId?: string,
+  ) {
+    return this.laporanService.komponenData(req.user.id, req.user.role, {
+      page: page ? parseInt(page) : 1,
+      search,
+      tanggalAwal,
+      tanggalAkhir,
+      sekolahId,
+    });
+  }
+
+  @Roles(Role.ADMIN, Role.TIM_DAPUR, Role.GURU)
+  @Get('feedback/data')
+  @ApiOperation({ summary: 'Laporan feedback JSON (paginated)' })
+  feedbackData(
+    @Request() req: any,
+    @Query('page') page?: string,
+    @Query('search') search?: string,
+    @Query('tanggalAwal') tanggalAwal?: string,
+    @Query('tanggalAkhir') tanggalAkhir?: string,
+    @Query('sekolahId') sekolahId?: string,
+  ) {
+    return this.laporanService.feedbackData(req.user.id, req.user.role, {
+      page: page ? parseInt(page) : 1,
+      search,
+      tanggalAwal,
+      tanggalAkhir,
+      sekolahId,
+    });
+  }
+
+  // ── CSV export endpoints ─────────────────────────────────────────────────
+
+  @Roles(Role.ADMIN, Role.TIM_DAPUR, Role.GURU)
   @Get('distribusi')
   @ApiOperation({ summary: 'Export laporan distribusi CSV' })
   @ApiQuery({ name: 'tanggalAwal', required: false })
@@ -28,7 +114,7 @@ export class LaporanController {
     const csv = await this.laporanService.laporanDistribusi(req.user.id, req.user.role, tanggalAwal, tanggalAkhir);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="laporan-distribusi.csv"');
-    res.send('\uFEFF' + csv); // UTF-8 BOM for Excel compatibility
+    res.send('\uFEFF' + csv);
   }
 
   @Roles(Role.ADMIN, Role.TIM_DAPUR, Role.GURU)
@@ -48,7 +134,7 @@ export class LaporanController {
     res.send('\uFEFF' + csv);
   }
 
-  @Roles(Role.ADMIN, Role.TIM_DAPUR)
+  @Roles(Role.ADMIN, Role.TIM_DAPUR, Role.GURU)
   @Get('komponen')
   @ApiOperation({ summary: 'Export laporan keterhabisan komponen CSV' })
   @ApiQuery({ name: 'tanggalAwal', required: false })

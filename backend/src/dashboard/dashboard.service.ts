@@ -122,7 +122,7 @@ export class DashboardService {
       const detail = komponenDetails.find((d) => d.id === k.komponenId);
       return {
         komponenId: k.komponenId,
-        nama: detail?.nama || 'Unknown',
+        nama: detail?.namaSnapshot || 'Unknown',
         rataKeterhabisan: k._avg.skorKeterhabisan
           ? Number(k._avg.skorKeterhabisan.toFixed(2))
           : null,

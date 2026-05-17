@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
-import { Loader2, Utensils, CheckCircle2, Clock, Star, CalendarDays, ChevronRight, AlertCircle } from 'lucide-react';
+import { Loader2, Utensils, CheckCircle2, Clock, Star, CalendarDays, ChevronRight, AlertCircle, Info } from 'lucide-react';
 
 interface PMStats {
   sudahIsiHariIni: boolean;
@@ -25,7 +25,17 @@ interface PMStats {
 interface MenuHariIni {
   id: string;
   tanggal: string;
-  menu: { nama: string; deskripsi?: string; komponen: { id: string; nama: string; porsi?: string }[] };
+  menu: { 
+    nama: string; 
+    deskripsi?: string; 
+    fotoUrl?: string | null;
+    energiKkal?: number | null;
+    proteinGram?: number | null;
+    lemakGram?: number | null;
+    karbohidratGram?: number | null;
+    seratGram?: number | null;
+    komponen: { id: string; namaSnapshot: string; }[] 
+  };
   dapur: { nama: string };
 }
 
@@ -73,7 +83,7 @@ export default function BerandaPenerimaManfaat() {
   const tanggalHariIni = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
-    <div className="max-w-md mx-auto space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-md mx-auto space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Beranda</h1>
         <p className="text-muted-foreground text-sm mt-1">{tanggalHariIni}</p>
@@ -127,32 +137,84 @@ export default function BerandaPenerimaManfaat() {
       ) : (
         <Card className="shadow-md border-primary/20 overflow-hidden relative">
           <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-primary to-primary/50" />
+          
+          {distribusi.menu.fotoUrl && (
+            <div className="w-full h-48 bg-muted border-b border-border/50">
+              <img 
+                src={distribusi.menu.fotoUrl} 
+                alt={distribusi.menu.nama} 
+                className="w-full h-full object-cover"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
+            </div>
+          )}
+
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <CardTitle className="text-lg text-primary">{distribusi.menu.nama}</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">Dari: {distribusi.dapur.nama}</p>
+                <CardTitle className="text-xl text-primary font-black tracking-tight">{distribusi.menu.nama}</CardTitle>
+                <p className="text-xs font-semibold text-muted-foreground mt-1 uppercase tracking-widest">Dapur: {distribusi.dapur.nama}</p>
               </div>
               <Badge className="bg-primary/10 text-primary border-0 text-xs shrink-0">Hari Ini</Badge>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-5">
             {distribusi.menu.deskripsi && (
-              <p className="text-sm text-muted-foreground">{distribusi.menu.deskripsi}</p>
+              <p className="text-sm text-foreground/80 leading-relaxed border-l-2 border-primary/30 pl-3 italic">
+                "{distribusi.menu.deskripsi}"
+              </p>
             )}
+            
             <div className="space-y-2">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Komponen Menu</h4>
-              <div className="grid gap-1.5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Utensils size={14} /> Komposisi Menu
+              </h4>
+              <div className="flex flex-wrap gap-1.5">
                 {distribusi.menu.komponen.map((komp) => (
-                  <div key={komp.id} className="flex justify-between items-center p-2.5 bg-muted/30 rounded-lg border border-border/40">
-                    <p className="text-sm font-medium">{komp.nama}</p>
-                    {komp.porsi && <span className="text-xs font-medium px-2 py-0.5 bg-background rounded-md border shadow-sm">{komp.porsi}</span>}
-                  </div>
+                  <Badge key={komp.id} variant="secondary" className="font-medium bg-muted/50 text-foreground border-border/60">
+                    {komp.namaSnapshot}
+                  </Badge>
                 ))}
               </div>
             </div>
+
+            {/* Nilai Gizi Section */}
+            {(distribusi.menu.energiKkal !== null || distribusi.menu.proteinGram !== null) && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Info size={14} /> Nilai Gizi
+                </h4>
+                <div className="bg-blue-50/50 border border-blue-100/50 rounded-xl p-3 grid grid-cols-2 gap-y-3 gap-x-4">
+                  {distribusi.menu.energiKkal !== null && (
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground/70">Energi</span>
+                      <span className="text-sm font-bold text-foreground">{distribusi.menu.energiKkal} <span className="text-xs font-medium text-muted-foreground">kkal</span></span>
+                    </div>
+                  )}
+                  {distribusi.menu.proteinGram !== null && (
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground/70">Protein</span>
+                      <span className="text-sm font-bold text-foreground">{distribusi.menu.proteinGram} <span className="text-xs font-medium text-muted-foreground">g</span></span>
+                    </div>
+                  )}
+                  {distribusi.menu.lemakGram !== null && (
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground/70">Lemak</span>
+                      <span className="text-sm font-bold text-foreground">{distribusi.menu.lemakGram} <span className="text-xs font-medium text-muted-foreground">g</span></span>
+                    </div>
+                  )}
+                  {distribusi.menu.karbohidratGram !== null && (
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground/70">Karbohidrat</span>
+                      <span className="text-sm font-bold text-foreground">{distribusi.menu.karbohidratGram} <span className="text-xs font-medium text-muted-foreground">g</span></span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
           </CardContent>
-          <CardFooter className="pt-3 bg-muted/10 border-t">
+          <CardFooter className="pt-4 bg-muted/10 border-t">
             {stats?.sudahIsiHariIni ? (
               <Button variant="outline" className="w-full h-11" onClick={() => router.push('/penerima-manfaat/riwayat')}>
                 <CheckCircle2 size={16} className="mr-2 text-green-600" />
@@ -160,11 +222,11 @@ export default function BerandaPenerimaManfaat() {
               </Button>
             ) : (
               <Button
-                className="w-full h-11 font-medium shadow-sm"
+                className="w-full h-11 font-medium shadow-sm group"
                 onClick={() => router.push(`/penerima-manfaat/evaluasi?distribusiId=${distribusi.id}&tanggal=${distribusi.tanggal}`)}
               >
                 Isi Evaluasi Makanan
-                <ChevronRight size={16} className="ml-1" />
+                <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
               </Button>
             )}
           </CardFooter>

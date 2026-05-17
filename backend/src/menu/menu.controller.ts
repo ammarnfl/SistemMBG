@@ -1,7 +1,11 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Query, Request } from '@nestjs/common';
+import {
+  Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Query, Request,
+} from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
-import { CreateKomponenDto } from './dto/create-komponen.dto';
+import { UpdateMenuDto } from './dto/update-menu.dto';
+import { CreateKomponenMasterDto } from './dto/create-komponen-master.dto';
+import { UpdateKomponenMasterDto } from './dto/update-komponen-master.dto';
 import { SetJadwalDto } from './dto/set-jadwal.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/role.guard';
@@ -15,15 +19,51 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
 
+  // ── Komponen Master ───────────────────────────────────────────────────────
+
+  @Roles('TIM_DAPUR', 'ADMIN')
+  @Get('komponen-master')
+  @ApiOperation({ summary: 'List komponen master milik dapur ini' })
+  findAllKomponenMaster(@Request() req: any) {
+    return this.menuService.findAllKomponenMaster(req.user.id, req.user.role);
+  }
+
+  @Roles('TIM_DAPUR')
+  @Post('komponen-master')
+  @ApiOperation({ summary: 'Buat komponen master baru' })
+  createKomponenMaster(@Request() req: any, @Body() dto: CreateKomponenMasterDto) {
+    return this.menuService.createKomponenMaster(req.user.id, dto);
+  }
+
+  @Roles('TIM_DAPUR')
+  @Put('komponen-master/:id')
+  @ApiOperation({ summary: 'Update komponen master' })
+  updateKomponenMaster(
+    @Param('id') id: string,
+    @Request() req: any,
+    @Body() dto: UpdateKomponenMasterDto,
+  ) {
+    return this.menuService.updateKomponenMaster(id, req.user.id, dto);
+  }
+
+  @Roles('TIM_DAPUR')
+  @Delete('komponen-master/:id')
+  @ApiOperation({ summary: 'Hapus komponen master' })
+  deleteKomponenMaster(@Param('id') id: string, @Request() req: any) {
+    return this.menuService.deleteKomponenMaster(id, req.user.id);
+  }
+
+  // ── Menu Master ───────────────────────────────────────────────────────────
+
   @Roles('TIM_DAPUR', 'ADMIN')
   @Post()
   @ApiOperation({ summary: 'Create menu master' })
-  create(@Request() req: any, @Body() createMenuDto: CreateMenuDto) {
-    return this.menuService.create(req.user.id, createMenuDto, req.user.role);
+  create(@Request() req: any, @Body() dto: CreateMenuDto) {
+    return this.menuService.create(req.user.id, dto, req.user.role);
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all menu master' })
+  @ApiOperation({ summary: 'List all menu master (scoped by role)' })
   findAll(@Request() req: any) {
     return this.menuService.findAll(req.user.id, req.user.role);
   }
@@ -35,18 +75,20 @@ export class MenuController {
   }
 
   @Roles('TIM_DAPUR', 'ADMIN')
-  @Post(':id/komponen')
-  @ApiOperation({ summary: 'Add components to menu' })
-  createKomponen(@Param('id') id: string, @Body() createKomponenDto: CreateKomponenDto) {
-    return this.menuService.createKomponen(id, createKomponenDto);
+  @Put(':id')
+  @ApiOperation({ summary: 'Update menu' })
+  update(@Param('id') id: string, @Request() req: any, @Body() dto: UpdateMenuDto) {
+    return this.menuService.update(id, req.user.id, dto, req.user.role);
   }
 
   @Roles('TIM_DAPUR', 'ADMIN')
-  @Delete('komponen/:id')
-  @ApiOperation({ summary: 'Remove a component' })
-  removeKomponen(@Param('id') id: string) {
-    return this.menuService.removeKomponen(id);
+  @Delete(':id')
+  @ApiOperation({ summary: 'Hapus menu' })
+  remove(@Param('id') id: string, @Request() req: any) {
+    return this.menuService.remove(id, req.user.id, req.user.role);
   }
+
+  // ── Jadwal ────────────────────────────────────────────────────────────────
 
   @Roles('TIM_DAPUR', 'ADMIN')
   @Post('jadwal')

@@ -2,6 +2,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronUp, ChevronDown, ChevronRight, ChevronLeft, ChevronsUpDown } from 'lucide-react';
 import { Card, CardContent } from './Card';
 
+/** Safely resolve a dotted path like 'a.b.c' on an object */
+function getNestedValue(obj: any, path: string): any {
+  return path.split('.').reduce((acc, key) => acc?.[key], obj);
+}
+
 export interface Column<T> {
   header: string;
   accessorKey?: string;
@@ -78,8 +83,8 @@ export function DataTable<T>({
             aValue = column.sortAccessorFn(a);
             bValue = column.sortAccessorFn(b);
           } else if (column.accessorKey) {
-            aValue = (a as any)[column.accessorKey];
-            bValue = (b as any)[column.accessorKey];
+            aValue = getNestedValue(a, column.accessorKey);
+            bValue = getNestedValue(b, column.accessorKey);
           }
 
           if (aValue === null || aValue === undefined) aValue = '';
@@ -157,7 +162,7 @@ export function DataTable<T>({
       >
         {columns.map((col, index) => (
           <td key={index} className={`p-4 align-middle ${col.className || ''}`}>
-            {col.cell ? col.cell(row) : col.accessorKey ? (row as any)[col.accessorKey] : null}
+            {col.cell ? col.cell(row) : col.accessorKey ? getNestedValue(row, col.accessorKey) : null}
           </td>
         ))}
       </tr>

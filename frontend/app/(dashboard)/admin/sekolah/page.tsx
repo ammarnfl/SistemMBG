@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../../../components
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { Badge } from '../../../../components/ui/Badge';
-import { ArrowLeft, Plus, GraduationCap, Loader2, Edit, Trash2, FileSpreadsheet, Upload, AlertCircle, Search, Copy } from 'lucide-react';
+import { ArrowLeft, Plus, GraduationCap, Loader2, Edit, Trash2, FileSpreadsheet, Upload, AlertCircle, Search, Copy, School } from 'lucide-react';
 import { DataTable, Column } from '../../../../components/ui/DataTable';
 
 export default function AdminSekolahPage() {
