@@ -178,7 +178,13 @@ export class DashboardService {
       this.prisma.sekolah.findUnique({ where: { id: sekolahId } }),
       this.prisma.distribusi.findFirst({
         where: { sekolahId, tanggal: today },
-        include: { menu: true },
+        include: {
+          menu: {
+            include: {
+              komponen: { include: { komponenMaster: true } },
+            },
+          },
+        },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.penerimaManfaatProfile.count({ where: { sekolahId } }),
@@ -199,8 +205,23 @@ export class DashboardService {
             id: distribusiHariIni.id,
             status: distribusiHariIni.status,
             jumlahPorsi: distribusiHariIni.jumlahPorsi,
+            tanggal: distribusiHariIni.tanggal,
             menu: distribusiHariIni.menu
-              ? { nama: distribusiHariIni.menu.nama }
+              ? {
+                  nama: distribusiHariIni.menu.nama,
+                  deskripsi: distribusiHariIni.menu.deskripsi,
+                  fotoUrl: distribusiHariIni.menu.fotoUrl,
+                  energiKkal: distribusiHariIni.menu.energiKkal,
+                  proteinGram: distribusiHariIni.menu.proteinGram,
+                  lemakGram: distribusiHariIni.menu.lemakGram,
+                  karbohidratGram: distribusiHariIni.menu.karbohidratGram,
+                  seratGram: distribusiHariIni.menu.seratGram,
+                  komponen: distribusiHariIni.menu.komponen.map(k => ({
+                    id: k.id,
+                    nama: k.namaSnapshot,
+                    deskripsi: k.komponenMaster?.deskripsi || null,
+                  })),
+                }
               : null,
           }
         : null,

@@ -9,7 +9,7 @@ export class DistribusiService {
 
   async create(userId: string, dto: CreateDistribusiDto) {
     const tanggal = new Date(dto.tanggal);
-    tanggal.setHours(0, 0, 0, 0);
+    tanggal.setUTCHours(0, 0, 0, 0);
 
     let dapurId = dto.dapurId;
 
@@ -70,7 +70,7 @@ export class DistribusiService {
 
     if (filters.tanggal) {
       const d = new Date(filters.tanggal);
-      d.setHours(0,0,0,0);
+      d.setUTCHours(0,0,0,0);
       where.tanggal = d;
     }
     return this.prisma.distribusi.findMany({
@@ -92,13 +92,21 @@ export class DistribusiService {
     const where: any = { sekolahId: profile.sekolahId };
     if (tanggalFilter) {
       const d = new Date(tanggalFilter);
-      d.setHours(0,0,0,0);
+      d.setUTCHours(0,0,0,0);
       where.tanggal = d;
     }
 
     return this.prisma.distribusi.findMany({
       where,
-      include: { dapur: true, sekolah: true },
+      include: {
+        dapur: true,
+        sekolah: true,
+        menu: {
+          include: {
+            komponen: { include: { komponenMaster: true } },
+          },
+        },
+      },
       orderBy: { tanggal: 'desc' },
     });
   }
@@ -106,7 +114,15 @@ export class DistribusiService {
   async findOne(id: string) {
     const data = await this.prisma.distribusi.findUnique({
       where: { id },
-      include: { sekolah: true, dapur: true }
+      include: {
+        sekolah: true,
+        dapur: true,
+        menu: {
+          include: {
+            komponen: { include: { komponenMaster: true } },
+          },
+        },
+      },
     });
     if (!data) throw new NotFoundException('Distribusi not found');
     return data;

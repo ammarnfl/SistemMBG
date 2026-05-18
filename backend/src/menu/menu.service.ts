@@ -260,7 +260,7 @@ export class MenuService {
 
   async setJadwal(setJadwalDto: SetJadwalDto) {
     const tanggal = new Date(setJadwalDto.tanggal);
-    tanggal.setHours(0, 0, 0, 0);
+    tanggal.setUTCHours(0, 0, 0, 0);
 
     return this.prisma.menuHarian.upsert({
       where: { tanggal_menuId: { tanggal, menuId: setJadwalDto.menuId } },
@@ -273,7 +273,7 @@ export class MenuService {
     const where: any = {};
     if (tanggalFilter) {
       const d = new Date(tanggalFilter);
-      d.setHours(0, 0, 0, 0);
+      d.setUTCHours(0, 0, 0, 0);
       where.tanggal = d;
     }
     if (userRole === 'TIM_DAPUR') {

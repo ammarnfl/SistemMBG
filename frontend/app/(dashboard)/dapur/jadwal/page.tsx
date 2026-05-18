@@ -100,14 +100,14 @@ export default function DapurJadwalPage() {
          jadwal.length === 0 ? <StateCard icon={<CalendarDays/>} title="Tidak Ada Menu" description="Belum ada menu yang diaktifkan untuk tanggal ini."/> :
          jadwal.map((j: any) => (
            <Card key={j.id} className="border-primary/20 bg-primary/5">
-             <CardContent className="p-5 flex items-center justify-between">
+             <div className="p-5 flex items-center justify-between">
                <div>
                  <Badge variant="default" className="mb-2">Menu Harian Aktif</Badge>
                  <div className="font-bold text-xl">{j.menu.nama}</div>
                  <div className="text-sm text-muted-foreground mt-1">{j.menu.deskripsi}</div>
                  <div className="text-xs text-muted-foreground mt-2">{j.menu.komponen?.length} komponen masakan.</div>
                </div>
-             </CardContent>
+             </div>
            </Card>
          ))
         }

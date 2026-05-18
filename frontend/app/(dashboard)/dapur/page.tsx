@@ -96,6 +96,45 @@ export default function DapurDashboard() {
         </div>
       </div>
 
+      {/* Quick Links - More visual cards */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest px-1">Akses Cepat</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <a href="/dapur/menu" className="group">
+            <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
+              <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">📋</span>
+              </div>
+              <p className="text-xs font-bold text-foreground">Kelola Menu</p>
+            </div>
+          </a>
+          <a href="/dapur/distribusi" className="group">
+            <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
+              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">🚚</span>
+              </div>
+              <p className="text-xs font-bold text-foreground">Distribusi</p>
+            </div>
+          </a>
+          <a href="/dapur/jadwal" className="group">
+            <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
+              <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">📅</span>
+              </div>
+              <p className="text-xs font-bold text-foreground">Jadwal Menu</p>
+            </div>
+          </a>
+          <a href="/laporan" className="group">
+            <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
+              <div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <span className="text-2xl">📊</span>
+              </div>
+              <p className="text-xs font-bold text-foreground">Unduh Laporan</p>
+            </div>
+          </a>
+        </div>
+      </div>
+
       {loading ? (
         <div className="flex flex-col justify-center items-center h-64 gap-4">
           <Loader2 className="animate-spin text-primary" size={40} />
@@ -271,45 +310,6 @@ export default function DapurDashboard() {
           </div>
         </>
       ) : null}
-
-      {/* Quick Links - More visual cards */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest px-1">Akses Cepat</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <a href="/dapur/menu" className="group">
-            <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
-              <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <span className="text-2xl">📋</span>
-              </div>
-              <p className="text-xs font-bold text-foreground">Kelola Menu</p>
-            </div>
-          </a>
-          <a href="/dapur/distribusi" className="group">
-            <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
-              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <span className="text-2xl">🚚</span>
-              </div>
-              <p className="text-xs font-bold text-foreground">Distribusi</p>
-            </div>
-          </a>
-          <a href="/dapur/jadwal" className="group">
-            <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
-              <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <span className="text-2xl">📅</span>
-              </div>
-              <p className="text-xs font-bold text-foreground">Jadwal Menu</p>
-            </div>
-          </a>
-          <a href="/laporan" className="group">
-            <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
-              <div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <span className="text-2xl">📊</span>
-              </div>
-              <p className="text-xs font-bold text-foreground">Unduh Laporan</p>
-            </div>
-          </a>
-        </div>
-      </div>
     </div>
   );
 }

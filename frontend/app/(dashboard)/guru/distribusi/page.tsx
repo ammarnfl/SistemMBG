@@ -1,13 +1,33 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { PageHeader } from '../../../../components/layout/PageHeader';
 import { StateCard } from '../../../../components/layout/StateCard';
 import { Card, CardContent } from '../../../../components/ui/Card';
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { Badge } from '../../../../components/ui/Badge';
-import { Inbox, Truck, AlertCircle, Loader2 } from 'lucide-react';
+import { Inbox, Loader2, UtensilsCrossed, CalendarDays, Flame, Beef, Droplets, Wheat, Leaf, ChevronRight } from 'lucide-react';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'warning' | 'destructive' | 'outline' | 'success' }> = {
+  DRAFT: { label: 'Draft', variant: 'outline' },
+  DIKIRIM: { label: 'Dalam Perjalanan', variant: 'warning' },
+  DITERIMA: { label: 'Diterima', variant: 'default' },
+  BERMASALAH: { label: 'Bermasalah', variant: 'destructive' },
+  SELESAI: { label: 'Selesai', variant: 'success' },
+};
+
+function NutritionTag({ value, unit, label, color }: { value: number | null; unit: string; label: string; color: string }) {
+  if (value == null) return null;
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${color}`}>
+      {value}{unit} {label}
+    </span>
+  );
+}
 
 export default function GuruDistribusiPage() {
   const [distribusi, setDistribusi] = useState<any[]>([]);
@@ -34,42 +54,113 @@ export default function GuruDistribusiPage() {
       />
 
       <div className="bg-white border p-3 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
-        <span className="text-sm font-medium">Filter Tanggal Kedatangan:</span>
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <CalendarDays size={16} className="text-primary" />
+          <span>Tanggal Distribusi:</span>
+        </div>
         <Input type="date" className="h-9 w-full sm:w-auto" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}/>
       </div>
 
       <div className="space-y-4 pt-2">
         {loading ? <StateCard icon={<Loader2 className="animate-spin"/>} title="Memuat" description=""/> :
-         distribusi.length===0 ? <StateCard icon={<Inbox/>} title="Belum Ada Distribusi" description="Tidak ada jadwal jadwal kiriman MBG pada tanggal ini."/> :
-         distribusi.map((d: any) => (
-           <Card key={d.id}>
-             <CardContent className="p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div>
-                  <div className="font-bold flex items-center gap-2 text-lg">
-                    {d.dapur?.nama || 'Dapur Utama'}
-                  </div>
-                  <div className="text-sm text-primary font-medium mt-1">{d.jumlahPorsi} Porsi Makanan</div>
-                  <div className="text-sm text-muted-foreground mt-1">Est. Tanggal: {new Date(d.tanggal).toLocaleDateString('id-ID')}</div>
-                </div>
-                
-                <div className="flex flex-col items-end gap-2 shrink-0 w-full sm:w-auto">
-                  <Badge variant={d.status === 'DIKIRIM' ? 'warning' : d.status === 'DITERIMA' ? 'default': d.status === 'BERMASALAH' ? 'destructive' : 'outline'}>
-                     {d.status}
-                  </Badge>
-                  {d.status === 'DIKIRIM' && (
-                    <Link href={`/guru/distribusi/${d.id}`} className="w-full sm:w-auto">
-                      <Button className="w-full">Lakukan Konfirmasi</Button>
-                    </Link>
-                  )}
-                  {(d.status === 'DITERIMA' || d.status === 'BERMASALAH') && (
-                    <Link href={`/guru/distribusi/${d.id}`} className="w-full sm:w-auto">
-                      <Button variant="outline" className="w-full">Lihat Data</Button>
-                    </Link>
-                  )}
-                </div>
-             </CardContent>
-           </Card>
-         ))
+         distribusi.length===0 ? <StateCard icon={<Inbox/>} title="Belum Ada Distribusi" description="Tidak ada jadwal kiriman MBG pada tanggal ini."/> :
+         distribusi.map((d: any) => {
+           const menu = d.menu;
+           const statusCfg = STATUS_CONFIG[d.status] || { label: d.status, variant: 'outline' as const };
+           const fotoSrc = menu?.fotoUrl
+             ? (menu.fotoUrl.startsWith('http') ? menu.fotoUrl : `${BACKEND_URL}${menu.fotoUrl}`)
+             : null;
+           const tanggalStr = new Date(d.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+           return (
+             <Card key={d.id} className="overflow-hidden hover:shadow-md transition-shadow duration-200">
+               <CardContent className="p-0">
+                 <div className="flex flex-col sm:flex-row">
+                   {/* Menu image section */}
+                   <div className="sm:w-36 sm:min-h-full shrink-0">
+                     {fotoSrc ? (
+                       <div className="w-full h-32 sm:h-full relative">
+                         <Image src={fotoSrc} alt={menu?.nama || ''} fill className="object-cover" unoptimized />
+                       </div>
+                     ) : (
+                       <div className="w-full h-32 sm:h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                         <UtensilsCrossed size={32} className="text-primary/30" />
+                       </div>
+                     )}
+                   </div>
+                   {/* Content section */}
+                   <div className="flex-1 p-4 sm:p-5 flex flex-col gap-3">
+                     {/* Top row: dapur name + status */}
+                     <div className="flex items-start justify-between gap-3">
+                       <div className="min-w-0">
+                         <div className="font-bold text-lg text-foreground leading-tight">
+                           {d.dapur?.nama || 'Dapur Utama'}
+                         </div>
+                         <div className="text-xs text-muted-foreground mt-0.5">
+                           {tanggalStr}
+                         </div>
+                       </div>
+                       <Badge variant={statusCfg.variant} className="shrink-0">
+                         {statusCfg.label}
+                       </Badge>
+                     </div>
+
+                     {/* Menu info */}
+                     {menu ? (
+                       <div className="space-y-2">
+                         <div>
+                           <p className="text-sm font-semibold text-foreground">{menu.nama}</p>
+                           {menu.deskripsi && (
+                             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{menu.deskripsi}</p>
+                           )}
+                         </div>
+                         <div className="text-sm text-primary font-semibold">{d.jumlahPorsi} Porsi</div>
+
+                         {/* Nutrition tags */}
+                         {(menu.energiKkal || menu.proteinGram || menu.lemakGram || menu.karbohidratGram || menu.seratGram) && (
+                           <div className="flex flex-wrap gap-1.5">
+                             <NutritionTag value={menu.energiKkal} unit=" kkal" label="" color="bg-orange-50 text-orange-700" />
+                             <NutritionTag value={menu.proteinGram} unit="g" label="protein" color="bg-red-50 text-red-700" />
+                             <NutritionTag value={menu.lemakGram} unit="g" label="lemak" color="bg-yellow-50 text-yellow-700" />
+                             <NutritionTag value={menu.karbohidratGram} unit="g" label="karbo" color="bg-amber-50 text-amber-700" />
+                             <NutritionTag value={menu.seratGram} unit="g" label="serat" color="bg-green-50 text-green-700" />
+                           </div>
+                         )}
+
+                         {/* Komponen preview */}
+                         {menu.komponen && menu.komponen.length > 0 && (
+                           <div className="flex flex-wrap gap-1.5">
+                             {menu.komponen.map((k: any) => (
+                               <span key={k.id} className="text-xs bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full border border-neutral-200">
+                                 {k.namaSnapshot || k.nama}
+                               </span>
+                             ))}
+                           </div>
+                         )}
+                       </div>
+                     ) : (
+                       <div className="text-sm text-primary font-semibold">{d.jumlahPorsi} Porsi Makanan</div>
+                     )}
+
+                     {/* Action buttons */}
+                     <div className="flex gap-2 mt-auto pt-1">
+                       {d.status === 'DIKIRIM' && (
+                         <Link href={`/guru/distribusi/${d.id}`} className="flex-1 sm:flex-none">
+                           <Button className="w-full sm:w-auto gap-1" size="sm">Lakukan Konfirmasi <ChevronRight size={14} /></Button>
+                         </Link>
+                       )}
+                       {(d.status === 'DITERIMA' || d.status === 'BERMASALAH' || d.status === 'SELESAI') && (
+                         <Link href={`/guru/distribusi/${d.id}`} className="flex-1 sm:flex-none">
+                           <Button variant="outline" className="w-full sm:w-auto gap-1" size="sm">Lihat Detail <ChevronRight size={14} /></Button>
+                         </Link>
+                       )}
+                     </div>
+                   </div>
+                 </div>
+               </CardContent>
+             </Card>
+           );
+         })
         }
       </div>
     </div>

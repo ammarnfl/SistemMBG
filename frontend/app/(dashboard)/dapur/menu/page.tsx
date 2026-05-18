@@ -484,15 +484,15 @@ export default function DapurMenuPage() {
 
       {/* MODAL: FORM MENU */}
       {isMenuFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto animate-in fade-in">
-          <div className="my-8 w-full max-w-3xl">
-            <Card className="shadow-2xl">
-              <CardHeader className="pb-4 border-b border-border/40 sticky top-0 bg-card z-10 rounded-t-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <Card className="shadow-2xl flex flex-col overflow-hidden h-full">
+              <CardHeader className="pb-4 border-b border-border/40 shrink-0 bg-card">
                 <CardTitle>{menuForm.id ? 'Edit Menu' : 'Tambah Menu Baru'}</CardTitle>
                 <CardDescription>Lengkapi detail menu, komposisi bahan, dan nilai gizi per porsi.</CardDescription>
               </CardHeader>
-              <CardContent className="pt-6">
-                <form onSubmit={handleSaveMenu} className="space-y-8">
+              <CardContent className="pt-6 overflow-y-auto flex-1">
+                <form id="menu-form" onSubmit={handleSaveMenu} className="space-y-8">
                   
                   {/* Bagian 1: Info Dasar */}
                   <div className="space-y-4">
@@ -641,14 +641,14 @@ export default function DapurMenuPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-3 pt-6 border-t border-border/40 mt-8 sticky bottom-0 bg-card py-4 z-10 rounded-b-xl">
-                    <Button type="button" variant="ghost" onClick={() => setIsMenuFormOpen(false)}>Batal</Button>
-                    <Button type="submit" disabled={savingMenu || menuForm.komponenIds.length === 0}>
-                      {savingMenu ? <Loader2 size={16} className="animate-spin" /> : 'Simpan Menu'}
-                    </Button>
-                  </div>
                 </form>
               </CardContent>
+              <div className="flex justify-end gap-3 p-4 border-t border-border/40 shrink-0 bg-card">
+                <Button type="button" variant="ghost" onClick={() => setIsMenuFormOpen(false)}>Batal</Button>
+                <Button type="submit" form="menu-form" disabled={savingMenu || menuForm.komponenIds.length === 0}>
+                  {savingMenu ? <Loader2 size={16} className="animate-spin" /> : 'Simpan Menu'}
+                </Button>
+              </div>
             </Card>
           </div>
         </div>

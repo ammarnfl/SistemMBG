@@ -226,7 +226,7 @@ export default function DapurDistribusiPage() {
          distribusi.length===0 ? <StateCard icon={<Truck/>} title="Belum Ada Distribusi" description="Tidak ada jadwal untuk sekolah manapun."/> :
          distribusi.map((d: any) => (
            <Card key={d.id}>
-             <CardContent className="p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+             <div className="p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div>
                   <div className="font-bold flex items-center gap-2">
                     {d.sekolah?.nama}
@@ -243,7 +243,7 @@ export default function DapurDistribusiPage() {
                     <Button size="sm" onClick={() => updateStatus(d.id, 'DIKIRIM')}><Send size={14} className="mr-1"/> Kirim Makanan</Button>
                   )}
                 </div>
-             </CardContent>
+             </div>
              {d.catatanGuru && (
                <div className="bg-destructive/10 px-4 py-2 border-t border-destructive/20 text-xs text-destructive flex flex-col gap-1">
                  <strong>Catatan Guru:</strong> {d.catatanGuru}

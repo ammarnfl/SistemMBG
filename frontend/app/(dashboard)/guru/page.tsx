@@ -5,8 +5,27 @@ import { PageHeader } from '../../../components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
-import { Loader2, School, Users, CheckCircle2, Clock, Truck, ChevronRight } from 'lucide-react';
+import { Loader2, School, Users, CheckCircle2, Clock, Truck, ChevronRight, UtensilsCrossed, Flame, Beef, Droplets, Wheat, Leaf } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
+
+interface MenuKomponen {
+  id: string;
+  nama: string;
+  deskripsi: string | null;
+}
+
+interface MenuDetail {
+  nama: string;
+  deskripsi: string | null;
+  fotoUrl: string | null;
+  energiKkal: number | null;
+  proteinGram: number | null;
+  lemakGram: number | null;
+  karbohidratGram: number | null;
+  seratGram: number | null;
+  komponen: MenuKomponen[];
+}
 
 interface GuruStats {
   sekolah: { id: string; nama: string } | null;
@@ -14,7 +33,8 @@ interface GuruStats {
     id: string;
     status: string;
     jumlahPorsi: number;
-    menu: { nama: string } | null;
+    tanggal: string;
+    menu: MenuDetail | null;
   } | null;
   totalPM: number;
   sudahIsi: number;
@@ -33,6 +53,18 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   BERMASALAH: { label: 'Bermasalah', color: 'bg-red-100 text-red-700' },
   SELESAI: { label: 'Selesai', color: 'bg-green-100 text-green-700' },
 };
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+function NutritionPill({ icon, label, value, unit, color }: { icon: React.ReactNode; label: string; value: number | null; unit: string; color: string }) {
+  if (value == null) return null;
+  return (
+    <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg ${color} text-xs font-medium`}>
+      {icon}
+      <span>{value}{unit}</span>
+    </div>
+  );
+}
 
 export default function GuruDashboard() {
   const [stats, setStats] = useState<GuruStats | null>(null);
@@ -65,6 +97,11 @@ export default function GuruDashboard() {
     ? STATUS_CONFIG[stats.distribusiHariIni.status]
     : null;
 
+  const menu = stats?.distribusiHariIni?.menu;
+  const fotoSrc = menu?.fotoUrl
+    ? (menu.fotoUrl.startsWith('http') ? menu.fotoUrl : `${BACKEND_URL}${menu.fotoUrl}`)
+    : null;
+
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader
@@ -90,29 +127,77 @@ export default function GuruDashboard() {
 
       {stats?.sekolah && (
         <>
-          {/* Distribusi hari ini */}
-          <Card className={`border-l-4 ${stats.distribusiHariIni ? 'border-l-primary' : 'border-l-muted'}`}>
+          {/* Distribusi hari ini — rich card */}
+          <Card className={`border-l-4 overflow-hidden ${stats.distribusiHariIni ? 'border-l-primary' : 'border-l-muted'}`}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Truck size={16} className="text-primary" />
-                Distribusi Hari Ini
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Truck size={16} className="text-primary" />
+                  Distribusi Hari Ini
+                </CardTitle>
+                {statusDistribusi && (
+                  <Badge className={`${statusDistribusi.color} border-0 shrink-0`}>{statusDistribusi.label}</Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {stats.distribusiHariIni ? (
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-foreground">{stats.distribusiHariIni.menu?.nama || 'Menu tidak diset'}</p>
-                      <p className="text-sm text-muted-foreground">{stats.distribusiHariIni.jumlahPorsi} porsi</p>
-                    </div>
-                    {statusDistribusi && (
-                      <Badge className={`${statusDistribusi.color} border-0 shrink-0`}>{statusDistribusi.label}</Badge>
+                <div className="space-y-4">
+                  {/* Menu header with foto */}
+                  <div className="flex gap-4">
+                    {fotoSrc ? (
+                      <div className="shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-muted border shadow-sm">
+                        <Image src={fotoSrc} alt={menu?.nama || 'Foto menu'} width={80} height={80} className="w-full h-full object-cover" unoptimized />
+                      </div>
+                    ) : (
+                      <div className="shrink-0 w-20 h-20 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border flex items-center justify-center">
+                        <UtensilsCrossed size={28} className="text-primary/40" />
+                      </div>
                     )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground text-lg leading-tight">{menu?.nama || 'Menu tidak diset'}</p>
+                      {menu?.deskripsi && (
+                        <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{menu.deskripsi}</p>
+                      )}
+                      <p className="text-sm text-primary font-medium mt-1">{stats.distribusiHariIni.jumlahPorsi} porsi makanan</p>
+                    </div>
                   </div>
+
+                  {/* Nutritional info pills */}
+                  {menu && (menu.energiKkal || menu.proteinGram || menu.lemakGram || menu.karbohidratGram || menu.seratGram) && (
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium mb-2 uppercase tracking-wide">Nilai Gizi per Porsi</p>
+                      <div className="flex flex-wrap gap-2">
+                        <NutritionPill icon={<Flame size={12} />} label="Energi" value={menu.energiKkal} unit=" kkal" color="bg-orange-50 text-orange-700 border border-orange-100" />
+                        <NutritionPill icon={<Beef size={12} />} label="Protein" value={menu.proteinGram} unit="g" color="bg-red-50 text-red-700 border border-red-100" />
+                        <NutritionPill icon={<Droplets size={12} />} label="Lemak" value={menu.lemakGram} unit="g" color="bg-yellow-50 text-yellow-700 border border-yellow-100" />
+                        <NutritionPill icon={<Wheat size={12} />} label="Karbo" value={menu.karbohidratGram} unit="g" color="bg-amber-50 text-amber-700 border border-amber-100" />
+                        <NutritionPill icon={<Leaf size={12} />} label="Serat" value={menu.seratGram} unit="g" color="bg-green-50 text-green-700 border border-green-100" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Komponen list */}
+                  {menu && menu.komponen && menu.komponen.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium mb-2 uppercase tracking-wide">Komponen Menu</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {menu.komponen.map((k) => (
+                          <div key={k.id} className="flex items-start gap-2 p-2 rounded-lg bg-neutral-50 border border-neutral-100">
+                            <span className="text-primary mt-0.5 shrink-0">•</span>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground leading-tight">{k.nama}</p>
+                              {k.deskripsi && <p className="text-xs text-muted-foreground mt-0.5">{k.deskripsi}</p>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <Link href={`/guru/distribusi/${stats.distribusiHariIni.id}`}>
-                    <Button variant="outline" size="sm" className="mt-2 gap-1">
-                      Lihat Detail <ChevronRight size={14} />
+                    <Button variant="outline" size="sm" className="gap-1 mt-1">
+                      Lihat Detail Lengkap <ChevronRight size={14} />
                     </Button>
                   </Link>
                 </div>
