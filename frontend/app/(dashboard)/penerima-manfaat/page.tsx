@@ -5,7 +5,20 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
-import { Loader2, Utensils, CheckCircle2, Clock, Star, CalendarDays, ChevronRight, AlertCircle, Info } from 'lucide-react';
+import { Loader2, Utensils, CheckCircle2, Clock, Star, CalendarDays, ChevronRight, AlertCircle, Info, Flame, Beef, Droplets, Wheat, Leaf } from 'lucide-react';
+import Image from 'next/image';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+function NutritionPill({ icon, label, value, unit, color }: { icon: React.ReactNode; label: string; value: number | null; unit: string; color: string }) {
+  if (value == null) return null;
+  return (
+    <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg ${color} text-xs font-medium`}>
+      {icon}
+      <span>{value}{unit}</span>
+    </div>
+  );
+}
 
 interface PMStats {
   sudahIsiHariIni: boolean;
@@ -25,6 +38,7 @@ interface PMStats {
 interface MenuHariIni {
   id: string;
   tanggal: string;
+  status: string;
   menu: { 
     nama: string; 
     deskripsi?: string; 
@@ -55,6 +69,7 @@ export default function BerandaPenerimaManfaat() {
   const [distribusi, setDistribusi] = useState<MenuHariIni | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedFotoUrl, setSelectedFotoUrl] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -100,48 +115,69 @@ export default function BerandaPenerimaManfaat() {
 
       {/* Status Pengisian Hari Ini */}
       {stats && (
-        <Card className={`border-l-4 ${stats.sudahIsiHariIni ? 'border-l-green-400 bg-green-50/30' : 'border-l-amber-400 bg-amber-50/30'}`}>
-          <CardContent className="p-4 flex items-center gap-3">
-            {stats.sudahIsiHariIni
-              ? <CheckCircle2 size={24} className="text-green-600 shrink-0" />
-              : <Clock size={24} className="text-amber-600 shrink-0" />
-            }
-            <div>
-              <p className="font-semibold text-foreground">
-                {stats.sudahIsiHariIni ? 'Evaluasi Hari Ini Sudah Diisi' : 'Belum Mengisi Evaluasi Hari Ini'}
-              </p>
-              {stats.evaluasiHariIni && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge className={`text-xs border-0 ${stats.evaluasiHariIni.statusKonsumsi === 'KONSUMSI' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {stats.evaluasiHariIni.statusKonsumsi === 'KONSUMSI' ? 'Dikonsumsi' : 'Tidak Dikonsumsi'}
-                  </Badge>
-                  <StarRow value={stats.evaluasiHariIni.ratingKeseluruhan} />
-                </div>
-              )}
+        stats.sudahIsiHariIni ? (
+          <Card className="border-l-4 border-l-green-400 bg-green-50/30">
+            <div className="p-4 flex items-center gap-3">
+              <CheckCircle2 size={24} className="text-green-600 shrink-0" />
+              <div>
+                <p className="font-semibold text-foreground">Evaluasi Hari Ini Sudah Diisi</p>
+                {stats.evaluasiHariIni && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge className={`text-xs border-0 ${stats.evaluasiHariIni.statusKonsumsi === 'KONSUMSI' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {stats.evaluasiHariIni.statusKonsumsi === 'KONSUMSI' ? 'Dikonsumsi' : 'Tidak Dikonsumsi'}
+                    </Badge>
+                    <StarRow value={stats.evaluasiHariIni.ratingKeseluruhan} />
+                  </div>
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </Card>
+        ) : distribusi && (distribusi.status === 'DITERIMA' || distribusi.status === 'SELESAI') ? (
+          <Card className="border-l-4 border-l-amber-500 bg-amber-50 shadow-sm mt-4">
+            <div className="p-4">
+              <div className="flex items-start gap-3">
+                <Clock size={24} className="text-amber-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-bold text-amber-900">Belum Mengisi Evaluasi</p>
+                  <p className="text-sm text-amber-700 mt-0.5 leading-tight">Anda belum mengisi evaluasi makanan untuk hari ini. Mohon segera isi.</p>
+                  <Button 
+                    size="sm" 
+                    className="w-full mt-3 bg-amber-500 hover:bg-amber-600 text-white shadow-sm"
+                    onClick={() => router.push(`/penerima-manfaat/evaluasi?distribusiId=${distribusi.id}&tanggal=${distribusi.tanggal}`)}
+                  >
+                    Isi Evaluasi Sekarang
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        ) : null
       )}
 
       {/* Menu Hari Ini */}
       {!distribusi ? (
         <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center p-10 text-center text-muted-foreground">
+          <div className="flex flex-col items-center justify-center p-10 text-center text-muted-foreground">
             <div className="p-4 bg-muted/50 rounded-full mb-3">
               <Utensils size={28} className="text-muted-foreground/70" />
             </div>
             <p className="font-medium text-foreground">Belum ada makanan hari ini</p>
             <p className="text-sm mt-1">Tidak ada distribusi makanan untuk sekolah Anda.</p>
-          </CardContent>
+          </div>
         </Card>
       ) : (
         <Card className="shadow-md border-primary/20 overflow-hidden relative">
           <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-primary to-primary/50" />
           
           {distribusi.menu.fotoUrl && (
-            <div className="w-full h-48 bg-muted border-b border-border/50">
+            <div 
+              className="w-full h-48 bg-muted border-b border-border/50 cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => setSelectedFotoUrl(
+                distribusi.menu.fotoUrl!.startsWith('http') ? distribusi.menu.fotoUrl! : `${BACKEND_URL}${distribusi.menu.fotoUrl}`
+              )}
+            >
               <img 
-                src={distribusi.menu.fotoUrl} 
+                src={distribusi.menu.fotoUrl.startsWith('http') ? distribusi.menu.fotoUrl : `${BACKEND_URL}${distribusi.menu.fotoUrl}`} 
                 alt={distribusi.menu.nama} 
                 className="w-full h-full object-cover"
                 onError={(e) => (e.currentTarget.style.display = 'none')}
@@ -155,7 +191,6 @@ export default function BerandaPenerimaManfaat() {
                 <CardTitle className="text-xl text-primary font-black tracking-tight">{distribusi.menu.nama}</CardTitle>
                 <p className="text-xs font-semibold text-muted-foreground mt-1 uppercase tracking-widest">Dapur: {distribusi.dapur.nama}</p>
               </div>
-              <Badge className="bg-primary/10 text-primary border-0 text-xs shrink-0">Hari Ini</Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -179,48 +214,29 @@ export default function BerandaPenerimaManfaat() {
             </div>
 
             {/* Nilai Gizi Section */}
-            {(distribusi.menu.energiKkal !== null || distribusi.menu.proteinGram !== null) && (
+            {(distribusi.menu.energiKkal !== null || distribusi.menu.proteinGram !== null || distribusi.menu.lemakGram !== null || distribusi.menu.karbohidratGram !== null || distribusi.menu.seratGram !== null) && (
               <div className="space-y-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Info size={14} /> Nilai Gizi
+                  <Info size={14} /> Nilai Gizi per Porsi
                 </h4>
-                <div className="bg-blue-50/50 border border-blue-100/50 rounded-xl p-3 grid grid-cols-2 gap-y-3 gap-x-4">
-                  {distribusi.menu.energiKkal !== null && (
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground/70">Energi</span>
-                      <span className="text-sm font-bold text-foreground">{distribusi.menu.energiKkal} <span className="text-xs font-medium text-muted-foreground">kkal</span></span>
-                    </div>
-                  )}
-                  {distribusi.menu.proteinGram !== null && (
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground/70">Protein</span>
-                      <span className="text-sm font-bold text-foreground">{distribusi.menu.proteinGram} <span className="text-xs font-medium text-muted-foreground">g</span></span>
-                    </div>
-                  )}
-                  {distribusi.menu.lemakGram !== null && (
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground/70">Lemak</span>
-                      <span className="text-sm font-bold text-foreground">{distribusi.menu.lemakGram} <span className="text-xs font-medium text-muted-foreground">g</span></span>
-                    </div>
-                  )}
-                  {distribusi.menu.karbohidratGram !== null && (
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground/70">Karbohidrat</span>
-                      <span className="text-sm font-bold text-foreground">{distribusi.menu.karbohidratGram} <span className="text-xs font-medium text-muted-foreground">g</span></span>
-                    </div>
-                  )}
+                <div className="flex flex-wrap gap-2">
+                  <NutritionPill icon={<Flame size={12} />} label="Energi" value={distribusi.menu.energiKkal} unit=" kkal" color="bg-orange-50 text-orange-700 border border-orange-100" />
+                  <NutritionPill icon={<Beef size={12} />} label="Protein" value={distribusi.menu.proteinGram} unit="g" color="bg-red-50 text-red-700 border border-red-100" />
+                  <NutritionPill icon={<Droplets size={12} />} label="Lemak" value={distribusi.menu.lemakGram} unit="g" color="bg-yellow-50 text-yellow-700 border border-yellow-100" />
+                  <NutritionPill icon={<Wheat size={12} />} label="Karbo" value={distribusi.menu.karbohidratGram} unit="g" color="bg-amber-50 text-amber-700 border border-amber-100" />
+                  <NutritionPill icon={<Leaf size={12} />} label="Serat" value={distribusi.menu.seratGram} unit="g" color="bg-green-50 text-green-700 border border-green-100" />
                 </div>
               </div>
             )}
             
           </CardContent>
-          <CardFooter className="pt-4 bg-muted/10 border-t">
+          <CardFooter className="pt-4 bg-muted/10 border-t flex-col gap-2">
             {stats?.sudahIsiHariIni ? (
               <Button variant="outline" className="w-full h-11" onClick={() => router.push('/penerima-manfaat/riwayat')}>
                 <CheckCircle2 size={16} className="mr-2 text-green-600" />
                 Lihat Riwayat Evaluasi
               </Button>
-            ) : (
+            ) : distribusi.status === 'DITERIMA' || distribusi.status === 'SELESAI' ? (
               <Button
                 className="w-full h-11 font-medium shadow-sm group"
                 onClick={() => router.push(`/penerima-manfaat/evaluasi?distribusiId=${distribusi.id}&tanggal=${distribusi.tanggal}`)}
@@ -228,6 +244,12 @@ export default function BerandaPenerimaManfaat() {
                 Isi Evaluasi Makanan
                 <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
               </Button>
+            ) : (
+              <div className="w-full text-center p-3 rounded-lg bg-amber-50 border border-amber-100 flex flex-col items-center gap-1">
+                <Clock size={18} className="text-amber-500" />
+                <p className="text-sm font-medium text-amber-700">Belum Bisa Mengisi Evaluasi</p>
+                <p className="text-xs text-amber-600">Menunggu guru mengonfirmasi distribusi makanan ini.</p>
+              </div>
             )}
           </CardFooter>
         </Card>
@@ -266,6 +288,22 @@ export default function BerandaPenerimaManfaat() {
             </Button>
           </CardFooter>
         </Card>
+      )}
+
+      {/* Image Modal */}
+      {selectedFotoUrl && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in"
+          onClick={() => setSelectedFotoUrl(null)}
+        >
+          <div className="relative w-full max-w-4xl max-h-[90vh] flex items-center justify-center">
+            <img 
+              src={selectedFotoUrl} 
+              alt="Foto diperbesar" 
+              className="max-w-full max-h-[90vh] object-contain rounded-md" 
+            />
+          </div>
+        </div>
       )}
     </div>
   );

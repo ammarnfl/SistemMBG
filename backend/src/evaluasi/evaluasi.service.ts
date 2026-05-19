@@ -63,6 +63,19 @@ export class EvaluasiService {
       throw new BadRequestException('Evaluasi sudah melewati batas waktu 7 hari');
     }
 
+    // 1.5 Cek status distribusi
+    if (dto.distribusiId) {
+      const distribusi = await this.prisma.distribusi.findUnique({
+        where: { id: dto.distribusiId }
+      });
+      if (!distribusi) {
+        throw new BadRequestException('Distribusi tidak ditemukan');
+      }
+      if (distribusi.status !== 'DITERIMA' && distribusi.status !== 'SELESAI') {
+        throw new BadRequestException('Evaluasi belum bisa diisi karena distribusi belum dikonfirmasi oleh guru');
+      }
+    }
+
     // 2. Cek apakah sudah mengisi evaluasi di hari tersebut
     const existing = await this.prisma.evaluasiHarian.findUnique({
       where: {

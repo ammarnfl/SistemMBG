@@ -71,6 +71,7 @@ export default function GuruDashboard() {
   const [monitoring, setMonitoring] = useState<MonitoringData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedFotoUrl, setSelectedFotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -146,7 +147,10 @@ export default function GuruDashboard() {
                   {/* Menu header with foto */}
                   <div className="flex gap-4">
                     {fotoSrc ? (
-                      <div className="shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-muted border shadow-sm">
+                      <div 
+                        className="shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-muted border shadow-sm cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                        onClick={() => setSelectedFotoUrl(fotoSrc)}
+                      >
                         <Image src={fotoSrc} alt={menu?.nama || 'Foto menu'} width={80} height={80} className="w-full h-full object-cover" unoptimized />
                       </div>
                     ) : (
@@ -305,6 +309,25 @@ export default function GuruDashboard() {
             </Button>
           </Link>
         </>
+      )}
+
+      {/* Image Modal */}
+      {selectedFotoUrl && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in"
+          onClick={() => setSelectedFotoUrl(null)}
+        >
+          <div className="relative w-full max-w-4xl max-h-[90vh] flex items-center justify-center">
+            <Image 
+              src={selectedFotoUrl} 
+              alt="Foto diperbesar" 
+              width={1200} 
+              height={1200} 
+              className="max-w-full max-h-[90vh] object-contain rounded-md" 
+              unoptimized 
+            />
+          </div>
+        </div>
       )}
     </div>
   );

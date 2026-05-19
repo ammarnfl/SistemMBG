@@ -33,6 +33,7 @@ export default function GuruDistribusiPage() {
   const [distribusi, setDistribusi] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterDate, setFilterDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedFotoUrl, setSelectedFotoUrl] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -53,12 +54,12 @@ export default function GuruDistribusiPage() {
         description="Pantau dan konfirmasi penerimaan makanan dari Dapur Utama."
       />
 
-      <div className="bg-white border p-3 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+      <div className="bg-white border px-4 py-3 rounded-lg flex flex-row items-center justify-between gap-3 shadow-sm">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground shrink-0">
           <CalendarDays size={16} className="text-primary" />
           <span>Tanggal Distribusi:</span>
         </div>
-        <Input type="date" className="h-9 w-full sm:w-auto" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}/>
+        <Input type="date" className="h-9 w-auto" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}/>
       </div>
 
       <div className="space-y-4 pt-2">
@@ -79,8 +80,11 @@ export default function GuruDistribusiPage() {
                    {/* Menu image section */}
                    <div className="sm:w-36 sm:min-h-full shrink-0">
                      {fotoSrc ? (
-                       <div className="w-full h-32 sm:h-full relative">
-                         <Image src={fotoSrc} alt={menu?.nama || ''} fill className="object-cover" unoptimized />
+                       <div 
+                         className="w-full h-32 sm:h-full relative cursor-pointer group"
+                         onClick={() => setSelectedFotoUrl(fotoSrc)}
+                       >
+                         <Image src={fotoSrc} alt={menu?.nama || ''} fill className="object-cover group-hover:brightness-90 transition-all" unoptimized />
                        </div>
                      ) : (
                        <div className="w-full h-32 sm:h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">

@@ -28,6 +28,7 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
 
   const [dist, setDist] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedFotoUrl, setSelectedFotoUrl] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -92,7 +93,7 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
 
       {/* Status & Info Card */}
       <Card>
-        <CardContent className="p-6 space-y-5">
+        <CardContent className="p-6 pt-5 space-y-5">
           {/* Top: dapur, status, date */}
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -137,7 +138,10 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
             {/* Menu hero with photo */}
             <div className="flex gap-4">
               {fotoSrc ? (
-                <div className="shrink-0 w-24 h-24 rounded-xl overflow-hidden bg-muted border shadow-sm">
+                <div 
+                  className="shrink-0 w-24 h-24 rounded-xl overflow-hidden bg-muted border shadow-sm cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                  onClick={() => setSelectedFotoUrl(fotoSrc)}
+                >
                   <Image src={fotoSrc} alt={menu.nama} width={96} height={96} className="w-full h-full object-cover" unoptimized />
                 </div>
               ) : (
@@ -276,6 +280,25 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Image Modal */}
+      {selectedFotoUrl && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in"
+          onClick={() => setSelectedFotoUrl(null)}
+        >
+          <div className="relative w-full max-w-4xl max-h-[90vh] flex items-center justify-center">
+            <Image 
+              src={selectedFotoUrl} 
+              alt="Foto diperbesar" 
+              width={1200} 
+              height={1200} 
+              className="max-w-full max-h-[90vh] object-contain rounded-md" 
+              unoptimized 
+            />
+          </div>
+        </div>
       )}
     </div>
   );

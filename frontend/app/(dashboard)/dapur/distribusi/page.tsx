@@ -235,7 +235,7 @@ export default function DapurDistribusiPage() {
                   <div className="text-sm font-medium mt-1 text-primary">{d.jumlahPorsi} Porsi</div>
                 </div>
                 
-                <div className="flex flex-col items-end gap-2 shrink-0">
+                <div className="flex w-full sm:w-auto flex-row sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
                   <Badge variant={d.status === 'DRAFT' ? 'outline' : d.status === 'DIKIRIM'? 'default' : d.status === 'DITERIMA' ? 'default': 'destructive'}>
                      {d.status}
                   </Badge>

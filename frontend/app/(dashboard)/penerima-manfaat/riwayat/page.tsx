@@ -3,14 +3,21 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '../../../../components/ui/Card';
-import { Loader2, Calendar, Star, CheckCircle2, Camera } from 'lucide-react';
+import { Loader2, Calendar, Star, CheckCircle2, Camera, X, ZoomIn } from 'lucide-react';
 import { Alert, AlertDescription } from '../../../../components/ui/FormComponents';
 import { Badge } from '../../../../components/ui/Badge';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+function resolveUrl(url: string) {
+  return url.startsWith('http') ? url : `${BACKEND_URL}${url}`;
+}
 
 export default function RiwayatEvaluasiPage() {
   const [riwayat, setRiwayat] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedFotoUrl, setSelectedFotoUrl] = useState<string | null>(null);
   
   const searchParams = useSearchParams();
   const showSuccess = searchParams.get('success') === '1';
@@ -64,11 +71,11 @@ export default function RiwayatEvaluasiPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : riwayat.length === 0 ? (
-        <Card className="border-dashed bg-muted/10 shadow-sm">
-          <CardContent className="flex flex-col items-center justify-center p-10 text-center">
+        <Card className="border-dashed bg-muted/10 shadow-sm min-h-[240px] flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center text-center px-6">
             <Calendar className="h-10 w-10 text-muted-foreground/40 mb-3" />
             <p className="text-muted-foreground font-medium">Belum ada riwayat evaluasi</p>
-          </CardContent>
+          </div>
         </Card>
       ) : (
         <div className="space-y-4">
@@ -113,15 +120,42 @@ export default function RiwayatEvaluasiPage() {
                       </div>
                     )}
                     {item.fotoUrl && (
-                      <div className="flex items-center gap-2 text-xs font-medium text-primary bg-primary/5 p-2 rounded-md border border-primary/10">
-                        <Camera size={14} /> Foto dilampirkan
-                      </div>
+                      <button
+                        onClick={() => setSelectedFotoUrl(resolveUrl(item.fotoUrl))}
+                        className="flex items-center gap-2 text-xs font-medium text-primary bg-primary/5 p-2 rounded-md border border-primary/10 hover:bg-primary/10 transition-colors w-full"
+                      >
+                        <Camera size={14} />
+                        <span className="flex-1 text-left">Foto dilampirkan</span>
+                        <ZoomIn size={13} className="text-primary/60" />
+                      </button>
                     )}
                   </div>
                 )}
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+      {/* Image Modal */}
+      {selectedFotoUrl && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in"
+          onClick={() => setSelectedFotoUrl(null)}
+        >
+          <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col items-center gap-3">
+            <button
+              className="self-end bg-white/20 hover:bg-white/30 text-white rounded-full p-1 transition-colors"
+              onClick={() => setSelectedFotoUrl(null)}
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={selectedFotoUrl}
+              alt="Foto evaluasi"
+              className="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl"
+            />
+            <p className="text-white/60 text-xs">Ketuk di luar untuk menutup</p>
+          </div>
         </div>
       )}
     </div>

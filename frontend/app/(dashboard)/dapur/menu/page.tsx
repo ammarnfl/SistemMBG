@@ -616,23 +616,23 @@ export default function DapurMenuPage() {
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3 ml-8">
                       <FormField>
                         <FormLabel>Energi (kkal)</FormLabel>
-                        <Input type="number" min="0" placeholder="0" value={menuForm.energiKkal} onChange={e => setMenuForm({...menuForm, energiKkal: e.target.value})} />
+                        <Input type="number" min="0" step="any" placeholder="0" value={menuForm.energiKkal} onChange={e => setMenuForm({...menuForm, energiKkal: e.target.value})} />
                       </FormField>
                       <FormField>
                         <FormLabel>Protein (gram)</FormLabel>
-                        <Input type="number" min="0" placeholder="0" value={menuForm.proteinGram} onChange={e => setMenuForm({...menuForm, proteinGram: e.target.value})} />
+                        <Input type="number" min="0" step="any" placeholder="0" value={menuForm.proteinGram} onChange={e => setMenuForm({...menuForm, proteinGram: e.target.value})} />
                       </FormField>
                       <FormField>
                         <FormLabel>Lemak (gram)</FormLabel>
-                        <Input type="number" min="0" placeholder="0" value={menuForm.lemakGram} onChange={e => setMenuForm({...menuForm, lemakGram: e.target.value})} />
+                        <Input type="number" min="0" step="any" placeholder="0" value={menuForm.lemakGram} onChange={e => setMenuForm({...menuForm, lemakGram: e.target.value})} />
                       </FormField>
                       <FormField>
                         <FormLabel>Karbo. (gram)</FormLabel>
-                        <Input type="number" min="0" placeholder="0" value={menuForm.karbohidratGram} onChange={e => setMenuForm({...menuForm, karbohidratGram: e.target.value})} />
+                        <Input type="number" min="0" step="any" placeholder="0" value={menuForm.karbohidratGram} onChange={e => setMenuForm({...menuForm, karbohidratGram: e.target.value})} />
                       </FormField>
                       <FormField>
                         <FormLabel>Serat (gram)</FormLabel>
-                        <Input type="number" min="0" placeholder="0" value={menuForm.seratGram} onChange={e => setMenuForm({...menuForm, seratGram: e.target.value})} />
+                        <Input type="number" min="0" step="any" placeholder="0" value={menuForm.seratGram} onChange={e => setMenuForm({...menuForm, seratGram: e.target.value})} />
                       </FormField>
                     </div>
                     <div className="ml-8 mt-2 p-3 rounded-lg bg-blue-50/50 border border-blue-100 flex gap-2 text-xs text-blue-700">

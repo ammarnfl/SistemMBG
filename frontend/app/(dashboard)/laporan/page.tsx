@@ -6,7 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { DataTable, Column } from '../../../components/ui/DataTable';
-import { Download, Loader2, FileText, CheckCircle2, Search, Filter, RefreshCw } from 'lucide-react';
+import { Download, Loader2, FileText, CheckCircle2, Search, Filter, RefreshCw, Camera, X, ZoomIn } from 'lucide-react';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+function resolveImgUrl(url: string) {
+  return url.startsWith('http') ? url : `${BACKEND_URL}${url}`;
+}
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -48,6 +53,7 @@ export default function LaporanPage() {
   // Export states
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
+  const [selectedFotoUrl, setSelectedFotoUrl] = useState<string | null>(null);
 
   const buildQueryString = useCallback((pageNum = 1) => {
     const params = new URLSearchParams();
@@ -140,6 +146,14 @@ export default function LaporanPage() {
     { header: 'Status', accessorKey: 'statusKonsumsi' },
     { header: 'Rating', cell: (row) => row.ratingKeseluruhan ? `${row.ratingKeseluruhan} ⭐` : '-' },
     { header: 'Menu', accessorKey: 'distribusi.menu.nama' },
+    { header: 'Foto', cell: (row) => row.fotoUrl ? (
+      <button
+        onClick={() => setSelectedFotoUrl(resolveImgUrl(row.fotoUrl))}
+        className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-md hover:bg-primary/20 transition-colors"
+      >
+        <Camera size={12} /><ZoomIn size={12} />
+      </button>
+    ) : <span className="text-muted-foreground/40 text-xs">—</span> },
   ];
 
   const colsKomponen: Column<any>[] = [
@@ -157,6 +171,14 @@ export default function LaporanPage() {
     { header: 'Menu', accessorKey: 'distribusi.menu.nama' },
     { header: 'Rating', cell: (row) => row.ratingKeseluruhan ? `${row.ratingKeseluruhan} ⭐` : '-' },
     { header: 'Feedback', accessorKey: 'feedback', className: 'max-w-xs truncate' },
+    { header: 'Foto', cell: (row) => row.fotoUrl ? (
+      <button
+        onClick={() => setSelectedFotoUrl(resolveImgUrl(row.fotoUrl))}
+        className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-md hover:bg-primary/20 transition-colors"
+      >
+        <Camera size={12} /><ZoomIn size={12} />
+      </button>
+    ) : <span className="text-muted-foreground/40 text-xs">—</span> },
   ];
 
   const currentColumns = 
@@ -306,6 +328,29 @@ export default function LaporanPage() {
           )}
         </div>
       </Card>
+
+      {/* Image Modal */}
+      {selectedFotoUrl && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in"
+          onClick={() => setSelectedFotoUrl(null)}
+        >
+          <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="self-end bg-white/20 hover:bg-white/30 text-white rounded-full p-1.5 transition-colors"
+              onClick={() => setSelectedFotoUrl(null)}
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={selectedFotoUrl}
+              alt="Foto evaluasi siswa"
+              className="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl"
+            />
+            <p className="text-white/60 text-xs">Klik tombol × atau area luar untuk menutup</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

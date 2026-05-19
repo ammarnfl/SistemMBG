@@ -233,20 +233,27 @@ export default function FormEvaluasiPage() {
               <div className="border-t border-dashed my-4"></div>
 
               {/* Komponen Rating */}
-              <div className="space-y-4">
-                <Label className="text-sm font-semibold mb-2 block">Seberapa habis porsi ini?</Label>
+              <div className="space-y-5">
+                <div>
+                  <Label className="text-sm font-semibold block">Seberapa habis porsi ini?</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">1 = Tidak habis, 5 = Habis semua</p>
+                </div>
                 {distribusi?.menu?.komponen?.map((komp: any) => (
                   <div key={komp.id} className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium">{komp.nama}</span>
-                      <span className="text-xs text-muted-foreground">{komp.porsi}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-foreground">{komp.namaSnapshot || komp.nama}</span>
+                      {penilaianKomponen[komp.id] && (
+                        <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                          {penilaianKomponen[komp.id]}/5
+                        </span>
+                      )}
                     </div>
-                    <div className="flex justify-between items-center gap-1">
+                    <div className="flex justify-between items-center gap-1.5">
                       {[1, 2, 3, 4, 5].map((val) => (
                         <button
                           key={val}
                           onClick={() => handleKomponenRating(komp.id, val)}
-                          className={`flex-1 h-8 rounded-md text-xs font-medium transition-all ${
+                          className={`flex-1 h-9 rounded-md text-xs font-medium transition-all ${
                             penilaianKomponen[komp.id] === val 
                             ? 'bg-primary text-primary-foreground shadow-md scale-105' 
                             : 'bg-muted text-muted-foreground hover:bg-muted/80'
