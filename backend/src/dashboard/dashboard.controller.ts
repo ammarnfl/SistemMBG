@@ -45,6 +45,25 @@ export class DashboardController {
     return this.dashboardService.getGuruMonitoring(req.user.id);
   }
 
+  @Roles(Role.GURU)
+  @Get('guru/kelas')
+  @ApiOperation({ summary: 'Guru: daftar kelas di sekolahnya untuk filter presensi' })
+  getGuruKelas(@Request() req: any) {
+    return this.dashboardService.getGuruKelas(req.user.id);
+  }
+
+  @Roles(Role.GURU)
+  @Get('guru/presensi')
+  @ApiOperation({ summary: 'Guru presensi: status konsumsi & feedback siswa per tanggal' })
+  getGuruPresensi(
+    @Request() req: any,
+    @Query('tanggal') tanggal?: string,
+    @Query('search') search?: string,
+    @Query('kelasId') kelasId?: string,
+  ) {
+    return this.dashboardService.getGuruPresensi(req.user.id, { tanggal, search, kelasId });
+  }
+
   @Roles(Role.PENERIMA_MANFAAT)
   @Get('pm')
   @ApiOperation({ summary: 'Penerima Manfaat dashboard stats' })

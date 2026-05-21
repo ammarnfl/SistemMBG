@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '../../../../components/ui/Card';
-import { Loader2, Calendar, Star, CheckCircle2, Camera, X, ZoomIn } from 'lucide-react';
+import { Loader2, Calendar, Star, CheckCircle2, Camera, X, ZoomIn, MessageSquareReply } from 'lucide-react';
 import { Alert, AlertDescription } from '../../../../components/ui/FormComponents';
 import { Badge } from '../../../../components/ui/Badge';
 
@@ -128,6 +128,24 @@ export default function RiwayatEvaluasiPage() {
                         <span className="flex-1 text-left">Foto dilampirkan</span>
                         <ZoomIn size={13} className="text-primary/60" />
                       </button>
+                    )}
+                    {/* Resolution from Tim Dapur */}
+                    {item.feedbackResolved && item.feedbackResolution && (
+                      <div className="bg-green-50 border border-green-100 rounded-xl p-3 space-y-1.5 animate-in fade-in duration-300">
+                        <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider flex items-center gap-1.5">
+                          <MessageSquareReply size={11} />
+                          Tanggapan Tim Dapur
+                        </p>
+                        <p className="text-xs text-green-800 leading-relaxed">{item.feedbackResolution}</p>
+                        {item.feedbackResolvedAt && (
+                          <p className="text-[9px] text-green-500">
+                            {new Date(item.feedbackResolvedAt).toLocaleDateString('id-ID', {
+                              day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+                            })}
+                            {item.feedbackResolvedBy && ` · oleh ${item.feedbackResolvedBy.name}`}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}

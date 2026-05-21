@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { DataTable, Column } from '../../../components/ui/DataTable';
-import { Download, Loader2, FileText, CheckCircle2, Search, Filter, RefreshCw, Camera, X, ZoomIn } from 'lucide-react';
+import { Download, Loader2, FileText, CheckCircle2, Search, Filter, RefreshCw, Camera, X, ZoomIn, Clock } from 'lucide-react';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 function resolveImgUrl(url: string) {
@@ -54,6 +54,18 @@ export default function LaporanPage() {
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [selectedFotoUrl, setSelectedFotoUrl] = useState<string | null>(null);
+  const [lastSentimenRefresh, setLastSentimenRefresh] = useState<string | null>(null);
+
+  const SENTIMEN_COLORS: Record<string, string> = {
+    POSITIF: 'bg-green-100 text-green-700',
+    NETRAL: 'bg-gray-100 text-gray-600',
+    NEGATIF: 'bg-red-100 text-red-700',
+  };
+  const SENTIMEN_DOTS: Record<string, string> = {
+    POSITIF: 'bg-green-500',
+    NETRAL: 'bg-gray-400',
+    NEGATIF: 'bg-red-500',
+  };
 
   const buildQueryString = useCallback((pageNum = 1) => {
     const params = new URLSearchParams();
@@ -78,6 +90,9 @@ export default function LaporanPage() {
       setTotal(result.total || 0);
       setPage(result.page || 1);
       setTotalPages(result.totalPages || 1);
+      if (result.lastSentimenRefresh) {
+        setLastSentimenRefresh(result.lastSentimenRefresh);
+      }
     } catch (err: any) {
       console.error(err);
       setData([]);
@@ -137,6 +152,18 @@ export default function LaporanPage() {
     { header: 'Menu', accessorKey: 'menu.nama' },
     { header: 'Porsi', accessorKey: 'jumlahPorsi' },
     { header: 'Status', accessorKey: 'status' },
+    { 
+      header: 'Keterangan Dapur', 
+      cell: (row) => (row.status === 'BERMASALAH' && row.catatanDapur) ? 
+        <span className="text-destructive font-medium truncate max-w-[200px] inline-block" title={row.catatanDapur}>{row.catatanDapur}</span> : 
+        <span className="text-muted-foreground">-</span>
+    },
+    { 
+      header: 'Keterangan Guru', 
+      cell: (row) => (row.status === 'BERMASALAH' && row.catatanGuru) ? 
+        <span className="text-destructive font-medium truncate max-w-[200px] inline-block" title={row.catatanGuru}>{row.catatanGuru}</span> : 
+        <span className="text-muted-foreground">-</span>
+    },
   ];
 
   const colsEvaluasi: Column<any>[] = [
@@ -146,6 +173,15 @@ export default function LaporanPage() {
     { header: 'Status', accessorKey: 'statusKonsumsi' },
     { header: 'Rating', cell: (row) => row.ratingKeseluruhan ? `${row.ratingKeseluruhan} ⭐` : '-' },
     { header: 'Menu', accessorKey: 'distribusi.menu.nama' },
+    { 
+      header: 'Keterangan', 
+      cell: (row) => {
+        if (row.statusKonsumsi === 'SISA' || row.statusKonsumsi === 'TIDAK_DIMAKAN') {
+          return <span className="text-amber-600 font-medium truncate max-w-[250px] inline-block" title={row.feedback || ''}>{row.feedback || 'Perlu evaluasi'}</span>;
+        }
+        return <span className="text-muted-foreground">-</span>;
+      }
+    },
     { header: 'Foto', cell: (row) => row.fotoUrl ? (
       <button
         onClick={() => setSelectedFotoUrl(resolveImgUrl(row.fotoUrl))}
@@ -170,6 +206,18 @@ export default function LaporanPage() {
     { header: 'Sekolah', accessorKey: 'distribusi.sekolah.nama' },
     { header: 'Menu', accessorKey: 'distribusi.menu.nama' },
     { header: 'Rating', cell: (row) => row.ratingKeseluruhan ? `${row.ratingKeseluruhan} ⭐` : '-' },
+    { header: 'Label', cell: (row) => {
+      if (!row.sentimen) return <span className="text-muted-foreground/50 text-xs italic">—</span>;
+      const color = SENTIMEN_COLORS[row.sentimen] || 'bg-gray-100 text-gray-500';
+      const dot = SENTIMEN_DOTS[row.sentimen] || 'bg-gray-400';
+      const labelText = row.sentimen === 'POSITIF' ? 'Positif' : row.sentimen === 'NEGATIF' ? 'Negatif' : 'Netral';
+      return (
+        <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${color}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+          {labelText}
+        </div>
+      );
+    }},
     { header: 'Feedback', accessorKey: 'feedback', className: 'max-w-xs truncate' },
     { header: 'Foto', cell: (row) => row.fotoUrl ? (
       <button
@@ -270,6 +318,12 @@ export default function LaporanPage() {
         <div className="p-4 flex items-center justify-between bg-card">
           <div className="text-sm text-muted-foreground">
             Menampilkan {total} data <span className="font-semibold text-foreground capitalize">{activeTab}</span>
+            {activeTab === 'feedback' && lastSentimenRefresh && (
+              <span className="ml-3 inline-flex items-center gap-1.5 text-[10px] text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full border border-border/40">
+                <Clock size={10} />
+                Label diperbarui: {new Date(lastSentimenRefresh).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
           </div>
           <Button
             variant="outline"

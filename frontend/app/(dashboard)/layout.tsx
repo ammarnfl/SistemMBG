@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardShell } from '../../components/layout/DashboardShell';
-import { Home, Users, School, UtensilsCrossed, LayoutGrid, BookOpen, CalendarDays, Truck, ClipboardList, Loader2, WifiOff } from 'lucide-react';
+import { Home, Users, School, UtensilsCrossed, LayoutGrid, BookOpen, CalendarDays, Truck, ClipboardList, ClipboardCheck, Loader2, WifiOff, MessageSquare } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -17,8 +17,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
       const res = await fetch('/api/proxy/auth/me');
       if (!res.ok) {
-        // Token invalid or expired, redirect to login
-        router.push('/login');
+        // Token invalid or expired, clear cookie and redirect
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/login';
         return;
       }
       const json = await res.json();
@@ -102,6 +103,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       { title: 'Menu Master', href: '/dapur/menu', icon: BookOpen },
       { title: 'Jadwal Aktif', href: '/dapur/jadwal', icon: CalendarDays },
       { title: 'Distribusi', href: '/dapur/distribusi', icon: Truck },
+      { title: 'Feedback', href: '/dapur/feedback', icon: MessageSquare },
       { title: 'Laporan', href: '/laporan', icon: ClipboardList },
     ];
   } else if (role === 'GURU') {
@@ -109,6 +111,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     navItems = [
       { title: 'Dashboard', href: '/guru', icon: Home },
       { title: 'Distribusi', href: '/guru/distribusi', icon: Truck },
+      { title: 'Presensi', href: '/guru/presensi', icon: ClipboardCheck },
+      { title: 'Feedback', href: '/guru/feedback', icon: MessageSquare },
       { title: 'Laporan', href: '/laporan', icon: ClipboardList },
     ];
   } else if (role === 'PENERIMA_MANFAAT') {

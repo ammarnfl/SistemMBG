@@ -5,7 +5,7 @@ import { PageHeader } from '../../../components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
-import { Loader2, School, Users, CheckCircle2, Clock, Truck, ChevronRight, UtensilsCrossed, Flame, Beef, Droplets, Wheat, Leaf } from 'lucide-react';
+import { Loader2, School, Users, CheckCircle2, Clock, Truck, ChevronRight, UtensilsCrossed, Flame, Beef, Droplets, Wheat, Leaf, MessageSquare, ClipboardCheck, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -39,11 +39,23 @@ interface GuruStats {
   totalPM: number;
   sudahIsi: number;
   belumIsi: number;
-}
-
-interface MonitoringData {
-  sudahIsi: { userId: string; name: string; kelas: string; statusKonsumsi: string; rating: number | null }[];
-  belumIsi: { userId: string; name: string; kelas: string }[];
+  feedbackTerbaru: {
+    id: string;
+    feedback: string;
+    penerimaManfaat: string;
+    sekolah: string;
+    tanggal: string;
+    sentimen: 'POSITIF' | 'NETRAL' | 'NEGATIF' | null;
+    sentimenSkor: number | null;
+  }[];
+  presensiTerbaru: {
+    id: string;
+    name: string;
+    kelas: string;
+    statusKonsumsi: 'KONSUMSI' | 'TIDAK_KONSUMSI' | null;
+    rating: number | null;
+    sudahFeedback: boolean;
+  }[];
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -66,22 +78,36 @@ function NutritionPill({ icon, label, value, unit, color }: { icon: React.ReactN
   );
 }
 
+const SENTIMEN_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
+  POSITIF: { label: 'Positif', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
+  NETRAL: { label: 'Netral', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400' },
+  NEGATIF: { label: 'Negatif', color: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
+};
+
+function SentimentBadge({ sentimen, skor }: { sentimen: string | null; skor: number | null }) {
+  if (!sentimen || !(sentimen in SENTIMEN_CONFIG)) {
+    return <span className="text-[10px] text-muted-foreground italic">Belum dianalisis</span>;
+  }
+  const cfg = SENTIMEN_CONFIG[sentimen];
+  return (
+    <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.color}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+      {cfg.label}
+      {skor !== null && <span className="opacity-60">({Math.round(skor * 100)}%)</span>}
+    </div>
+  );
+}
+
 export default function GuruDashboard() {
   const [stats, setStats] = useState<GuruStats | null>(null);
-  const [monitoring, setMonitoring] = useState<MonitoringData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedFotoUrl, setSelectedFotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/proxy/dashboard/guru').then((r) => r.ok ? r.json() : Promise.reject('Gagal memuat statistik')),
-      fetch('/api/proxy/dashboard/guru/monitoring').then((r) => r.ok ? r.json() : Promise.reject('Gagal memuat monitoring')),
-    ])
-      .then(([s, m]) => {
-        setStats(s?.data ?? s);
-        setMonitoring(m?.data ?? m);
-      })
+    fetch('/api/proxy/dashboard/guru')
+      .then((r) => (r.ok ? r.json() : Promise.reject('Gagal memuat statistik')))
+      .then((s) => setStats(s?.data ?? s))
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
   }, []);
@@ -251,55 +277,122 @@ export default function GuruDashboard() {
             </CardContent>
           </Card>
 
-          {/* Detail monitoring */}
-          {monitoring && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {monitoring.sudahIsi.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2 text-green-600">
-                      <CheckCircle2 size={14} />
-                      Sudah Mengisi ({monitoring.sudahIsi.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 max-h-64 overflow-y-auto">
-                    {monitoring.sudahIsi.map((p) => (
-                      <div key={p.userId} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
-                        <div>
-                          <p className="text-sm font-medium">{p.name}</p>
-                          <p className="text-xs text-muted-foreground">{p.kelas}</p>
+          {/* Monitoring & Feedback Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+
+            {/* Presensi Terbaru */}
+            <Card className="border-border/60 shadow-sm h-full flex flex-col">
+              <CardHeader className="pb-3 border-b border-border/40 mb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-green-50">
+                      <ClipboardCheck size={18} className="text-green-600" />
+                    </div>
+                    Presensi Terbaru
+                  </CardTitle>
+                  <Link
+                    href="/guru/presensi"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-all group"
+                  >
+                    Detail
+                    <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-2">
+                {!stats?.presensiTerbaru || stats.presensiTerbaru.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <div className="p-3 rounded-full bg-muted/50 mb-3">
+                      <ClipboardCheck size={24} className="opacity-20" />
+                    </div>
+                    <p className="text-sm">Belum ada presensi terisi hari ini.</p>
+                  </div>
+                ) : (
+                  stats.presensiTerbaru.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between p-3 rounded-2xl bg-muted/30 border border-border/40 hover:border-primary/30 transition-colors">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[11px] font-bold text-primary shrink-0">
+                          {p.name.charAt(0)}
                         </div>
-                        <Badge className={`text-xs border-0 ${p.statusKonsumsi === 'KONSUMSI' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {p.statusKonsumsi === 'KONSUMSI' ? 'Konsumsi' : 'Tidak Konsumsi'}
-                        </Badge>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-              {monitoring.belumIsi.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2 text-amber-600">
-                      <Clock size={14} />
-                      Belum Mengisi ({monitoring.belumIsi.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 max-h-64 overflow-y-auto">
-                    {monitoring.belumIsi.map((p) => (
-                      <div key={p.userId} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
-                        <div>
-                          <p className="text-sm font-medium">{p.name}</p>
-                          <p className="text-xs text-muted-foreground">{p.kelas}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
+                          <p className="text-[11px] text-muted-foreground">{p.kelas}</p>
                         </div>
-                        <Badge className="text-xs border-0 bg-amber-100 text-amber-700">Menunggu</Badge>
                       </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {p.sudahFeedback && (
+                          <MessageSquare size={13} className="text-blue-500" />
+                        )}
+                        {p.statusKonsumsi === 'KONSUMSI' ? (
+                          <Badge className="text-[10px] border-0 bg-green-100 text-green-700 gap-1">
+                            <CheckCircle2 size={11} /> Konsumsi
+                          </Badge>
+                        ) : (
+                          <Badge className="text-[10px] border-0 bg-red-100 text-red-700 gap-1">
+                            <XCircle size={11} /> Tidak
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Feedback Terbaru */}
+            <Card className="border-border/60 shadow-sm h-full flex flex-col">
+              <CardHeader className="pb-3 border-b border-border/40 mb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-blue-50">
+                      <MessageSquare size={18} className="text-blue-500" />
+                    </div>
+                    Feedback Terbaru
+                  </CardTitle>
+                  <Link
+                    href="/guru/feedback"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-all group"
+                  >
+                    Lihat Semua
+                    <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                {!stats?.feedbackTerbaru || stats.feedbackTerbaru.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <div className="p-3 rounded-full bg-muted/50 mb-3">
+                      <MessageSquare size={24} className="opacity-20" />
+                    </div>
+                    <p className="text-sm">Belum ada feedback masuk.</p>
+                  </div>
+                ) : (
+                  stats.feedbackTerbaru.map((f) => (
+                    <div key={f.id} className="p-4 rounded-2xl bg-muted/30 border border-border/40 hover:border-primary/30 transition-colors relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <MessageSquare size={40} />
+                      </div>
+                      <p className="text-sm italic text-foreground leading-relaxed">&ldquo;{f.feedback}&rdquo;</p>
+                      <div className="mt-2">
+                        <SentimentBadge sentimen={f.sentimen} skor={f.sentimenSkor} />
+                      </div>
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                            {f.penerimaManfaat.charAt(0)}
+                          </div>
+                          <p className="text-[11px] font-medium text-muted-foreground">{f.penerimaManfaat} · <span className="text-foreground/70">{f.sekolah}</span></p>
+                        </div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
+                          {new Date(f.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Navigation */}
           <Link href="/guru/distribusi">

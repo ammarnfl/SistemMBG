@@ -29,9 +29,9 @@ export class EvaluasiService {
       where: {
         sekolahId,
         tanggal: today,
-        // Tampilkan semua status kecuali BERMASALAH, agar penerima manfaat bisa
-        // melihat menu meskipun distribusi masih DRAFT atau sudah DIKIRIM
-        status: { in: ['DRAFT', 'DIKIRIM', 'DITERIMA', 'SELESAI'] },
+        // Tampilkan semua status agar penerima manfaat bisa
+        // melihat menu meskipun distribusi masih DRAFT, DIKIRIM, atau BERMASALAH
+        status: { in: ['DRAFT', 'DIKIRIM', 'DITERIMA', 'SELESAI', 'BERMASALAH'] },
         // Wajib ada menu yang di-assign
         menuId: { not: null },
       },
@@ -71,8 +71,8 @@ export class EvaluasiService {
       if (!distribusi) {
         throw new BadRequestException('Distribusi tidak ditemukan');
       }
-      if (distribusi.status !== 'DITERIMA' && distribusi.status !== 'SELESAI') {
-        throw new BadRequestException('Evaluasi belum bisa diisi karena distribusi belum dikonfirmasi oleh guru');
+      if (distribusi.status !== 'DITERIMA' && distribusi.status !== 'SELESAI' && distribusi.status !== 'BERMASALAH') {
+        throw new BadRequestException('Evaluasi belum bisa diisi karena distribusi belum dikonfirmasi atau dilaporkan oleh guru');
       }
     }
 
@@ -135,7 +135,10 @@ export class EvaluasiService {
           include: {
             komponen: true,
           }
-        }
+        },
+        feedbackResolvedBy: {
+          select: { name: true },
+        },
       },
       orderBy: {
         tanggal: 'desc'

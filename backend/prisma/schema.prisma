@@ -19,6 +19,7 @@ model User {
   distribusiDikonfirmasi Distribusi[]            @relation("ConfirmedDistribusi")
   distribusiDibuat       Distribusi[]            @relation("CreatedDistribusi")
   evaluasiHarian         EvaluasiHarian[]        @relation("EvaluasiUser")
+  feedbackResolved       EvaluasiHarian[]        @relation("FeedbackResolver")
   guruProfile            GuruProfile?
   penerimaManfaatProfile PenerimaManfaatProfile?
   timDapurProfile        TimDapurProfile?
@@ -151,14 +152,14 @@ model MenuMaster {
 }
 
 model MenuKomponen {
-  id               String          @id @default(cuid())
+  id               String              @id @default(cuid())
   menuId           String
   komponenMasterId String?
-  namaSnapshot     String          @default("")
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  menu             MenuMaster      @relation(fields: [menuId], references: [id], onDelete: Cascade)
-  komponenMaster   KomponenMaster? @relation(fields: [komponenMasterId], references: [id])
+  namaSnapshot     String              @default("")
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  menu             MenuMaster          @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  komponenMaster   KomponenMaster?     @relation(fields: [komponenMasterId], references: [id])
   penilaian        PenilaianKomponen[]
 
   @@map("menu_komponen")
@@ -201,19 +202,28 @@ model Distribusi {
 }
 
 model EvaluasiHarian {
-  id                String              @id @default(cuid())
-  tanggal           DateTime            @db.Date
-  penerimaManfaatId String
-  distribusiId      String?
-  statusKonsumsi    StatusKonsumsi
-  ratingKeseluruhan Int?
-  feedback          String?
-  fotoUrl           String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  distribusi        Distribusi?         @relation(fields: [distribusiId], references: [id])
-  penerimaManfaat   User                @relation("EvaluasiUser", fields: [penerimaManfaatId], references: [id])
-  penilaianKomponen PenilaianKomponen[]
+  id                   String              @id @default(cuid())
+  tanggal              DateTime            @db.Date
+  penerimaManfaatId    String
+  distribusiId         String?
+  statusKonsumsi       StatusKonsumsi
+  ratingKeseluruhan    Int?
+  feedback             String?
+  fotoUrl              String?
+  sentimen             SentimenLabel?
+  sentimenSkor         Float?
+  sentimenLabel        String?
+  sentimenAnalyzedAt   DateTime?
+  feedbackResolved     Boolean             @default(false)
+  feedbackResolution   String?
+  feedbackResolvedAt   DateTime?
+  feedbackResolvedById String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  distribusi           Distribusi?         @relation(fields: [distribusiId], references: [id])
+  penerimaManfaat      User                @relation("EvaluasiUser", fields: [penerimaManfaatId], references: [id])
+  feedbackResolvedBy   User?               @relation("FeedbackResolver", fields: [feedbackResolvedById], references: [id])
+  penilaianKomponen    PenilaianKomponen[]
 
   @@unique([tanggal, penerimaManfaatId])
   @@map("evaluasi_harian")
@@ -251,4 +261,10 @@ enum StatusDistribusi {
 enum StatusKonsumsi {
   KONSUMSI
   TIDAK_KONSUMSI
+}
+
+enum SentimenLabel {
+  POSITIF
+  NETRAL
+  NEGATIF
 }

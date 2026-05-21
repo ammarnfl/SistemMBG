@@ -84,6 +84,7 @@ export class DashboardService {
       totalEvaluasi,
       ratingAggregate,
       feedbackTerbaru,
+      sentimenDistribusi,
     ] = await Promise.all([
       this.prisma.distribusi.count({ where: distribusiWhere }),
       this.prisma.evaluasiHarian.count({ where: evalWhere }),
@@ -95,10 +96,20 @@ export class DashboardService {
         where: { ...evalWhere, feedback: { not: null } },
         orderBy: { createdAt: 'desc' },
         take: 5,
-        include: {
+        select: {
+          id: true,
+          feedback: true,
+          tanggal: true,
+          sentimen: true,
+          sentimenSkor: true,
           penerimaManfaat: { select: { name: true } },
           distribusi: { include: { sekolah: { select: { nama: true } } } },
         },
+      }),
+      this.prisma.evaluasiHarian.groupBy({
+        by: ['sentimen'],
+        where: { ...evalWhere, sentimen: { not: null } },
+        _count: { _all: true },
       }),
     ]);
 
@@ -129,7 +140,7 @@ export class DashboardService {
       };
     });
 
-    // Distribusi per status
+    // Distribusi per status (filtered by date range)
     const distribusiByStatus = await this.prisma.distribusi.groupBy({
       by: ['status'],
       where: distribusiWhere,
@@ -138,6 +149,29 @@ export class DashboardService {
     const statusMap: Record<string, number> = {};
     distribusiByStatus.forEach((s) => (statusMap[s.status] = s._count._all));
 
+    // Status Hari Ini — always today, independent of date filter
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const todayWhere: any = { tanggal: today };
+    if (dapurId) todayWhere.dapurId = dapurId;
+    const distribusiHariIni = await this.prisma.distribusi.findMany({
+      where: todayWhere,
+      select: { id: true, status: true, jumlahPorsi: true, sekolah: { select: { nama: true } }, menu: { select: { nama: true } } },
+    });
+    const statusHariIniMap: Record<string, number> = {};
+    distribusiHariIni.forEach((d) => {
+      statusHariIniMap[d.status] = (statusHariIniMap[d.status] || 0) + 1;
+    });
+
+    const sentimenMap: Record<string, number> = {
+      POSITIF: 0,
+      NETRAL: 0,
+      NEGATIF: 0,
+    };
+    sentimenDistribusi.forEach((s) => {
+      if (s.sentimen) sentimenMap[s.sentimen] = s._count._all;
+    });
+
     return {
       totalDistribusi,
       totalEvaluasi,
@@ -145,13 +179,24 @@ export class DashboardService {
         ? Number(ratingAggregate._avg.ratingKeseluruhan.toFixed(2))
         : null,
       distribusiPerStatus: statusMap,
+      statusHariIni: statusHariIniMap,
+      distribusiHariIniDetail: distribusiHariIni.map((d) => ({
+        id: d.id,
+        status: d.status,
+        jumlahPorsi: d.jumlahPorsi,
+        sekolah: d.sekolah?.nama || '-',
+        menu: d.menu?.nama || '-',
+      })),
       komponenSeringTidakHabis: komponenSering,
+      sentimenDistribusi: sentimenMap,
       feedbackTerbaru: feedbackTerbaru.map((f) => ({
         id: f.id,
         feedback: f.feedback,
         penerimaManfaat: f.penerimaManfaat.name,
         sekolah: f.distribusi?.sekolah?.nama || '-',
         tanggal: f.tanggal,
+        sentimen: f.sentimen,
+        sentimenSkor: f.sentimenSkor,
       })),
     };
   }
@@ -168,13 +213,14 @@ export class DashboardService {
         sudahIsi: 0,
         belumIsi: 0,
         totalPM: 0,
+        feedbackTerbaru: [],
       };
     }
 
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
-    const [sekolah, distribusiHariIni, totalPM, sudahIsi] = await Promise.all([
+    const [sekolah, distribusiHariIni, totalPM, sudahIsi, feedbackTerbaru, presensiTerbaru] = await Promise.all([
       this.prisma.sekolah.findUnique({ where: { id: sekolahId } }),
       this.prisma.distribusi.findFirst({
         where: { sekolahId, tanggal: today },
@@ -193,6 +239,42 @@ export class DashboardService {
           tanggal: today,
           penerimaManfaat: {
             penerimaManfaatProfile: { sekolahId },
+          },
+        },
+      }),
+      this.prisma.evaluasiHarian.findMany({
+        where: {
+          feedback: { not: null },
+          penerimaManfaat: {
+            penerimaManfaatProfile: { sekolahId },
+          },
+        },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          penerimaManfaat: { select: { name: true } },
+          distribusi: { include: { sekolah: true } },
+        },
+      }),
+      this.prisma.evaluasiHarian.findMany({
+        where: {
+          tanggal: today,
+          penerimaManfaat: {
+            penerimaManfaatProfile: { sekolahId },
+          },
+        },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          statusKonsumsi: true,
+          ratingKeseluruhan: true,
+          feedback: true,
+          penerimaManfaat: {
+            select: {
+              name: true,
+              penerimaManfaatProfile: { select: { kelas: { select: { nama: true } } } },
+            },
           },
         },
       }),
@@ -228,6 +310,23 @@ export class DashboardService {
       totalPM,
       sudahIsi,
       belumIsi: Math.max(0, totalPM - sudahIsi),
+      feedbackTerbaru: feedbackTerbaru.map((f) => ({
+        id: f.id,
+        feedback: f.feedback,
+        penerimaManfaat: f.penerimaManfaat.name,
+        sekolah: f.distribusi?.sekolah?.nama || '-',
+        tanggal: f.tanggal,
+        sentimen: f.sentimen,
+        sentimenSkor: f.sentimenSkor,
+      })),
+      presensiTerbaru: presensiTerbaru.map((e) => ({
+        id: e.id,
+        name: e.penerimaManfaat.name,
+        kelas: e.penerimaManfaat.penerimaManfaatProfile?.kelas?.nama || '-',
+        statusKonsumsi: e.statusKonsumsi,
+        rating: e.ratingKeseluruhan,
+        sudahFeedback: !!e.feedback,
+      })),
     };
   }
 
@@ -281,6 +380,127 @@ export class DashboardService {
       }));
 
     return { sudahIsi, belumIsi };
+  }
+
+  /** Guru: daftar kelas di sekolahnya (untuk filter presensi) */
+  async getGuruKelas(userId: string) {
+    const profile = await this.prisma.guruProfile.findUnique({ where: { userId } });
+    const sekolahId = profile?.sekolahId;
+    if (!sekolahId) return [];
+    return this.prisma.kelas.findMany({
+      where: { sekolahId },
+      select: { id: true, nama: true },
+      orderBy: { nama: 'asc' },
+    });
+  }
+
+  /**
+   * Guru: presensi konsumsi + status feedback per siswa untuk tanggal tertentu.
+   * Jika tidak ada distribusi (MBG) pada tanggal tsb, kembalikan adaMBG=false & siswa kosong.
+   */
+  async getGuruPresensi(
+    userId: string,
+    opts: { tanggal?: string; search?: string; kelasId?: string },
+  ) {
+    const profile = await this.prisma.guruProfile.findUnique({ where: { userId } });
+    const sekolahId = profile?.sekolahId;
+    if (!sekolahId) {
+      return { sekolah: null, adaMBG: false, tanggal: null, distribusi: null, siswa: [] };
+    }
+
+    const tanggal = opts.tanggal ? new Date(opts.tanggal) : new Date();
+    tanggal.setUTCHours(0, 0, 0, 0);
+
+    const [sekolah, distribusi] = await Promise.all([
+      this.prisma.sekolah.findUnique({
+        where: { id: sekolahId },
+        select: { id: true, nama: true },
+      }),
+      this.prisma.distribusi.findFirst({
+        where: { sekolahId, tanggal },
+        orderBy: { createdAt: 'desc' },
+        include: { menu: { select: { nama: true } } },
+      }),
+    ]);
+
+    // Tidak ada jadwal MBG pada tanggal ini
+    if (!distribusi) {
+      return { sekolah, adaMBG: false, tanggal, distribusi: null, siswa: [] };
+    }
+
+    const pmWhere: any = { sekolahId };
+    if (opts.kelasId) pmWhere.kelasId = opts.kelasId;
+    if (opts.search) {
+      pmWhere.user = { name: { contains: opts.search, mode: 'insensitive' } };
+    }
+
+    const pmProfiles = await this.prisma.penerimaManfaatProfile.findMany({
+      where: pmWhere,
+      include: {
+        user: { select: { id: true, name: true } },
+        kelas: { select: { id: true, nama: true } },
+      },
+      orderBy: { user: { name: 'asc' } },
+    });
+
+    const evaluasi = await this.prisma.evaluasiHarian.findMany({
+      where: {
+        tanggal,
+        penerimaManfaatId: { in: pmProfiles.map((p) => p.userId) },
+      },
+      select: {
+        id: true,
+        penerimaManfaatId: true,
+        statusKonsumsi: true,
+        ratingKeseluruhan: true,
+        feedback: true,
+        sentimen: true,
+        sentimenSkor: true,
+        feedbackResolved: true,
+        feedbackResolution: true,
+        feedbackResolvedAt: true,
+      },
+    });
+    const evalMap = new Map(evaluasi.map((e) => [e.penerimaManfaatId, e]));
+
+    const siswa = pmProfiles.map((p) => {
+      const e = evalMap.get(p.userId);
+      const hasFeedback = !!(e && e.feedback);
+      return {
+        userId: p.userId,
+        name: p.user.name,
+        kelas: p.kelas?.nama || '-',
+        kelasId: p.kelasId || null,
+        sudahIsi: !!e,
+        statusKonsumsi: e?.statusKonsumsi ?? null,
+        sudahFeedback: hasFeedback,
+        feedback: hasFeedback
+          ? {
+              id: e!.id,
+              text: e!.feedback,
+              rating: e!.ratingKeseluruhan,
+              sentimen: e!.sentimen,
+              sentimenSkor: e!.sentimenSkor,
+              resolved: e!.feedbackResolved,
+              resolution: e!.feedbackResolution,
+              resolvedAt: e!.feedbackResolvedAt,
+            }
+          : null,
+      };
+    });
+
+    return {
+      sekolah,
+      adaMBG: true,
+      tanggal,
+      distribusi: {
+        id: distribusi.id,
+        status: distribusi.status,
+        jumlahPorsi: distribusi.jumlahPorsi,
+        menu: distribusi.menu?.nama || null,
+      },
+      siswa,
+    };
   }
 
   /** Penerima Manfaat: status hari ini */

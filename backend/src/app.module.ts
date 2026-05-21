@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthController } from './health/health.controller';
@@ -13,12 +14,15 @@ import { EvaluasiModule } from './evaluasi/evaluasi.module';
 import { UploadModule } from './upload/upload.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { LaporanModule } from './laporan/laporan.module';
+import { SentimenModule } from './sentimen/sentimen.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     DapurModule,
@@ -31,6 +35,8 @@ import { LaporanModule } from './laporan/laporan.module';
     UploadModule,
     DashboardModule,
     LaporanModule,
+    SentimenModule,
+    FeedbackModule,
   ],
   controllers: [HealthController],
 })

@@ -263,7 +263,21 @@ export class LaporanService {
       }),
     ]);
 
-    return { data, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+    // Get last sentimen refresh timestamp
+    const lastRefresh = await this.prisma.evaluasiHarian.findFirst({
+      where: { sentimenAnalyzedAt: { not: null } },
+      orderBy: { sentimenAnalyzedAt: 'desc' },
+      select: { sentimenAnalyzedAt: true },
+    });
+
+    return {
+      data,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+      lastSentimenRefresh: lastRefresh?.sentimenAnalyzedAt ?? null,
+    };
   }
 
   // ══════════════════════════════════════════════════════════════════════════

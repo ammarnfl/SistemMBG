@@ -10,7 +10,7 @@ import Image from 'next/image';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-function NutritionPill({ icon, label, value, unit, color }: { icon: React.ReactNode; label: string; value: number | null; unit: string; color: string }) {
+function NutritionPill({ icon, label, value, unit, color }: { icon: React.ReactNode; label: string; value: number | null | undefined; unit: string; color: string }) {
   if (value == null) return null;
   return (
     <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg ${color} text-xs font-medium`}>
@@ -132,7 +132,7 @@ export default function BerandaPenerimaManfaat() {
               </div>
             </div>
           </Card>
-        ) : distribusi && (distribusi.status === 'DITERIMA' || distribusi.status === 'SELESAI') ? (
+        ) : distribusi && (distribusi.status === 'DITERIMA' || distribusi.status === 'SELESAI' || distribusi.status === 'BERMASALAH') ? (
           <Card className="border-l-4 border-l-amber-500 bg-amber-50 shadow-sm mt-4">
             <div className="p-4">
               <div className="flex items-start gap-3">
