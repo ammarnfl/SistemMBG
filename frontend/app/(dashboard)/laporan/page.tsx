@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { DataTable, Column } from '../../../components/ui/DataTable';
-import { Download, Loader2, FileText, CheckCircle2, Search, Filter, RefreshCw, Camera, X, ZoomIn, Clock } from 'lucide-react';
+import { Download, Loader2, FileText, CheckCircle2, Search, Filter, RefreshCw, Camera, X, ZoomIn, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 function resolveImgUrl(url: string) {
@@ -362,19 +362,48 @@ export default function LaporanPage() {
                   <button
                     onClick={() => loadData(Math.max(page - 1, 1))}
                     disabled={page === 1}
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed flex items-center mr-3 transition-colors"
                   >
-                    Prev
+                    <ChevronLeft size={16} className="mr-1" /> Prev
                   </button>
-                  <span className="text-sm font-medium px-4">
-                    Halaman {page} dari {totalPages}
-                  </span>
+                  
+                  {(() => {
+                    const pages = [];
+                    if (totalPages <= 5) {
+                      for (let i = 1; i <= totalPages; i++) pages.push(i);
+                    } else {
+                      if (page <= 3) {
+                        pages.push(1, 2, 3, 4, '...', totalPages);
+                      } else if (page >= totalPages - 2) {
+                        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+                      } else {
+                        pages.push(1, '...', page - 1, page, page + 1, '...', totalPages);
+                      }
+                    }
+                    return pages.map((p, i) => (
+                      <button
+                        key={i}
+                        onClick={() => typeof p === 'number' && loadData(p)}
+                        disabled={p === '...'}
+                        className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
+                          p === page
+                            ? 'bg-[#3b82f6] text-white shadow-sm'
+                            : p === '...'
+                            ? 'text-muted-foreground cursor-default'
+                            : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ));
+                  })()}
+
                   <button
                     onClick={() => loadData(Math.min(page + 1, totalPages))}
                     disabled={page === totalPages}
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed flex items-center ml-3 transition-colors"
                   >
-                    Next
+                    Next <ChevronRight size={16} className="ml-1" />
                   </button>
                 </div>
               )}

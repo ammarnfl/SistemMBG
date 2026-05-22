@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../../../components/ui/Card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { Badge } from '../../../components/ui/Badge';
 import { ShieldCheck } from 'lucide-react';
 
 export default function LoginPage() {
@@ -88,18 +87,6 @@ export default function LoginPage() {
             </div>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col border-t pt-6 bg-secondary/30 mt-2 rounded-b-xl">
-          <div className="w-full text-xs text-muted-foreground space-y-2">
-            <p className="font-medium text-foreground">Akses Akun Demo:</p>
-            <div className="grid grid-cols-2 gap-2">
-              <Badge variant="outline" className="justify-center py-1">admin@example.com</Badge>
-              <Badge variant="outline" className="justify-center py-1">dapur@example.com</Badge>
-              <Badge variant="outline" className="justify-center py-1">guru@example.com</Badge>
-              <Badge variant="outline" className="justify-center py-1">pm@example.com</Badge>
-            </div>
-            <p className="pt-2 text-center">Password: <span className="font-mono bg-background px-1.5 py-0.5 rounded border">Password123!</span></p>
-          </div>
-        </CardFooter>
       </Card>
     </div>
   );

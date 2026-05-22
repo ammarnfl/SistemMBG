@@ -13,7 +13,7 @@ interface HuggingFaceResult {
 export class SentimenService {
   private readonly logger = new Logger(SentimenService.name);
   private readonly HF_API_URL =
-    'https://api-inference.huggingface.co/models/w11wo/indonesian-roberta-base-sentiment-classifier';
+    'https://router.huggingface.co/hf-inference/models/w11wo/indonesian-roberta-base-sentiment-classifier';
 
   constructor(
     private readonly prisma: PrismaService,
