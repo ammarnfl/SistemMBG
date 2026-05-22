@@ -443,13 +443,22 @@ export class LaporanService {
       orderBy: { tanggal: 'desc' },
     });
 
-    const headers = ['ID', 'Tanggal', 'Penerima Manfaat', 'Sekolah', 'Rating', 'Feedback', 'Foto URL'];
+    const sentimenText = (s: string | null) => {
+      if (s === 'POSITIF') return 'Positif';
+      if (s === 'NEGATIF') return 'Negatif';
+      if (s === 'NETRAL') return 'Netral';
+      return '';
+    };
+
+    const headers = ['ID', 'Tanggal', 'Penerima Manfaat', 'Sekolah', 'Rating', 'Sentimen', 'Skor Sentimen', 'Feedback', 'Foto URL'];
     const rows = data.map((e) => [
       e.id,
       new Date(e.tanggal).toISOString().slice(0, 10),
       e.penerimaManfaat.name,
       e.distribusi?.sekolah?.nama || '-',
       e.ratingKeseluruhan ?? '',
+      sentimenText(e.sentimen),
+      e.sentimenSkor != null ? e.sentimenSkor.toFixed(3) : '',
       e.feedback || '',
       e.fotoUrl || '',
     ]);

@@ -6,7 +6,7 @@ import { StateCard } from '../../../../components/layout/StateCard';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card';
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
-import { Badge } from '../../../../components/ui/Badge';
+import { StatusBadge } from '../../../../components/ui/StatusBadge';
 import { Truck, Upload, Plus, FileSpreadsheet, Send, Search } from 'lucide-react';
 
 export default function DapurDistribusiPage() {
@@ -236,9 +236,7 @@ export default function DapurDistribusiPage() {
                 </div>
                 
                 <div className="flex w-full sm:w-auto flex-row sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
-                  <Badge variant={d.status === 'DRAFT' ? 'outline' : d.status === 'DIKIRIM'? 'default' : d.status === 'DITERIMA' ? 'default': 'destructive'}>
-                     {d.status}
-                  </Badge>
+                  <StatusBadge status={d.status} />
                   {d.status === 'DRAFT' && (
                     <Button size="sm" onClick={() => updateStatus(d.id, 'DIKIRIM')}><Send size={14} className="mr-1"/> Kirim Makanan</Button>
                   )}

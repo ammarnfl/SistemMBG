@@ -8,7 +8,18 @@ import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { Badge } from '../../../../components/ui/Badge';
 import { DataTable, Column } from '../../../../components/ui/DataTable';
+import { Select } from '../../../../components/ui/Select';
+import { Tabs } from '../../../../components/ui/Tabs';
+import { toast } from '../../../../components/ui/Toast';
+import { ConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 import { ArrowLeft, UserPlus, Users, Loader2, Edit, Trash2, UserCheck, UserX, Search, Plus, FileSpreadsheet, Upload, AlertCircle } from 'lucide-react';
+
+const ROLE_OPTIONS = [
+  { label: 'ADMIN', value: 'ADMIN' },
+  { label: 'TIM_DAPUR', value: 'TIM_DAPUR' },
+  { label: 'GURU', value: 'GURU' },
+  { label: 'PENERIMA_MANFAAT', value: 'PENERIMA_MANFAAT' },
+];
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -22,6 +33,8 @@ export default function AdminUsersPage() {
   const [tab, setTab] = useState<'SINGLE' | 'BATCH'>('SINGLE');
   const [batchErrors, setBatchErrors] = useState<any[]>([]);
   const [kelasList, setKelasList] = useState<any[]>([]);
+  const [confirmAction, setConfirmAction] = useState<{ id: string; currentActive: boolean } | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -79,9 +92,10 @@ export default function AdminUsersPage() {
         throw new Error(errJson.message || 'Gagal simpan user');
       }
       setForm({ name: '', email: '', password: '', role: 'GURU', dapurId: '', sekolahId: '', nisn: '', kelasId: '' });
+      toast.success('User berhasil ditambahkan');
       loadData();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message);
     } finally {
       setSaving(false);
     }
@@ -140,14 +154,14 @@ export default function AdminUsersPage() {
 
         if (dataJson.data && dataJson.data.errors && dataJson.data.errors.length > 0) {
            setBatchErrors(dataJson.data.errors);
-           alert(`Berhasil upload ${dataJson.data.success} data, namun ada ${dataJson.data.failed} data yang gagal.`);
+           toast.warning(`Berhasil upload ${dataJson.data.success} data, namun ada ${dataJson.data.failed} data yang gagal.`);
         } else {
-           alert(`Berhasil upload semua ${items.length} data tanpa error!`);
+           toast.success(`Berhasil upload semua ${items.length} data tanpa error!`);
         }
 
         loadData();
       } catch(e: any) {
-        alert(e.message);
+        toast.error(e.message);
       } finally {
         setSaving(false);
         e.target.value = '';
@@ -156,22 +170,31 @@ export default function AdminUsersPage() {
     reader.readAsText(file);
   };
 
-  const handleToggleActive = async (id: string, currentActive: boolean) => {
+  const handleToggleActive = (id: string, currentActive: boolean) => {
+    setConfirmAction({ id, currentActive });
+  };
+
+  const executeToggle = async () => {
+    if (!confirmAction) return;
+    const { id, currentActive } = confirmAction;
+    setConfirmLoading(true);
     try {
       if (currentActive) {
-        if (!confirm('Nonaktifkan pengguna ini?')) return;
         await fetch(`/api/proxy/admin-users/${id}/nonaktifkan`, { method: 'PATCH' });
       } else {
-        if (!confirm('Aktifkan kembali pengguna ini?')) return;
-        await fetch(`/api/proxy/admin-users/${id}`, { 
-          method: 'PATCH', 
+        await fetch(`/api/proxy/admin-users/${id}`, {
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isActive: true }) 
+          body: JSON.stringify({ isActive: true })
         });
       }
+      toast.success(currentActive ? 'Pengguna dinonaktifkan' : 'Pengguna diaktifkan kembali');
       loadData();
     } catch (e: any) {
-      alert('Gagal merubah status: ' + e.message);
+      toast.error('Gagal mengubah status: ' + e.message);
+    } finally {
+      setConfirmLoading(false);
+      setConfirmAction(null);
     }
   };
 
@@ -200,9 +223,10 @@ export default function AdminUsersPage() {
         throw new Error(errJson.message || 'Gagal update user');
       }
       setEditingId(null);
+      toast.success('Perubahan tersimpan');
       loadData();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message);
     }
   };
 
@@ -314,15 +338,11 @@ export default function AdminUsersPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Role</label>
-            <select 
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
-              value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})}
-            >
-              <option value="ADMIN">ADMIN</option>
-              <option value="TIM_DAPUR">TIM_DAPUR</option>
-              <option value="GURU">GURU</option>
-              <option value="PENERIMA_MANFAAT">PENERIMA_MANFAAT</option>
-            </select>
+            <Select
+              value={editForm.role}
+              onChange={e => setEditForm({...editForm, role: e.target.value})}
+              options={ROLE_OPTIONS}
+            />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Password Baru</label>
@@ -337,13 +357,12 @@ export default function AdminUsersPage() {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Pilih Kelas/Grup</label>
-              <select 
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
-                value={editForm.kelasId} onChange={e => setEditForm({...editForm, kelasId: e.target.value})}
-              >
-                <option value="">-- Pilih Kelas --</option>
-                {kelasList.map(k => <option key={k.id} value={k.id}>{k.nama} ({k.sekolah?.nama})</option>)}
-              </select>
+              <Select
+                value={editForm.kelasId}
+                onChange={e => setEditForm({...editForm, kelasId: e.target.value})}
+                placeholder="-- Pilih Kelas --"
+                options={kelasList.map(k => ({ label: `${k.nama} (${k.sekolah?.nama})`, value: k.id }))}
+              />
             </div>
           </div>
         )}
@@ -373,14 +392,14 @@ export default function AdminUsersPage() {
 
       <Card>
         <CardHeader className="pb-4 border-b bg-muted/10">
-          <div className="flex bg-secondary/50 p-1 rounded-lg w-fit border border-border/50">
-            <button onClick={() => setTab('SINGLE')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='SINGLE'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
-              <div className="flex items-center gap-2"><Plus size={16}/> Input Manual</div>
-            </button>
-            <button onClick={() => setTab('BATCH')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='BATCH'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
-              <div className="flex items-center gap-2"><FileSpreadsheet size={16}/> Upload CSV</div>
-            </button>
-          </div>
+          <Tabs
+            value={tab}
+            onValueChange={(v) => setTab(v as 'SINGLE' | 'BATCH')}
+            items={[
+              { value: 'SINGLE', label: 'Input Manual', icon: Plus },
+              { value: 'BATCH', label: 'Upload CSV', icon: FileSpreadsheet },
+            ]}
+          />
         </CardHeader>
         <CardContent className="pt-4">
           {tab === 'SINGLE' ? (
@@ -400,29 +419,24 @@ export default function AdminUsersPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Role</label>
-                  <select 
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
-                    value={form.role} onChange={e => setForm({...form, role: e.target.value})} required
-                  >
-                    <option value="ADMIN">ADMIN</option>
-                    <option value="TIM_DAPUR">TIM_DAPUR</option>
-                    <option value="GURU">GURU</option>
-                    <option value="PENERIMA_MANFAAT">PENERIMA_MANFAAT</option>
-                  </select>
+                  <Select
+                    value={form.role}
+                    onChange={e => setForm({...form, role: e.target.value})}
+                    required
+                    options={ROLE_OPTIONS}
+                  />
                 </div>
                 
                 {form.role === 'TIM_DAPUR' && (
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-sm font-medium">Pilih Dapur (Wajib)</label>
-                    <select 
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
-                      value={form.dapurId} 
+                    <Select
+                      value={form.dapurId}
                       onChange={e => setForm({...form, dapurId: e.target.value})}
                       required
-                    >
-                      <option value="">-- Pilih Dapur --</option>
-                      {dapurList.map(d => <option key={d.id} value={d.id}>{d.nama}</option>)}
-                    </select>
+                      placeholder="-- Pilih Dapur --"
+                      options={dapurList.map(d => ({ label: d.nama, value: d.id }))}
+                    />
                   </div>
                 )}
 
@@ -431,15 +445,13 @@ export default function AdminUsersPage() {
                     <label className="text-sm font-medium">
                       Pilih Sekolah (Wajib)
                     </label>
-                    <select 
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
-                      value={form.sekolahId} 
+                    <Select
+                      value={form.sekolahId}
                       onChange={e => setForm({...form, sekolahId: e.target.value, kelasId: ''})}
                       required
-                    >
-                      <option value="">-- Pilih Sekolah --</option>
-                      {sekolahList.map(s => <option key={s.id} value={s.id}>{s.nama}</option>)}
-                    </select>
+                      placeholder="-- Pilih Sekolah --"
+                      options={sekolahList.map(s => ({ label: s.nama, value: s.id }))}
+                    />
                   </div>
                 )}
 
@@ -451,16 +463,14 @@ export default function AdminUsersPage() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Pilih Kelas / Grup (Wajib)</label>
-                      <select 
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
-                        value={form.kelasId} 
+                      <Select
+                        value={form.kelasId}
                         onChange={e => setForm({...form, kelasId: e.target.value})}
                         required
                         disabled={!form.sekolahId}
-                      >
-                        <option value="">-- Pilih Kelas --</option>
-                        {kelasList.filter(k => k.sekolahId === form.sekolahId).map(k => <option key={k.id} value={k.id}>{k.nama}</option>)}
-                      </select>
+                        placeholder="-- Pilih Kelas --"
+                        options={kelasList.filter(k => k.sekolahId === form.sekolahId).map(k => ({ label: k.nama, value: k.id }))}
+                      />
                     </div>
                   </>
                 )}
@@ -531,24 +541,24 @@ export default function AdminUsersPage() {
                 className="h-9 pl-9 w-full bg-white"
               />
             </div>
-            <select 
-              className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors text-muted-foreground focus:text-foreground w-full sm:w-[160px]"
-              value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
-            >
-              <option value="ALL">Pilih Role</option>
-              <option value="ADMIN">ADMIN</option>
-              <option value="TIM_DAPUR">TIM_DAPUR</option>
-              <option value="GURU">GURU</option>
-              <option value="PENERIMA_MANFAAT">PENERIMA_MANFAAT</option>
-            </select>
-            <select 
-              className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors text-muted-foreground focus:text-foreground w-full sm:w-[160px]"
-              value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="ALL">Pilih Status</option>
-              <option value="ACTIVE">Aktif</option>
-              <option value="INACTIVE">Nonaktif</option>
-            </select>
+            <Select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="bg-white"
+              wrapperClassName="sm:w-[160px]"
+              options={[{ label: 'Pilih Role', value: 'ALL' }, ...ROLE_OPTIONS]}
+            />
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-white"
+              wrapperClassName="sm:w-[160px]"
+              options={[
+                { label: 'Pilih Status', value: 'ALL' },
+                { label: 'Aktif', value: 'ACTIVE' },
+                { label: 'Nonaktif', value: 'INACTIVE' },
+              ]}
+            />
           </div>
         </div>
 
@@ -569,6 +579,19 @@ export default function AdminUsersPage() {
           />
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!confirmAction}
+        title={confirmAction?.currentActive ? 'Nonaktifkan pengguna ini?' : 'Aktifkan kembali pengguna ini?'}
+        description={confirmAction?.currentActive
+          ? 'Pengguna tidak akan bisa login sampai diaktifkan kembali.'
+          : 'Pengguna akan dapat login kembali ke sistem.'}
+        confirmLabel={confirmAction?.currentActive ? 'Nonaktifkan' : 'Aktifkan'}
+        destructive={!!confirmAction?.currentActive}
+        loading={confirmLoading}
+        onConfirm={executeToggle}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

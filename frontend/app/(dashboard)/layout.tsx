@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardShell } from '../../components/layout/DashboardShell';
+import { Toaster } from '../../components/ui/Toast';
 import { Home, Users, School, UtensilsCrossed, LayoutGrid, BookOpen, CalendarDays, Truck, ClipboardList, ClipboardCheck, Loader2, WifiOff, MessageSquare } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -124,9 +125,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <DashboardShell navItems={navItems} userRole={userRoleLabel} onLogout={handleLogout}>
-      {children}
-    </DashboardShell>
+    <>
+      <DashboardShell navItems={navItems} userRole={userRoleLabel} onLogout={handleLogout}>
+        {children}
+      </DashboardShell>
+      <Toaster />
+    </>
   );
 }
 

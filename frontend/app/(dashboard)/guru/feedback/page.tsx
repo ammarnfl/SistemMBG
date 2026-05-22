@@ -334,7 +334,7 @@ export default function GuruFeedbackPage() {
                     disabled={p === '...'}
                     className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
                       p === page
-                        ? 'bg-[#3b82f6] text-white shadow-sm'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
                         : p === '...'
                         ? 'text-muted-foreground cursor-default'
                         : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground'

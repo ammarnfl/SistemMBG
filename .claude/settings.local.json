@@ -9,7 +9,8 @@
       "Bash(npx eslint *)",
       "Bash(node -e \"const b=require\\('bcryptjs'\\); console.log\\('ADMIN='+b.hashSync\\('Password123!',10\\)\\); console.log\\('USER='+b.hashSync\\('mbg12345',10\\)\\);\")",
       "Bash(node -e \"const c=require\\('@prisma/client'\\); console.log\\('Role',!!c.Role,'StatusDistribusi',!!c.StatusDistribusi,'StatusKonsumsi',!!c.StatusKonsumsi,'SentimenLabel',!!c.SentimenLabel\\); console.log\\(c.SentimenLabel\\);\")",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(rm -f uploads/file-1779481513096-743306347.png)"
     ]
   }
 }

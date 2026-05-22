@@ -194,35 +194,67 @@ export class MenuService {
 
     const { komponenIds, ...menuData } = dto;
 
-    // If komponenIds provided, replace all komponen
+    // If komponenIds provided, sinkronkan komponen via DIFF (bukan hapus-buat
+    // ulang). Ini penting: MenuKomponen direferensikan oleh PenilaianKomponen
+    // (FK tanpa cascade), jadi deleteMany membabi-buta akan melanggar FK dan
+    // menyebabkan 500 untuk menu yang sudah pernah dinilai. Kasus umum (mis.
+    // hanya ganti foto) mengirim komponen yang sama → tidak ada perubahan.
     if (komponenIds !== undefined) {
-      if (komponenIds.length === 0) throw new BadRequestException('Menu harus memiliki minimal 1 komponen');
+      const desired = Array.from(new Set(komponenIds));
+      if (desired.length === 0) throw new BadRequestException('Menu harus memiliki minimal 1 komponen');
 
       const dapurId = menu.dapurId;
       if (dapurId) {
         const validKomponents = await this.prisma.komponenMaster.findMany({
-          where: { id: { in: komponenIds }, dapurId },
+          where: { id: { in: desired }, dapurId },
         });
-        if (validKomponents.length !== komponenIds.length) {
+        if (validKomponents.length !== desired.length) {
           throw new BadRequestException('Beberapa komponen tidak valid atau bukan milik dapur ini');
         }
       }
 
-      // Delete old komponen, create new ones
-      await this.prisma.menuKomponen.deleteMany({ where: { menuId: id } });
+      const current = menu.komponen; // dari findOne (include komponen)
+      const currentMasterIds = current
+        .map((k) => k.komponenMasterId)
+        .filter((x): x is string => !!x);
 
-      const komponentList = await this.prisma.komponenMaster.findMany({
-        where: { id: { in: komponenIds } },
-        select: { id: true, nama: true },
-      });
+      const toAddIds = desired.filter((kid) => !currentMasterIds.includes(kid));
+      const toRemove = current.filter(
+        (k) => !k.komponenMasterId || !desired.includes(k.komponenMasterId),
+      );
 
-      await this.prisma.menuKomponen.createMany({
-        data: komponentList.map((k) => ({
-          menuId: id,
-          komponenMasterId: k.id,
-          namaSnapshot: k.nama,
-        })),
-      });
+      // Jangan hapus komponen yang masih dipakai PenilaianKomponen — lindungi
+      // data evaluasi yang sudah ada. Beri pesan jelas alih-alih error 500.
+      if (toRemove.length > 0) {
+        const removeIds = toRemove.map((k) => k.id);
+        const referenced = await this.prisma.penilaianKomponen.findMany({
+          where: { komponenId: { in: removeIds } },
+          select: { komponenId: true },
+        });
+        const referencedIds = new Set(referenced.map((r) => r.komponenId));
+        const blocked = toRemove.filter((k) => referencedIds.has(k.id));
+        if (blocked.length > 0) {
+          throw new BadRequestException(
+            'Komponen yang sudah dinilai oleh penerima manfaat tidak dapat dihapus dari menu. ' +
+              'Buat menu baru bila ingin mengubah komposisinya.',
+          );
+        }
+        await this.prisma.menuKomponen.deleteMany({ where: { id: { in: removeIds } } });
+      }
+
+      if (toAddIds.length > 0) {
+        const addList = await this.prisma.komponenMaster.findMany({
+          where: { id: { in: toAddIds } },
+          select: { id: true, nama: true },
+        });
+        await this.prisma.menuKomponen.createMany({
+          data: addList.map((k) => ({
+            menuId: id,
+            komponenMasterId: k.id,
+            namaSnapshot: k.nama,
+          })),
+        });
+      }
     }
 
     return this.prisma.menuMaster.update({
