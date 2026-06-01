@@ -7,7 +7,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../../../components
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { Badge } from '../../../../components/ui/Badge';
-import { ArrowLeft, Plus, LayoutGrid, Loader2, Edit, Trash2, FileSpreadsheet, Upload, AlertCircle, Search } from 'lucide-react';
+import { Select } from '../../../../components/ui/Select';
+import { Tabs } from '../../../../components/ui/Tabs';
+import { toast } from '../../../../components/ui/Toast';
+import { ConfirmDialog } from '../../../../components/ui/ConfirmDialog';
+import { ArrowLeft, Plus, LayoutGrid, Loader2, Edit, Trash2, FileSpreadsheet, Upload, AlertCircle, Search, X } from 'lucide-react';
 import { DataTable, Column } from '../../../../components/ui/DataTable';
 
 export default function AdminKelasPage() {
@@ -19,6 +23,9 @@ export default function AdminKelasPage() {
   const [sekolahFilter, setSekolahFilter] = useState('ALL');
   const [tab, setTab] = useState<'SINGLE' | 'BATCH'>('SINGLE');
   const [batchErrors, setBatchErrors] = useState<any[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -45,14 +52,30 @@ export default function AdminKelasPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ nama: '', sekolahId: '' });
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus kelas ini?')) return;
+  const openAddForm = () => {
+    setForm({ nama: '', sekolahId: '' });
+    setBatchErrors([]);
+    setTab('SINGLE');
+    setShowForm(true);
+  };
+
+  const handleDelete = (id: string) => {
+    setConfirmId(id);
+  };
+
+  const executeDelete = async () => {
+    if (!confirmId) return;
+    setConfirmLoading(true);
     try {
-      const res = await fetch(`/api/proxy/kelas/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/proxy/kelas/${confirmId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal menghapus kelas');
+      toast.success('Kelas berhasil dihapus');
       loadData();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message);
+    } finally {
+      setConfirmLoading(false);
+      setConfirmId(null);
     }
   };
 
@@ -71,9 +94,10 @@ export default function AdminKelasPage() {
       });
       if (!res.ok) throw new Error('Gagal update kelas');
       setEditingId(null);
+      toast.success('Perubahan tersimpan');
       loadData();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message);
     }
   };
 
@@ -88,12 +112,65 @@ export default function AdminKelasPage() {
       });
       if (!res.ok) throw new Error('Gagal simpan kelas');
       setForm({ nama: '', sekolahId: '' });
+      toast.success('Kelas berhasil ditambahkan');
+      setShowForm(false);
       loadData();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message);
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if(!file) return;
+    setSaving(true);
+    setBatchErrors([]);
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const text = evt.target?.result as string;
+        const lines = text.split('\n').filter(l => l.trim() !== '');
+        const items = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',').map(c => c.trim());
+          if (cols.length < 2) {
+            setBatchErrors(prev => [...prev, { row: i + 1, nama: cols[0] || 'Unknown', message: 'Format kolom tidak lengkap' }]);
+            continue;
+          }
+          items.push({ nama: cols[0], sekolahId: cols[1] });
+        }
+        if (items.length === 0 && lines.length > 1) throw new Error('Tidak ada data valid.');
+        const res = await fetch('/api/proxy/kelas/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kelas: items })
+        });
+        const dataJson = await res.json();
+        if (!res.ok) {
+          if (dataJson.details && dataJson.details.errors) {
+            setBatchErrors(dataJson.details.errors);
+            throw new Error('Beberapa data gagal diunggah.');
+          }
+          throw new Error(dataJson.message || 'Gagal batch upload');
+        }
+        if (dataJson.data && dataJson.data.errors && dataJson.data.errors.length > 0) {
+           setBatchErrors(dataJson.data.errors);
+           toast.warning(`Berhasil upload ${dataJson.data.success} data, gagal ${dataJson.data.failed}.`);
+        } else {
+           toast.success(`Berhasil upload semua ${items.length} data tanpa error!`);
+           setShowForm(false);
+        }
+        loadData();
+      } catch(e: any) {
+        toast.error(e.message);
+      } finally {
+        setSaving(false);
+        e.target.value = '';
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -107,141 +184,15 @@ export default function AdminKelasPage() {
         <span className="text-sm font-medium text-muted-foreground">Kembali</span>
       </div>
 
-      <PageHeader 
-        title="Manajemen Kelas / Grup" 
+      <PageHeader
+        title="Manajemen Kelas / Grup"
         description="Kelola daftar kelas dan kelompok di masing-masing sekolah penerima manfaat."
+        action={
+          <Button onClick={openAddForm} className="gap-2">
+            <Plus size={16} /> Tambah Kelas
+          </Button>
+        }
       />
-
-      <Card>
-        <CardHeader className="pb-4 border-b bg-muted/10">
-          <div className="flex bg-secondary/50 p-1 rounded-lg w-fit border border-border/50">
-            <button onClick={() => setTab('SINGLE')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='SINGLE'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
-              <div className="flex items-center gap-2"><Plus size={16}/> Input Manual</div>
-            </button>
-            <button onClick={() => setTab('BATCH')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='BATCH'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
-              <div className="flex items-center gap-2"><FileSpreadsheet size={16}/> Upload CSV</div>
-            </button>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-4">
-          {tab === 'SINGLE' ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Asal Sekolah</label>
-                <select 
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
-                  value={form.sekolahId} onChange={e => setForm({...form, sekolahId: e.target.value})} required
-                >
-                  <option value="">-- Pilih Sekolah --</option>
-                  {sekolah.map(s => <option key={s.id} value={s.id}>{s.nama}</option>)}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Nama Kelas / Grup</label>
-                <Input placeholder="Contoh: 1A, atau Kelompok A" value={form.nama} onChange={e => setForm({...form, nama: e.target.value})} required/>
-              </div>
-            </div>
-            <div className="pt-2">
-              <Button type="submit" disabled={saving} className="w-full sm:w-auto">
-                {saving ? <><Loader2 size={16} className="mr-2 animate-spin" /> Menyimpan...</> : 'Simpan Kelas'}
-              </Button>
-            </div>
-          </form>
-          ) : (
-            <div className="space-y-4">
-              <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                <Upload size={32} className="mx-auto text-muted-foreground mb-4"/>
-                <h3 className="font-semibold text-lg text-foreground">Format CSV Batch Upload</h3>
-                <p className="text-sm text-muted-foreground">Silakan download template CSV di bawah ini dan isi dengan data yang benar sebelum di-upload.</p>
-                
-                <div className="flex justify-center gap-4 mt-4">
-                   <Button variant="outline" type="button" onClick={() => {
-                     const csvContent = "data:text/csv;charset=utf-8,Nama Kelas,ID Sekolah\n1A,SEKOLAH_ID\n1B,SEKOLAH_ID";
-                     const encodedUri = encodeURI(csvContent);
-                     const link = document.createElement("a");
-                     link.setAttribute("href", encodedUri);
-                     link.setAttribute("download", "template_kelas.csv");
-                     document.body.appendChild(link);
-                     link.click();
-                     document.body.removeChild(link);
-                   }}>
-                     Download Template CSV
-                   </Button>
-                   
-                   <div className="relative inline-block">
-                     <input type="file" accept=".csv" onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if(!file) return;
-                        setSaving(true);
-                        setBatchErrors([]);
-                        const reader = new FileReader();
-                        reader.onload = async (evt) => {
-                          try {
-                            const text = evt.target?.result as string;
-                            const lines = text.split('\n').filter(l => l.trim() !== '');
-                            const items = [];
-                            for (let i = 1; i < lines.length; i++) {
-                              const cols = lines[i].split(',').map(c => c.trim());
-                              if (cols.length < 2) {
-                                setBatchErrors(prev => [...prev, { row: i + 1, nama: cols[0] || 'Unknown', message: 'Format kolom tidak lengkap' }]);
-                                continue;
-                              }
-                              items.push({ nama: cols[0], sekolahId: cols[1] });
-                            }
-                            if (items.length === 0 && lines.length > 1) throw new Error('Tidak ada data valid.');
-                            const res = await fetch('/api/proxy/kelas/batch', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ kelas: items })
-                            });
-                            const dataJson = await res.json();
-                            if (!res.ok) {
-                              if (dataJson.details && dataJson.details.errors) {
-                                setBatchErrors(dataJson.details.errors);
-                                throw new Error('Beberapa data gagal diunggah.');
-                              }
-                              throw new Error(dataJson.message || 'Gagal batch upload');
-                            }
-                            if (dataJson.data && dataJson.data.errors && dataJson.data.errors.length > 0) {
-                               setBatchErrors(dataJson.data.errors);
-                               alert(`Berhasil upload ${dataJson.data.success} data, gagal ${dataJson.data.failed}.`);
-                            } else {
-                               alert(`Berhasil upload semua ${items.length} data tanpa error!`);
-                            }
-                            loadData();
-                          } catch(e: any) {
-                            alert(e.message);
-                          } finally {
-                            setSaving(false);
-                            e.target.value = '';
-                          }
-                        };
-                        reader.readAsText(file);
-                     }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                     <Button disabled={saving}>{saving?'Uploading...':'Pilih File CSV & Upload'}</Button>
-                   </div>
-                </div>
-              </div>
-
-              {batchErrors.length > 0 && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4 mt-4">
-                  <div className="flex items-center gap-2 text-destructive font-semibold mb-2">
-                    <AlertCircle size={18} /> Terdapat Kesalahan saat Upload ({batchErrors.length} data gagal)
-                  </div>
-                  <ul className="list-disc list-inside text-sm text-destructive space-y-1">
-                    {batchErrors.map((err, i) => (
-                      <li key={i}>
-                        <strong>Baris {err.row} ({err.nama}):</strong> {err.message}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       <div className="space-y-6">
         <div className="flex flex-col gap-3 px-1 mb-4">
@@ -249,20 +200,20 @@ export default function AdminKelasPage() {
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative w-full sm:w-[250px]">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                placeholder="Cari di sini..." 
-                value={searchQuery} 
+              <Input
+                placeholder="Cari di sini..."
+                value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="h-9 pl-9 w-full bg-white"
               />
             </div>
-            <select 
-              className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors text-muted-foreground focus:text-foreground w-full sm:w-[220px]"
-              value={sekolahFilter} onChange={(e) => setSekolahFilter(e.target.value)}
-            >
-              <option value="ALL">Pilih Sekolah</option>
-              {sekolah.map(s => <option key={s.id} value={s.id}>{s.nama}</option>)}
-            </select>
+            <Select
+              value={sekolahFilter}
+              onChange={(e) => setSekolahFilter(e.target.value)}
+              className="bg-white"
+              wrapperClassName="sm:w-[220px]"
+              options={[{ label: 'Pilih Sekolah', value: 'ALL' }, ...sekolah.map(s => ({ label: s.nama, value: s.id }))]}
+            />
           </div>
         </div>
         {loading ? (
@@ -270,9 +221,9 @@ export default function AdminKelasPage() {
         ) : error ? (
           <StateCard icon={<LayoutGrid size={32} />} title="Gagal Memuat" description={error} action={<Button variant="outline" onClick={loadData}>Coba Lagi</Button>} />
         ) : kelas.length === 0 ? (
-          <StateCard icon={<LayoutGrid size={32} />} title="Belum Ada Data" description="Silahkan tambah data kelas baru di atas." />
+          <StateCard icon={<LayoutGrid size={32} />} title="Belum Ada Data" description="Klik tombol 'Tambah Kelas' untuk menambah data." action={<Button onClick={openAddForm} className="gap-2"><Plus size={16} /> Tambah Kelas</Button>} />
         ) : (
-          <DataTable 
+          <DataTable
             data={kelas.filter(k => {
               const matchSekolah = sekolahFilter === 'ALL' || k.sekolahId === sekolahFilter;
               const matchSearch = !searchQuery || k.nama.toLowerCase().includes(searchQuery.toLowerCase());
@@ -323,13 +274,12 @@ export default function AdminKelasPage() {
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">Asal Sekolah</label>
-                      <select 
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
-                        value={editForm.sekolahId} onChange={e => setEditForm({...editForm, sekolahId: e.target.value})}
-                      >
-                        <option value="">-- Pilih Sekolah --</option>
-                        {sekolah.map(s => <option key={s.id} value={s.id}>{s.nama}</option>)}
-                      </select>
+                      <Select
+                        value={editForm.sekolahId}
+                        onChange={e => setEditForm({...editForm, sekolahId: e.target.value})}
+                        placeholder="-- Pilih Sekolah --"
+                        options={sekolah.map(s => ({ label: s.nama, value: s.id }))}
+                      />
                     </div>
                   </div>
                 </div>
@@ -343,6 +293,124 @@ export default function AdminKelasPage() {
           />
         )}
       </div>
+
+      {/* Modal Tambah Kelas */}
+      {showForm && (
+        <div
+          className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={() => setShowForm(false)}
+        >
+          <div
+            className="w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-2 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border/40 p-5 shrink-0">
+              <h2 className="text-base font-bold text-foreground">Tambah Kelas / Grup</h2>
+              <button
+                onClick={() => setShowForm(false)}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Tutup"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-5 pt-4 shrink-0">
+              <Tabs
+                value={tab}
+                onValueChange={(v) => setTab(v as 'SINGLE' | 'BATCH')}
+                items={[
+                  { value: 'SINGLE', label: 'Input Manual', icon: Plus },
+                  { value: 'BATCH', label: 'Upload CSV', icon: FileSpreadsheet },
+                ]}
+              />
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              {tab === 'SINGLE' ? (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Asal Sekolah</label>
+                      <Select
+                        value={form.sekolahId}
+                        onChange={e => setForm({...form, sekolahId: e.target.value})}
+                        required
+                        placeholder="-- Pilih Sekolah --"
+                        options={sekolah.map(s => ({ label: s.nama, value: s.id }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Nama Kelas / Grup</label>
+                      <Input placeholder="Contoh: 1A, atau Kelompok A" value={form.nama} onChange={e => setForm({...form, nama: e.target.value})} required/>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Batal</Button>
+                    <Button type="submit" disabled={saving}>
+                      {saving ? <><Loader2 size={16} className="mr-2 animate-spin" /> Menyimpan...</> : 'Simpan Kelas'}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                    <Upload size={32} className="mx-auto text-muted-foreground mb-4"/>
+                    <h3 className="font-semibold text-lg text-foreground">Format CSV Batch Upload</h3>
+                    <p className="text-sm text-muted-foreground">Silakan download template CSV di bawah ini dan isi dengan data yang benar sebelum di-upload.</p>
+
+                    <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+                       <Button variant="outline" type="button" className="w-full sm:w-auto" onClick={() => {
+                         const csvContent = "data:text/csv;charset=utf-8,Nama Kelas,ID Sekolah\n1A,SEKOLAH_ID\n1B,SEKOLAH_ID";
+                         const encodedUri = encodeURI(csvContent);
+                         const link = document.createElement("a");
+                         link.setAttribute("href", encodedUri);
+                         link.setAttribute("download", "template_kelas.csv");
+                         document.body.appendChild(link);
+                         link.click();
+                         document.body.removeChild(link);
+                       }}>
+                         Download Template CSV
+                       </Button>
+
+                       <div className="relative w-full sm:w-auto">
+                         <input type="file" accept=".csv" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                         <Button disabled={saving} className="w-full">{saving?'Uploading...':'Pilih File CSV & Upload'}</Button>
+                       </div>
+                    </div>
+                  </div>
+
+                  {batchErrors.length > 0 && (
+                    <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4 mt-4">
+                      <div className="flex items-center gap-2 text-destructive font-semibold mb-2">
+                        <AlertCircle size={18} /> Terdapat Kesalahan saat Upload ({batchErrors.length} data gagal)
+                      </div>
+                      <ul className="list-disc list-inside text-sm text-destructive space-y-1">
+                        {batchErrors.map((err, i) => (
+                          <li key={i}>
+                            <strong>Baris {err.row} ({err.nama}):</strong> {err.message}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={!!confirmId}
+        title="Hapus kelas ini?"
+        description="Data kelas akan dihapus permanen dan tidak dapat dikembalikan."
+        confirmLabel="Hapus"
+        destructive
+        loading={confirmLoading}
+        onConfirm={executeDelete}
+        onCancel={() => setConfirmId(null)}
+      />
     </div>
   );
 }

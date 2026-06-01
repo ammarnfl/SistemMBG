@@ -106,7 +106,7 @@ export function DashboardShell({ children, navItems, userRole = 'Admin', onLogou
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto w-full p-4 md:p-6 bg-background">
-          <div className="mx-auto max-w-4xl">
+          <div className="mx-auto w-full max-w-6xl">
             {children}
           </div>
         </main>

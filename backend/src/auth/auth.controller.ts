@@ -15,9 +15,13 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt.guard';
+import { RolesGuard } from './guards/role.guard';
+import { Roles } from './decorators/roles.decorator';
+import { LoginThrottlerGuard } from './guards/login-throttler.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -26,6 +30,8 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(LoginThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({ summary: 'Login dan dapatkan JWT token' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
@@ -33,6 +39,7 @@ export class AuthController {
     description: 'Login berhasil, mengembalikan accessToken dan data user.',
   })
   @ApiResponse({ status: 401, description: 'Email atau password salah.' })
+  @ApiResponse({ status: 429, description: 'Terlalu banyak percobaan login.' })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
@@ -48,6 +55,10 @@ export class AuthController {
   }
 
   @Get('fix-dapur')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[ADMIN] One-off fix: pasangkan TimDapurProfile untuk user TIM_DAPUR yang belum dipetakan' })
   async fixDapur() {
     const prisma = this.authService['prisma'];
     const users = await prisma.user.findMany({ where: { role: 'TIM_DAPUR' } });

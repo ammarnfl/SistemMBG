@@ -6,6 +6,7 @@ import { Card, CardContent } from '../../../../components/ui/Card';
 import { Loader2, Calendar, Star, CheckCircle2, Camera, X, ZoomIn, MessageSquareReply } from 'lucide-react';
 import { Alert, AlertDescription } from '../../../../components/ui/FormComponents';
 import { Badge } from '../../../../components/ui/Badge';
+import { ImageLightbox } from '../../../../components/ui/ImageLightbox';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -154,28 +155,7 @@ export default function RiwayatEvaluasiPage() {
           ))}
         </div>
       )}
-      {/* Image Modal */}
-      {selectedFotoUrl && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in"
-          onClick={() => setSelectedFotoUrl(null)}
-        >
-          <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col items-center gap-3">
-            <button
-              className="self-end bg-white/20 hover:bg-white/30 text-white rounded-full p-1 transition-colors"
-              onClick={() => setSelectedFotoUrl(null)}
-            >
-              <X size={20} />
-            </button>
-            <img
-              src={selectedFotoUrl}
-              alt="Foto evaluasi"
-              className="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl"
-            />
-            <p className="text-white/60 text-xs">Ketuk di luar untuk menutup</p>
-          </div>
-        </div>
-      )}
+      <ImageLightbox src={selectedFotoUrl} alt="Foto evaluasi" onClose={() => setSelectedFotoUrl(null)} />
     </div>
   );
 }

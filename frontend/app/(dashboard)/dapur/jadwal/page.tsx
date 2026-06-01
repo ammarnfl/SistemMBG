@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../../components
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { Badge } from '../../../../components/ui/Badge';
+import { Select } from '../../../../components/ui/Select';
+import { toast } from '../../../../components/ui/Toast';
 import { CalendarDays, Save, Loader2 } from 'lucide-react';
 
 export default function DapurJadwalPage() {
@@ -47,8 +49,9 @@ export default function DapurJadwalPage() {
       });
       if (!res.ok) throw new Error('Gagal simpan jadwal');
       setForm({...form, menuId: ''});
+      toast.success('Menu harian berhasil diaktifkan');
       loadData();
-    } catch(e: any) { alert(e.message); }
+    } catch(e: any) { toast.error(e.message); }
     setSaving(false);
   };
 
@@ -74,13 +77,13 @@ export default function DapurJadwalPage() {
                </div>
                <div className="space-y-2">
                  <label className="text-sm font-medium">Pilih Master Menu</label>
-                 <select 
-                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                   value={form.menuId} onChange={e=>setForm({...form, menuId: e.target.value})} required
-                 >
-                   <option value="">-- Pilih Menu --</option>
-                   {menus?.map(m => <option key={m.id} value={m.id}>{m.nama}</option>)}
-                 </select>
+                 <Select
+                   value={form.menuId}
+                   onChange={e=>setForm({...form, menuId: e.target.value})}
+                   required
+                   placeholder="-- Pilih Menu --"
+                   options={menus.map(m => ({ label: m.nama, value: m.id }))}
+                 />
                </div>
              </div>
              <Button type="submit" disabled={saving}>

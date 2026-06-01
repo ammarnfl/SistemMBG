@@ -1,10 +1,20 @@
-import { Module } from '@nestjs/common';
+import { Module, BadRequestException } from '@nestjs/common';
 import { UploadController } from './upload.controller';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { extname } from 'path';
 import { UploadService } from './upload.service';
 import { existsSync, mkdirSync } from 'fs';
+
+const ALLOWED_MIMES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+]);
+const ALLOWED_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
+const MAX_FILE_SIZE = 8 * 1024 * 1024;
 
 @Module({
   imports: [
@@ -22,6 +32,20 @@ import { existsSync, mkdirSync } from 'fs';
           cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
         },
       }),
+      limits: { fileSize: MAX_FILE_SIZE, files: 1 },
+      fileFilter: (req, file, cb) => {
+        const ext = extname(file.originalname).toLowerCase();
+        const mime = file.mimetype.toLowerCase();
+        if (!ALLOWED_EXTS.has(ext) || !ALLOWED_MIMES.has(mime)) {
+          return cb(
+            new BadRequestException(
+              'Format file tidak didukung. Gunakan JPG, PNG, WEBP, atau HEIC.',
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
     }),
   ],
   controllers: [UploadController],

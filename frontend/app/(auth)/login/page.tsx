@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -82,7 +82,11 @@ export default function LoginPage() {
             </div>
             <div className="pt-2">
               <Button type="submit" disabled={loading} className="w-full h-12 text-sm font-bold">
-                {loading ? 'Memproses...' : 'Masuk'}
+                {loading ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Memproses...</>
+                ) : (
+                  'Masuk'
+                )}
               </Button>
             </div>
           </form>

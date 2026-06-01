@@ -6,6 +6,8 @@ import { Card, CardContent } from '../../../../components/ui/Card';
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { Badge } from '../../../../components/ui/Badge';
+import { Select } from '../../../../components/ui/Select';
+import { SentimentBadge } from '../../../../components/ui/SentimentBadge';
 import {
   Loader2, Search, Filter, RefreshCw, MessageSquare, CheckCircle2,
   ChevronLeft, ChevronRight, X, ArrowLeft, Calendar, School,
@@ -34,25 +36,7 @@ interface SekolahOption {
   nama: string;
 }
 
-const SENTIMEN_CONFIG: Record<string, { label: string; color: string; dot: string; bg: string }> = {
-  POSITIF: { label: 'Positif', color: 'bg-green-100 text-green-700', dot: 'bg-green-500', bg: 'border-green-200' },
-  NETRAL: { label: 'Netral', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400', bg: 'border-gray-200' },
-  NEGATIF: { label: 'Negatif', color: 'bg-red-100 text-red-700', dot: 'bg-red-500', bg: 'border-red-200' },
-};
-
-function SentimentBadge({ sentimen, skor }: { sentimen: string | null; skor: number | null }) {
-  if (!sentimen || !(sentimen in SENTIMEN_CONFIG)) {
-    return <span className="text-[10px] text-muted-foreground italic">Belum dianalisis</span>;
-  }
-  const cfg = SENTIMEN_CONFIG[sentimen];
-  return (
-    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${cfg.color}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.label}
-      {skor !== null && <span className="opacity-60">({Math.round(skor * 100)}%)</span>}
-    </div>
-  );
-}
+// SentimentBadge & SENTIMEN_CONFIG dipindah ke components/ui/SentimentBadge
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -119,7 +103,7 @@ export default function GuruFeedbackPage() {
   const hasFilters = search || tanggalAwal || tanggalAkhir || sentimen || resolvedFilter;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+    <div className="max-w-6xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -169,27 +153,31 @@ export default function GuruFeedbackPage() {
             </div>
 
             {/* Sentimen Filter */}
-            <select
+            <Select
               value={sentimen}
               onChange={(e) => setSentimen(e.target.value)}
-              className="text-xs bg-white border border-border/60 rounded-lg px-3 py-2 focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all min-w-[130px]"
-            >
-              <option value="">Semua Label</option>
-              <option value="POSITIF">🟢 Positif</option>
-              <option value="NETRAL">⚪ Netral</option>
-              <option value="NEGATIF">🔴 Negatif</option>
-            </select>
+              className="bg-white"
+              wrapperClassName="min-w-[150px]"
+              options={[
+                { label: 'Semua Label', value: '' },
+                { label: '🟢 Positif', value: 'POSITIF' },
+                { label: '⚪ Netral', value: 'NETRAL' },
+                { label: '🔴 Negatif', value: 'NEGATIF' },
+              ]}
+            />
 
             {/* Status Filter */}
-            <select
+            <Select
               value={resolvedFilter}
               onChange={(e) => setResolvedFilter(e.target.value)}
-              className="text-xs bg-white border border-border/60 rounded-lg px-3 py-2 focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all min-w-[130px]"
-            >
-              <option value="">Semua Status</option>
-              <option value="false">Belum Ditanggapi</option>
-              <option value="true">Sudah Ditanggapi</option>
-            </select>
+              className="bg-white"
+              wrapperClassName="min-w-[150px]"
+              options={[
+                { label: 'Semua Status', value: '' },
+                { label: 'Belum Ditanggapi', value: 'false' },
+                { label: 'Sudah Ditanggapi', value: 'true' },
+              ]}
+            />
 
             {hasFilters && (
                <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9 text-xs gap-1.5 text-muted-foreground hover:text-foreground">
@@ -245,7 +233,7 @@ export default function GuruFeedbackPage() {
                         &ldquo;{item.feedback}&rdquo;
                       </p>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        <SentimentBadge sentimen={item.sentimen} skor={item.sentimenSkor} />
+                        <SentimentBadge sentimen={item.sentimen} skor={item.sentimenSkor} size="md" />
                         {item.feedbackResolved && (
                           <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
                             <CheckCircle2 size={10} />

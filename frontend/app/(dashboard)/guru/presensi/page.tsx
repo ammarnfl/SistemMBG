@@ -5,6 +5,8 @@ import { PageHeader } from '../../../../components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card';
 import { Input } from '../../../../components/ui/Input';
 import { Badge } from '../../../../components/ui/Badge';
+import { Select } from '../../../../components/ui/Select';
+import { SentimentBadge } from '../../../../components/ui/SentimentBadge';
 import {
   Loader2, Search, Calendar, CalendarOff, Users, CheckCircle2, XCircle,
   Clock, MessageSquare, UtensilsCrossed, X, ChevronRight, Star,
@@ -45,25 +47,7 @@ interface KelasOption {
   nama: string;
 }
 
-const SENTIMEN_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
-  POSITIF: { label: 'Positif', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
-  NETRAL: { label: 'Netral', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400' },
-  NEGATIF: { label: 'Negatif', color: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
-};
-
-function SentimentBadge({ sentimen, skor }: { sentimen: string | null; skor: number | null }) {
-  if (!sentimen || !(sentimen in SENTIMEN_CONFIG)) {
-    return <span className="text-[10px] text-muted-foreground italic">Belum dianalisis</span>;
-  }
-  const cfg = SENTIMEN_CONFIG[sentimen];
-  return (
-    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${cfg.color}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.label}
-      {skor !== null && <span className="opacity-60">({Math.round(skor * 100)}%)</span>}
-    </div>
-  );
-}
+// SentimentBadge & SENTIMEN_CONFIG dipindah ke components/ui/SentimentBadge
 
 function KonsumsiBadge({ status }: { status: Siswa['statusKonsumsi'] }) {
   if (status === 'KONSUMSI') {
@@ -156,7 +140,7 @@ export default function GuruPresensiPage() {
   const sudahFeedback = siswa.filter((s) => s.sudahFeedback).length;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+    <div className="max-w-6xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <PageHeader
@@ -195,16 +179,13 @@ export default function GuruPresensiPage() {
               />
             </div>
 
-            <select
+            <Select
               value={kelasId}
               onChange={(e) => setKelasId(e.target.value)}
-              className="text-xs bg-white border border-border/60 rounded-lg px-3 py-2 focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all min-w-[150px]"
-            >
-              <option value="">Semua Kelas</option>
-              {kelasOptions.map((k) => (
-                <option key={k.id} value={k.id}>{k.nama}</option>
-              ))}
-            </select>
+              className="bg-white"
+              wrapperClassName="min-w-[150px]"
+              options={[{ label: 'Semua Kelas', value: '' }, ...kelasOptions.map((k) => ({ label: k.nama, value: k.id }))]}
+            />
           </div>
         </div>
       </Card>
@@ -350,7 +331,7 @@ export default function GuruPresensiPage() {
                   &ldquo;{selected.feedback.text}&rdquo;
                 </p>
                 <div className="flex items-center gap-3 mt-3 flex-wrap">
-                  <SentimentBadge sentimen={selected.feedback.sentimen} skor={selected.feedback.sentimenSkor} />
+                  <SentimentBadge sentimen={selected.feedback.sentimen} skor={selected.feedback.sentimenSkor} size="md" />
                   {selected.feedback.rating != null && (
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <Star size={12} className="text-amber-400 fill-amber-400" />

@@ -6,6 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { DataTable, Column } from '../../../components/ui/DataTable';
+import { Tabs } from '../../../components/ui/Tabs';
+import { SentimentBadge } from '../../../components/ui/SentimentBadge';
+import { toast } from '../../../components/ui/Toast';
+import { ImageLightbox } from '../../../components/ui/ImageLightbox';
 import { Download, Loader2, FileText, CheckCircle2, Search, Filter, RefreshCw, Camera, X, ZoomIn, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -56,16 +60,7 @@ export default function LaporanPage() {
   const [selectedFotoUrl, setSelectedFotoUrl] = useState<string | null>(null);
   const [lastSentimenRefresh, setLastSentimenRefresh] = useState<string | null>(null);
 
-  const SENTIMEN_COLORS: Record<string, string> = {
-    POSITIF: 'bg-green-100 text-green-700',
-    NETRAL: 'bg-gray-100 text-gray-600',
-    NEGATIF: 'bg-red-100 text-red-700',
-  };
-  const SENTIMEN_DOTS: Record<string, string> = {
-    POSITIF: 'bg-green-500',
-    NETRAL: 'bg-gray-400',
-    NEGATIF: 'bg-red-500',
-  };
+  // Warna sentimen via components/ui/SentimentBadge
 
   const buildQueryString = useCallback((pageNum = 1) => {
     const params = new URLSearchParams();
@@ -138,7 +133,7 @@ export default function LaporanPage() {
       setDownloaded(true);
       setTimeout(() => setDownloaded(false), 3000);
     } catch (err) {
-      alert('Gagal mengunduh laporan.');
+      toast.error('Gagal mengunduh laporan.');
     } finally {
       setDownloading(false);
     }
@@ -206,18 +201,7 @@ export default function LaporanPage() {
     { header: 'Sekolah', accessorKey: 'distribusi.sekolah.nama' },
     { header: 'Menu', accessorKey: 'distribusi.menu.nama' },
     { header: 'Rating', cell: (row) => row.ratingKeseluruhan ? `${row.ratingKeseluruhan} ⭐` : '-' },
-    { header: 'Label', cell: (row) => {
-      if (!row.sentimen) return <span className="text-muted-foreground/50 text-xs italic">—</span>;
-      const color = SENTIMEN_COLORS[row.sentimen] || 'bg-gray-100 text-gray-500';
-      const dot = SENTIMEN_DOTS[row.sentimen] || 'bg-gray-400';
-      const labelText = row.sentimen === 'POSITIF' ? 'Positif' : row.sentimen === 'NEGATIF' ? 'Negatif' : 'Netral';
-      return (
-        <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${color}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-          {labelText}
-        </div>
-      );
-    }},
+    { header: 'Label', cell: (row) => <SentimentBadge sentimen={row.sentimen} /> },
     { header: 'Feedback', accessorKey: 'feedback', className: 'max-w-xs truncate' },
     { header: 'Foto', cell: (row) => row.fotoUrl ? (
       <button
@@ -296,22 +280,13 @@ export default function LaporanPage() {
         </div>
 
         {/* TABS */}
-        <div className="border-b border-border/40 bg-card">
-          <div className="flex overflow-x-auto p-1 scrollbar-none">
-            {TAB_CONFIG.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as LaporanType)}
-                className={`px-6 py-3 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${
-                  activeTab === tab.id 
-                    ? 'border-primary text-primary' 
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        <div className="bg-card">
+          <Tabs
+            variant="underline"
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as LaporanType)}
+            items={TAB_CONFIG.map((t) => ({ value: t.id, label: t.label }))}
+          />
         </div>
 
         {/* TABLE HEADER & ACTIONS */}
@@ -412,28 +387,7 @@ export default function LaporanPage() {
         </div>
       </Card>
 
-      {/* Image Modal */}
-      {selectedFotoUrl && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in"
-          onClick={() => setSelectedFotoUrl(null)}
-        >
-          <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="self-end bg-white/20 hover:bg-white/30 text-white rounded-full p-1.5 transition-colors"
-              onClick={() => setSelectedFotoUrl(null)}
-            >
-              <X size={20} />
-            </button>
-            <img
-              src={selectedFotoUrl}
-              alt="Foto evaluasi siswa"
-              className="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl"
-            />
-            <p className="text-white/60 text-xs">Klik tombol × atau area luar untuk menutup</p>
-          </div>
-        </div>
-      )}
+      <ImageLightbox src={selectedFotoUrl} alt="Foto evaluasi siswa" onClose={() => setSelectedFotoUrl(null)} />
     </div>
   );
 }

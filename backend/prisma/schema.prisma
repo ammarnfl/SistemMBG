@@ -198,6 +198,9 @@ model Distribusi {
   sekolah        Sekolah          @relation(fields: [sekolahId], references: [id])
   evaluasiHarian EvaluasiHarian[]
 
+  // Satu sekolah hanya boleh punya satu distribusi per tanggal (cegah dua dapur
+  // membuat distribusi ganda untuk sekolah & hari yang sama).
+  @@unique([sekolahId, tanggal])
   @@map("distribusi")
 }
 

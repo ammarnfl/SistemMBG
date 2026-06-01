@@ -7,18 +7,10 @@ import { StateCard } from '../../../../components/layout/StateCard';
 import { Card, CardContent } from '../../../../components/ui/Card';
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
-import { Badge } from '../../../../components/ui/Badge';
+import { StatusBadge } from '../../../../components/ui/StatusBadge';
 import { Inbox, Loader2, UtensilsCrossed, CalendarDays, Flame, Beef, Droplets, Wheat, Leaf, ChevronRight } from 'lucide-react';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'warning' | 'destructive' | 'outline' | 'success' }> = {
-  DRAFT: { label: 'Draft', variant: 'outline' },
-  DIKIRIM: { label: 'Dalam Perjalanan', variant: 'warning' },
-  DITERIMA: { label: 'Diterima', variant: 'default' },
-  BERMASALAH: { label: 'Bermasalah', variant: 'destructive' },
-  SELESAI: { label: 'Selesai', variant: 'success' },
-};
 
 function NutritionTag({ value, unit, label, color }: { value: number | null; unit: string; label: string; color: string }) {
   if (value == null) return null;
@@ -34,14 +26,17 @@ export default function GuruDistribusiPage() {
   const [loading, setLoading] = useState(true);
   const [filterDate, setFilterDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [selectedFotoUrl, setSelectedFotoUrl] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   const loadData = async () => {
     setLoading(true);
+    setError('');
     try {
       const res = await fetch(`/api/proxy/distribusi/sekolah-saya?tanggal=${filterDate}`);
+      if (!res.ok) throw new Error('Gagal memuat distribusi');
       const json = await res.json();
       setDistribusi(Array.isArray(json?.data) ? json.data : (Array.isArray(json) ? json : []));
-    } catch(e) {}
+    } catch(e: any) { setError(e.message || 'Gagal memuat distribusi'); }
     setLoading(false);
   };
 
@@ -64,10 +59,10 @@ export default function GuruDistribusiPage() {
 
       <div className="space-y-4 pt-2">
         {loading ? <StateCard icon={<Loader2 className="animate-spin"/>} title="Memuat" description=""/> :
+         error ? <StateCard icon={<Inbox/>} title="Gagal Memuat" description={error} action={<Button variant="outline" onClick={loadData}>Coba Lagi</Button>}/> :
          distribusi.length===0 ? <StateCard icon={<Inbox/>} title="Belum Ada Distribusi" description="Tidak ada jadwal kiriman MBG pada tanggal ini."/> :
          distribusi.map((d: any) => {
            const menu = d.menu;
-           const statusCfg = STATUS_CONFIG[d.status] || { label: d.status, variant: 'outline' as const };
            const fotoSrc = menu?.fotoUrl
              ? (menu.fotoUrl.startsWith('http') ? menu.fotoUrl : `${BACKEND_URL}${menu.fotoUrl}`)
              : null;
@@ -104,9 +99,7 @@ export default function GuruDistribusiPage() {
                            {tanggalStr}
                          </div>
                        </div>
-                       <Badge variant={statusCfg.variant} className="shrink-0">
-                         {statusCfg.label}
-                       </Badge>
+                       <StatusBadge status={d.status} className="shrink-0" />
                      </div>
 
                      {/* Menu info */}

@@ -6,8 +6,22 @@ import { StateCard } from '../../../../components/layout/StateCard';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../../components/ui/Card';
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
-import { ArrowLeft, Plus, UtensilsCrossed, Loader2, Edit, Trash2, FileSpreadsheet, Upload, AlertCircle, Copy, Search } from 'lucide-react';
+import { Select } from '../../../../components/ui/Select';
+import { Tabs } from '../../../../components/ui/Tabs';
+import { toast } from '../../../../components/ui/Toast';
+import { ConfirmDialog } from '../../../../components/ui/ConfirmDialog';
+import { ArrowLeft, Plus, UtensilsCrossed, Loader2, Edit, Trash2, FileSpreadsheet, Upload, AlertCircle, Copy, Search, X } from 'lucide-react';
 import { DataTable, Column } from '../../../../components/ui/DataTable';
+
+const PROVINSI_OPTIONS = [
+  { label: 'Jawa Barat', value: 'Jawa Barat' },
+  { label: 'DKI Jakarta', value: 'DKI Jakarta' },
+];
+const KABUPATEN_OPTIONS = [
+  { label: 'Kota Bandung', value: 'Kota Bandung' },
+  { label: 'Kota Adm. Jakarta Selatan', value: 'Kota Adm. Jakarta Selatan' },
+  { label: 'Kota Adm. Jakarta Pusat', value: 'Kota Adm. Jakarta Pusat' },
+];
 
 export default function AdminDapurPage() {
   const [dapur, setDapur] = useState<any[]>([]);
@@ -18,6 +32,9 @@ export default function AdminDapurPage() {
   const [kabupatenFilter, setKabupatenFilter] = useState('ALL');
   const [tab, setTab] = useState<'SINGLE' | 'BATCH'>('SINGLE');
   const [batchErrors, setBatchErrors] = useState<any[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -40,14 +57,30 @@ export default function AdminDapurPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ nama: '', alamat: '', kontak: '', provinsi: '', kabupatenKota: '', kecamatan: '' });
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus dapur ini?')) return;
+  const openAddForm = () => {
+    setForm({ nama: '', alamat: '', kontak: '', provinsi: '', kabupatenKota: '', kecamatan: '', email: '' });
+    setBatchErrors([]);
+    setTab('SINGLE');
+    setShowForm(true);
+  };
+
+  const handleDelete = (id: string) => {
+    setConfirmId(id);
+  };
+
+  const executeDelete = async () => {
+    if (!confirmId) return;
+    setConfirmLoading(true);
     try {
-      const res = await fetch(`/api/proxy/dapur/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/proxy/dapur/${confirmId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal menghapus dapur');
+      toast.success('Dapur berhasil dihapus');
       loadData();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message);
+    } finally {
+      setConfirmLoading(false);
+      setConfirmId(null);
     }
   };
 
@@ -69,9 +102,10 @@ export default function AdminDapurPage() {
         throw new Error(errJson.message || 'Gagal update dapur');
       }
       setEditingId(null);
+      toast.success('Perubahan tersimpan');
       loadData();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message);
     }
   };
 
@@ -86,9 +120,11 @@ export default function AdminDapurPage() {
       });
       if (!res.ok) throw new Error('Gagal simpan dapur');
       setForm({ nama: '', alamat: '', kontak: '', provinsi: '', kabupatenKota: '', kecamatan: '', email: '' });
+      toast.success('Dapur berhasil ditambahkan');
+      setShowForm(false);
       loadData();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message);
     } finally {
       setSaving(false);
     }
@@ -105,7 +141,7 @@ export default function AdminDapurPage() {
       try {
         const text = evt.target?.result as string;
         const lines = text.split('\n').filter(l => l.trim() !== '');
-        
+
         // Format: Nama Dapur, Alamat, Email PIC Dapur
         const items = [];
         for (let i = 1; i < lines.length; i++) {
@@ -130,9 +166,9 @@ export default function AdminDapurPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ items })
         });
-        
+
         const dataJson = await res.json();
-        
+
         if (!res.ok) {
           if (dataJson.details && dataJson.details.errors) {
             setBatchErrors(dataJson.details.errors);
@@ -143,14 +179,15 @@ export default function AdminDapurPage() {
 
         if (dataJson.data && dataJson.data.errors && dataJson.data.errors.length > 0) {
            setBatchErrors(dataJson.data.errors);
-           alert(`Berhasil upload ${dataJson.data.success} data, namun ada ${dataJson.data.failed} data yang gagal.`);
+           toast.warning(`Berhasil upload ${dataJson.data.success} data, namun ada ${dataJson.data.failed} data yang gagal.`);
         } else {
-           alert(`Berhasil upload semua ${items.length} data tanpa error!`);
+           toast.success(`Berhasil upload semua ${items.length} data tanpa error!`);
+           setShowForm(false);
         }
 
         loadData();
       } catch(e: any) {
-        alert(e.message);
+        toast.error(e.message);
       } finally {
         setSaving(false);
         e.target.value = '';
@@ -170,148 +207,43 @@ export default function AdminDapurPage() {
         <span className="text-sm font-medium text-muted-foreground">Kembali</span>
       </div>
 
-      <PageHeader 
-        title="Manajemen Dapur" 
+      <PageHeader
+        title="Manajemen Dapur"
         description="Kelola daftar fasilitas dapur umum/penyedia makanan MBG."
+        action={
+          <Button onClick={openAddForm} className="gap-2">
+            <Plus size={16} /> Tambah Dapur
+          </Button>
+        }
       />
 
-      <Card>
-        <CardHeader className="pb-4 border-b bg-muted/10">
-          <div className="flex bg-secondary/50 p-1 rounded-lg w-fit border border-border/50">
-            <button onClick={() => setTab('SINGLE')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='SINGLE'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
-              <div className="flex items-center gap-2"><Plus size={16}/> Input Manual</div>
-            </button>
-            <button onClick={() => setTab('BATCH')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='BATCH'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
-              <div className="flex items-center gap-2"><FileSpreadsheet size={16}/> Upload CSV</div>
-            </button>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-4">
-          {tab === 'SINGLE' ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Nama Dapur</label>
-                  <Input placeholder="Misal: Dapur Umum Pusat" value={form.nama} onChange={e => setForm({...form, nama: e.target.value})} required/>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Email Akun PIC Dapur</label>
-                  <Input type="email" placeholder="email@contoh.com" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required/>
-                  <p className="text-xs text-muted-foreground">Sandi bawaan: <b>mbg12345</b></p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Alamat (Wajib)</label>
-                  <Input placeholder="Alamat lengkap fasilitas dapur" value={form.alamat} onChange={e => setForm({...form, alamat: e.target.value})} required/>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Kontak (Opsional)</label>
-                  <Input placeholder="No. Telepon / HP" value={form.kontak} onChange={e => setForm({...form, kontak: e.target.value})}/>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Provinsi (Opsional)</label>
-                  <select 
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
-                    value={form.provinsi} onChange={e => setForm({...form, provinsi: e.target.value})}
-                  >
-                    <option value="">-- Pilih Provinsi --</option>
-                    <option value="Jawa Barat">Jawa Barat</option>
-                    <option value="DKI Jakarta">DKI Jakarta</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Kabupaten/Kota (Opsional)</label>
-                  <select 
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
-                    value={form.kabupatenKota} onChange={e => setForm({...form, kabupatenKota: e.target.value})}
-                  >
-                    <option value="">-- Pilih Kabupaten/Kota --</option>
-                    <option value="Bandung">Bandung</option>
-                    <option value="Jakarta Selatan">Jakarta Selatan</option>
-                  </select>
-                </div>
-              </div>
-              <div className="pt-2">
-                <Button type="submit" disabled={saving} className="w-full sm:w-auto">
-                  {saving ? <><Loader2 size={16} className="mr-2 animate-spin" /> Menyimpan...</> : 'Simpan Dapur'}
-                </Button>
-              </div>
-            </form>
-          ) : (
-            <div className="space-y-4">
-              <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                <Upload size={32} className="mx-auto text-muted-foreground mb-4"/>
-                <h3 className="font-semibold text-lg text-foreground">Format CSV Batch Upload</h3>
-                <p className="text-sm text-muted-foreground">Silakan download template CSV di bawah ini dan isi dengan data yang benar sebelum di-upload.</p>
-                
-                <div className="flex justify-center gap-4 mt-4">
-                   <Button variant="outline" type="button" onClick={() => {
-                     const csvContent = "data:text/csv;charset=utf-8,Nama Dapur,Alamat,Email PIC Dapur\nDapur Satelit A,Jl. Cihanjuang No 12,dapura@example.com\nDapur Satelit B,Jl. Merdeka No 5,dapurb@example.com";
-                     const encodedUri = encodeURI(csvContent);
-                     const link = document.createElement("a");
-                     link.setAttribute("href", encodedUri);
-                     link.setAttribute("download", "template_dapur.csv");
-                     document.body.appendChild(link);
-                     link.click();
-                     document.body.removeChild(link);
-                   }}>
-                     Download Template CSV
-                   </Button>
-                   
-                   <div className="relative inline-block">
-                     <input type="file" accept=".csv" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                     <Button disabled={saving}>{saving?'Uploading...':'Pilih File CSV & Upload'}</Button>
-                   </div>
-                </div>
-              </div>
-
-              {batchErrors.length > 0 && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4 mt-4">
-                  <div className="flex items-center gap-2 text-destructive font-semibold mb-2">
-                    <AlertCircle size={18} /> Terdapat Kesalahan saat Upload ({batchErrors.length} data gagal)
-                  </div>
-                  <ul className="list-disc list-inside text-sm text-destructive space-y-1">
-                    {batchErrors.map((err, i) => (
-                      <li key={i}>
-                        <strong>Baris {err.row} ({err.nama}):</strong> {err.message}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="pt-10 space-y-6">
+      <div className="space-y-6">
         <div className="flex flex-col gap-3 px-1 mb-4">
           <h3 className="font-bold text-xl text-foreground">Daftar Dapur</h3>
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative w-full sm:w-[250px]">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                placeholder="Cari di sini..." 
-                value={searchQuery} 
+              <Input
+                placeholder="Cari di sini..."
+                value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="h-9 pl-9 w-full bg-white"
               />
             </div>
-            <select 
-              className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors text-muted-foreground focus:text-foreground w-full sm:w-[160px]"
-              value={provinsiFilter} onChange={(e) => setProvinsiFilter(e.target.value)}
-            >
-              <option value="ALL">Pilih Provinsi</option>
-              <option value="Jawa Barat">Jawa Barat</option>
-              <option value="DKI Jakarta">DKI Jakarta</option>
-            </select>
-            <select 
-              className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors text-muted-foreground focus:text-foreground w-full sm:w-[180px]"
-              value={kabupatenFilter} onChange={(e) => setKabupatenFilter(e.target.value)}
-            >
-              <option value="ALL">Pilih Kabupaten/Kota</option>
-              <option value="Bandung">Bandung</option>
-              <option value="Jakarta Selatan">Jakarta Selatan</option>
-            </select>
+            <Select
+              value={provinsiFilter}
+              onChange={(e) => setProvinsiFilter(e.target.value)}
+              className="bg-white"
+              wrapperClassName="sm:w-[160px]"
+              options={[{ label: 'Pilih Provinsi', value: 'ALL' }, ...PROVINSI_OPTIONS]}
+            />
+            <Select
+              value={kabupatenFilter}
+              onChange={(e) => setKabupatenFilter(e.target.value)}
+              className="bg-white"
+              wrapperClassName="sm:w-[180px]"
+              options={[{ label: 'Pilih Kabupaten/Kota', value: 'ALL' }, ...KABUPATEN_OPTIONS]}
+            />
           </div>
         </div>
         {loading ? (
@@ -319,9 +251,9 @@ export default function AdminDapurPage() {
         ) : error ? (
           <StateCard icon={<UtensilsCrossed size={32} />} title="Gagal Memuat" description={error} action={<Button variant="outline" onClick={loadData}>Coba Lagi</Button>} />
         ) : dapur.length === 0 ? (
-          <StateCard icon={<UtensilsCrossed size={32} />} title="Belum Ada Data" description="Silahkan tambah data dapur baru di atas." />
+          <StateCard icon={<UtensilsCrossed size={32} />} title="Belum Ada Data" description="Klik tombol 'Tambah Dapur' untuk menambah data." action={<Button onClick={openAddForm} className="gap-2"><Plus size={16} /> Tambah Dapur</Button>} />
         ) : (
-          <DataTable 
+          <DataTable
             data={dapur.filter(d => {
               const matchProvinsi = provinsiFilter === 'ALL' || d.provinsi === provinsiFilter;
               const matchKabupaten = kabupatenFilter === 'ALL' || d.kabupatenKota === kabupatenFilter;
@@ -342,7 +274,7 @@ export default function AdminDapurPage() {
                       </div>
                       <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-primary" onClick={() => {
                         navigator.clipboard.writeText(d.id);
-                        alert('ID Dapur berhasil disalin!');
+                        toast.success('ID Dapur berhasil disalin');
                       }} title="Salin ID Lengkap">
                         <Copy size={12} />
                       </Button>
@@ -419,25 +351,21 @@ export default function AdminDapurPage() {
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">Provinsi</label>
-                      <select 
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
-                        value={editForm.provinsi} onChange={e => setEditForm({...editForm, provinsi: e.target.value})}
-                      >
-                        <option value="">-- Pilih --</option>
-                        <option value="Jawa Barat">Jawa Barat</option>
-                        <option value="DKI Jakarta">DKI Jakarta</option>
-                      </select>
+                      <Select
+                        value={editForm.provinsi}
+                        onChange={e => setEditForm({...editForm, provinsi: e.target.value})}
+                        placeholder="-- Pilih --"
+                        options={PROVINSI_OPTIONS}
+                      />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">Kabupaten/Kota</label>
-                      <select 
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors" 
-                        value={editForm.kabupatenKota} onChange={e => setEditForm({...editForm, kabupatenKota: e.target.value})}
-                      >
-                        <option value="">-- Pilih --</option>
-                        <option value="Bandung">Bandung</option>
-                        <option value="Jakarta Selatan">Jakarta Selatan</option>
-                      </select>
+                      <Select
+                        value={editForm.kabupatenKota}
+                        onChange={e => setEditForm({...editForm, kabupatenKota: e.target.value})}
+                        placeholder="-- Pilih --"
+                        options={KABUPATEN_OPTIONS}
+                      />
                     </div>
                   </div>
                 </div>
@@ -451,6 +379,145 @@ export default function AdminDapurPage() {
           />
         )}
       </div>
+
+      {/* Modal Tambah Dapur */}
+      {showForm && (
+        <div
+          className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={() => setShowForm(false)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-2 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border/40 p-5 shrink-0">
+              <h2 className="text-base font-bold text-foreground">Tambah Dapur</h2>
+              <button
+                onClick={() => setShowForm(false)}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Tutup"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-5 pt-4 shrink-0">
+              <Tabs
+                value={tab}
+                onValueChange={(v) => setTab(v as 'SINGLE' | 'BATCH')}
+                items={[
+                  { value: 'SINGLE', label: 'Input Manual', icon: Plus },
+                  { value: 'BATCH', label: 'Upload CSV', icon: FileSpreadsheet },
+                ]}
+              />
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              {tab === 'SINGLE' ? (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Nama Dapur</label>
+                      <Input placeholder="Misal: Dapur Umum Pusat" value={form.nama} onChange={e => setForm({...form, nama: e.target.value})} required/>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Email Akun PIC Dapur</label>
+                      <Input type="email" placeholder="email@contoh.com" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required/>
+                      <p className="text-xs text-muted-foreground">Sandi bawaan: <b>mbg12345</b></p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Alamat (Wajib)</label>
+                      <Input placeholder="Alamat lengkap fasilitas dapur" value={form.alamat} onChange={e => setForm({...form, alamat: e.target.value})} required/>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Kontak (Opsional)</label>
+                      <Input placeholder="No. Telepon / HP" value={form.kontak} onChange={e => setForm({...form, kontak: e.target.value})}/>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Provinsi (Opsional)</label>
+                      <Select
+                        value={form.provinsi}
+                        onChange={e => setForm({...form, provinsi: e.target.value})}
+                        placeholder="-- Pilih Provinsi --"
+                        options={PROVINSI_OPTIONS}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Kabupaten/Kota (Opsional)</label>
+                      <Select
+                        value={form.kabupatenKota}
+                        onChange={e => setForm({...form, kabupatenKota: e.target.value})}
+                        placeholder="-- Pilih Kabupaten/Kota --"
+                        options={KABUPATEN_OPTIONS}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Batal</Button>
+                    <Button type="submit" disabled={saving}>
+                      {saving ? <><Loader2 size={16} className="mr-2 animate-spin" /> Menyimpan...</> : 'Simpan Dapur'}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                    <Upload size={32} className="mx-auto text-muted-foreground mb-4"/>
+                    <h3 className="font-semibold text-lg text-foreground">Format CSV Batch Upload</h3>
+                    <p className="text-sm text-muted-foreground">Silakan download template CSV di bawah ini dan isi dengan data yang benar sebelum di-upload.</p>
+
+                    <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+                       <Button variant="outline" type="button" className="w-full sm:w-auto" onClick={() => {
+                         const csvContent = "data:text/csv;charset=utf-8,Nama Dapur,Alamat,Email PIC Dapur\nDapur Satelit A,Jl. Cihanjuang No 12,dapura@example.com\nDapur Satelit B,Jl. Merdeka No 5,dapurb@example.com";
+                         const encodedUri = encodeURI(csvContent);
+                         const link = document.createElement("a");
+                         link.setAttribute("href", encodedUri);
+                         link.setAttribute("download", "template_dapur.csv");
+                         document.body.appendChild(link);
+                         link.click();
+                         document.body.removeChild(link);
+                       }}>
+                         Download Template CSV
+                       </Button>
+
+                       <div className="relative w-full sm:w-auto">
+                         <input type="file" accept=".csv" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                         <Button disabled={saving} className="w-full">{saving?'Uploading...':'Pilih File CSV & Upload'}</Button>
+                       </div>
+                    </div>
+                  </div>
+
+                  {batchErrors.length > 0 && (
+                    <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4 mt-4">
+                      <div className="flex items-center gap-2 text-destructive font-semibold mb-2">
+                        <AlertCircle size={18} /> Terdapat Kesalahan saat Upload ({batchErrors.length} data gagal)
+                      </div>
+                      <ul className="list-disc list-inside text-sm text-destructive space-y-1">
+                        {batchErrors.map((err, i) => (
+                          <li key={i}>
+                            <strong>Baris {err.row} ({err.nama}):</strong> {err.message}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={!!confirmId}
+        title="Hapus dapur ini?"
+        description="Data dapur akan dihapus permanen dan tidak dapat dikembalikan."
+        confirmLabel="Hapus"
+        destructive
+        loading={confirmLoading}
+        onConfirm={executeDelete}
+        onCancel={() => setConfirmId(null)}
+      />
     </div>
   );
 }

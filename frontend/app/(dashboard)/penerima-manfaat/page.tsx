@@ -7,6 +7,7 @@ import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Loader2, Utensils, CheckCircle2, Clock, Star, CalendarDays, ChevronRight, AlertCircle, Info, Flame, Beef, Droplets, Wheat, Leaf } from 'lucide-react';
 import Image from 'next/image';
+import { ImageLightbox } from '../../../components/ui/ImageLightbox';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -290,21 +291,7 @@ export default function BerandaPenerimaManfaat() {
         </Card>
       )}
 
-      {/* Image Modal */}
-      {selectedFotoUrl && (
-        <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in"
-          onClick={() => setSelectedFotoUrl(null)}
-        >
-          <div className="relative w-full max-w-4xl max-h-[90vh] flex items-center justify-center">
-            <img 
-              src={selectedFotoUrl} 
-              alt="Foto diperbesar" 
-              className="max-w-full max-h-[90vh] object-contain rounded-md" 
-            />
-          </div>
-        </div>
-      )}
+      <ImageLightbox src={selectedFotoUrl} alt="Foto menu" onClose={() => setSelectedFotoUrl(null)} />
     </div>
   );
 }

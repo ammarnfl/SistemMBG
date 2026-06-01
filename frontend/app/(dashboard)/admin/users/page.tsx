@@ -12,7 +12,7 @@ import { Select } from '../../../../components/ui/Select';
 import { Tabs } from '../../../../components/ui/Tabs';
 import { toast } from '../../../../components/ui/Toast';
 import { ConfirmDialog } from '../../../../components/ui/ConfirmDialog';
-import { ArrowLeft, UserPlus, Users, Loader2, Edit, Trash2, UserCheck, UserX, Search, Plus, FileSpreadsheet, Upload, AlertCircle } from 'lucide-react';
+import { ArrowLeft, UserPlus, Users, Loader2, Edit, Trash2, UserCheck, UserX, Search, Plus, FileSpreadsheet, Upload, AlertCircle, X } from 'lucide-react';
 
 const ROLE_OPTIONS = [
   { label: 'ADMIN', value: 'ADMIN' },
@@ -35,6 +35,7 @@ export default function AdminUsersPage() {
   const [kelasList, setKelasList] = useState<any[]>([]);
   const [confirmAction, setConfirmAction] = useState<{ id: string; currentActive: boolean } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -70,6 +71,13 @@ export default function AdminUsersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: '', role: '', password: '', email: '', nisn: '', kelasId: '' });
 
+  const openAddForm = () => {
+    setForm({ name: '', email: '', password: '', role: 'GURU', dapurId: '', sekolahId: '', nisn: '', kelasId: '' });
+    setBatchErrors([]);
+    setTab('SINGLE');
+    setShowForm(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -93,6 +101,7 @@ export default function AdminUsersPage() {
       }
       setForm({ name: '', email: '', password: '', role: 'GURU', dapurId: '', sekolahId: '', nisn: '', kelasId: '' });
       toast.success('User berhasil ditambahkan');
+      setShowForm(false);
       loadData();
     } catch (e: any) {
       toast.error(e.message);
@@ -157,6 +166,7 @@ export default function AdminUsersPage() {
            toast.warning(`Berhasil upload ${dataJson.data.success} data, namun ada ${dataJson.data.failed} data yang gagal.`);
         } else {
            toast.success(`Berhasil upload semua ${items.length} data tanpa error!`);
+           setShowForm(false);
         }
 
         loadData();
@@ -385,24 +395,49 @@ export default function AdminUsersPage() {
         <span className="text-sm font-medium text-muted-foreground">Kembali</span>
       </div>
 
-      <PageHeader 
-        title="Manajemen User" 
+      <PageHeader
+        title="Manajemen User"
         description="Kelola hak akses pengguna, pendaftaran, dan pemetaan akun."
+        action={
+          <Button onClick={openAddForm} className="gap-2">
+            <Plus size={16} /> Tambah User
+          </Button>
+        }
       />
 
-      <Card>
-        <CardHeader className="pb-4 border-b bg-muted/10">
-          <Tabs
-            value={tab}
-            onValueChange={(v) => setTab(v as 'SINGLE' | 'BATCH')}
-            items={[
-              { value: 'SINGLE', label: 'Input Manual', icon: Plus },
-              { value: 'BATCH', label: 'Upload CSV', icon: FileSpreadsheet },
-            ]}
-          />
-        </CardHeader>
-        <CardContent className="pt-4">
-          {tab === 'SINGLE' ? (
+      {showForm && (
+        <div
+          className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={() => setShowForm(false)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-2 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border/40 p-5 shrink-0">
+              <h2 className="text-base font-bold text-foreground">Tambah User</h2>
+              <button
+                onClick={() => setShowForm(false)}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Tutup"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-5 pt-4 shrink-0">
+              <Tabs
+                value={tab}
+                onValueChange={(v) => setTab(v as 'SINGLE' | 'BATCH')}
+                items={[
+                  { value: 'SINGLE', label: 'Input Manual', icon: Plus },
+                  { value: 'BATCH', label: 'Upload CSV', icon: FileSpreadsheet },
+                ]}
+              />
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              {tab === 'SINGLE' ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -475,8 +510,9 @@ export default function AdminUsersPage() {
                   </>
                 )}
               </div>
-              <div className="pt-2">
-                <Button type="submit" disabled={saving} className="w-full sm:w-auto">
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Batal</Button>
+                <Button type="submit" disabled={saving}>
                   {saving ? <><Loader2 size={16} className="mr-2 animate-spin" /> Menyimpan...</> : 'Simpan User'}
                 </Button>
               </div>
@@ -488,8 +524,8 @@ export default function AdminUsersPage() {
                 <h3 className="font-semibold text-lg text-foreground">Format CSV Batch Upload</h3>
                 <p className="text-sm text-muted-foreground">Silakan download template CSV di bawah ini dan isi dengan data yang benar sebelum di-upload.</p>
                 
-                <div className="flex justify-center gap-4 mt-4">
-                   <Button variant="outline" type="button" onClick={() => {
+                <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+                   <Button variant="outline" type="button" className="w-full sm:w-auto" onClick={() => {
                      const csvContent = "data:text/csv;charset=utf-8,Nama Lengkap,Email,Password,Role,ID Sekolah,ID Dapur\nBudi Guru,budiguru@example.com,mbg12345,GURU,SEKOLAH_ID,\nTim Dapur B,dapurB@example.com,mbg12345,TIM_DAPUR,,DAPUR_ID";
                      const encodedUri = encodeURI(csvContent);
                      const link = document.createElement("a");
@@ -502,9 +538,9 @@ export default function AdminUsersPage() {
                      Download Template CSV
                    </Button>
                    
-                   <div className="relative inline-block">
+                   <div className="relative w-full sm:w-auto">
                      <input type="file" accept=".csv" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                     <Button disabled={saving}>{saving?'Uploading...':'Pilih File CSV & Upload'}</Button>
+                     <Button disabled={saving} className="w-full">{saving?'Uploading...':'Pilih File CSV & Upload'}</Button>
                    </div>
                 </div>
               </div>
@@ -524,11 +560,13 @@ export default function AdminUsersPage() {
                 </div>
               )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-      <div className="pt-10 space-y-6">
+      <div className="space-y-6">
         <div className="flex flex-col gap-3 px-1 mb-4">
           <h3 className="font-bold text-xl text-foreground">Daftar User</h3>
           <div className="flex flex-wrap items-center gap-3">

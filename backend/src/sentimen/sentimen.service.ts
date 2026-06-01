@@ -14,6 +14,10 @@ export class SentimenService {
   private readonly logger = new Logger(SentimenService.name);
   private readonly HF_API_URL =
     'https://router.huggingface.co/hf-inference/models/w11wo/indonesian-roberta-base-sentiment-classifier';
+  private readonly REQUEST_TIMEOUT_MS = 8_000;
+  private readonly RETRY_DELAY_MS = 1_500;
+  // 503 = model loading, 429 = rate limit, 502/504 = gateway issues → layak di-retry.
+  private readonly RETRIABLE_STATUS = new Set([429, 502, 503, 504]);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -27,6 +31,21 @@ export class SentimenService {
     return SentimenLabel.NETRAL;
   }
 
+  private async callHuggingFace(
+    text: string,
+    token: string,
+  ): Promise<Response> {
+    return fetch(this.HF_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ inputs: text }),
+      signal: AbortSignal.timeout(this.REQUEST_TIMEOUT_MS),
+    });
+  }
+
   async analyzeSingle(
     text: string,
   ): Promise<{ label: SentimenLabel; rawLabel: string; score: number } | null> {
@@ -36,37 +55,49 @@ export class SentimenService {
       return null;
     }
 
-    try {
-      const response = await fetch(this.HF_API_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ inputs: text }),
-      });
+    // Coba dua kali: satu retry untuk transient failure (cold-start 503, rate limit, timeout).
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await this.callHuggingFace(text, token);
 
-      if (!response.ok) {
-        this.logger.warn(`HuggingFace API returned ${response.status}`);
+        if (!response.ok) {
+          const retriable = this.RETRIABLE_STATUS.has(response.status);
+          this.logger.warn(
+            `HF API returned ${response.status} (attempt ${attempt}/2, retriable=${retriable})`,
+          );
+          if (retriable && attempt < 2) {
+            await new Promise((r) => setTimeout(r, this.RETRY_DELAY_MS));
+            continue;
+          }
+          return null;
+        }
+
+        const data = (await response.json()) as HuggingFaceResult[][];
+        const results = data[0];
+        if (!results || results.length === 0) return null;
+
+        const top = results.reduce((prev, cur) =>
+          cur.score > prev.score ? cur : prev,
+        );
+        return {
+          label: this.mapLabel(top.label),
+          rawLabel: top.label,
+          score: top.score,
+        };
+      } catch (error: any) {
+        // AbortError (timeout) atau network error → layak di-retry.
+        const isTimeout = error?.name === 'TimeoutError' || error?.name === 'AbortError';
+        this.logger.error(
+          `HF API call failed (attempt ${attempt}/2, ${isTimeout ? 'timeout' : 'network'}): ${error?.message ?? error}`,
+        );
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, this.RETRY_DELAY_MS));
+          continue;
+        }
         return null;
       }
-
-      const data = (await response.json()) as HuggingFaceResult[][];
-      const results = data[0];
-      if (!results || results.length === 0) return null;
-
-      const top = results.reduce((prev, cur) =>
-        cur.score > prev.score ? cur : prev,
-      );
-      return {
-        label: this.mapLabel(top.label),
-        rawLabel: top.label,
-        score: top.score,
-      };
-    } catch (error) {
-      this.logger.error(`HuggingFace API call failed: ${error}`);
-      return null;
     }
+    return null;
   }
 
   @Cron(CronExpression.EVERY_HOUR)

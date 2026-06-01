@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../../components
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { StatusBadge } from '../../../../components/ui/StatusBadge';
+import { Select } from '../../../../components/ui/Select';
+import { Tabs } from '../../../../components/ui/Tabs';
+import { toast } from '../../../../components/ui/Toast';
 import { Truck, Upload, Plus, FileSpreadsheet, Send, Search } from 'lucide-react';
 
 export default function DapurDistribusiPage() {
@@ -67,8 +70,9 @@ export default function DapurDistribusiPage() {
       });
       if(!res.ok) throw new Error('Gagal simpan distribusi');
       setForm({...form, sekolahId: '', jumlahPorsi: '', catatanDapur: '', menuId: ''});
+      toast.success('Distribusi berhasil dibuat');
       loadData();
-    } catch(e: any) { alert(e.message); }
+    } catch(e: any) { toast.error(e.message); }
     setSaving(false);
   };
 
@@ -108,10 +112,10 @@ export default function DapurDistribusiPage() {
           body: JSON.stringify({ items })
         });
         if(!res.ok) throw new Error('Gagal batch upload');
-        alert('Berhasil upload ' + items.length + ' data.');
+        toast.success('Berhasil upload ' + items.length + ' data.');
         loadData();
       } catch(e: any) {
-        alert(e.message);
+        toast.error(e.message);
       } finally {
         setSaving(false);
         // reset input
@@ -123,13 +127,15 @@ export default function DapurDistribusiPage() {
 
   const updateStatus = async (id: string, newStatus: string) => {
     try {
-      await fetch(`/api/proxy/distribusi/${id}/status`, {
+      const res = await fetch(`/api/proxy/distribusi/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
       });
+      if (!res.ok) throw new Error('Gagal memperbarui status');
+      toast.success('Status distribusi diperbarui');
       loadData();
-    } catch(e) {}
+    } catch(e: any) { toast.error(e.message); }
   };
 
   return (
@@ -141,14 +147,14 @@ export default function DapurDistribusiPage() {
 
       <Card>
         <CardHeader className="pb-4 border-b bg-muted/10">
-          <div className="flex bg-secondary/50 p-1 rounded-lg w-fit border border-border/50">
-             <button onClick={() => setTab('SINGLE')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='SINGLE'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
-               <div className="flex items-center gap-2"><Plus size={16}/> Input Manual</div>
-             </button>
-             <button onClick={() => setTab('BATCH')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${tab==='BATCH'?'bg-white text-primary shadow-sm ring-1 ring-border/50':'text-muted-foreground hover:text-foreground hover:bg-white/50'}`}>
-               <div className="flex items-center gap-2"><FileSpreadsheet size={16}/> Upload CSV</div>
-             </button>
-          </div>
+          <Tabs
+            value={tab}
+            onValueChange={(v) => setTab(v as 'SINGLE' | 'BATCH')}
+            items={[
+              { value: 'SINGLE', label: 'Input Manual', icon: Plus },
+              { value: 'BATCH', label: 'Upload CSV', icon: FileSpreadsheet },
+            ]}
+          />
         </CardHeader>
         <CardContent className="pt-4">
           {tab === 'SINGLE' ? (
@@ -160,17 +166,22 @@ export default function DapurDistribusiPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Menu (Dari Jadwal Aktif)</label>
-                  <select className="flex h-9 w-full border rounded-md px-3 text-sm" value={form.menuId} onChange={e=>setForm({...form, menuId: e.target.value})}>
-                    <option value="">-- Pilih Menu (Opsional) --</option>
-                    {jadwal.map(j=><option key={j.menu?.id} value={j.menu?.id}>{j.menu?.nama}</option>)}
-                  </select>
+                  <Select
+                    value={form.menuId}
+                    onChange={e=>setForm({...form, menuId: e.target.value})}
+                    placeholder="-- Pilih Menu (Opsional) --"
+                    options={jadwal.map(j => ({ label: j.menu?.nama ?? '', value: j.menu?.id ?? '' }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Sekolah Tujuan</label>
-                  <select className="flex h-9 w-full border rounded-md px-3 text-sm" value={form.sekolahId} onChange={e=>setForm({...form, sekolahId: e.target.value})} required>
-                    <option value="">-- Sekolah --</option>
-                    {sekolah.map(s=><option key={s.id} value={s.id}>{s.nama}</option>)}
-                  </select>
+                  <Select
+                    value={form.sekolahId}
+                    onChange={e=>setForm({...form, sekolahId: e.target.value})}
+                    required
+                    placeholder="-- Sekolah --"
+                    options={sekolah.map(s => ({ label: s.nama, value: s.id }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Jumlah Porsi</label>
@@ -189,8 +200,8 @@ export default function DapurDistribusiPage() {
               <h3 className="font-semibold text-lg text-foreground">Format CSV Batch Upload</h3>
               <p className="text-sm text-muted-foreground">Silakan download template CSV di bawah ini dan isi dengan data yang benar sebelum di-upload.<br/>(ID Menu bersifat opsional, kosongkan jika tidak ada)</p>
               
-              <div className="flex justify-center gap-4 mt-4">
-                 <Button variant="outline" type="button" onClick={() => {
+              <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+                 <Button variant="outline" type="button" className="w-full sm:w-auto" onClick={() => {
                    const csvContent = "data:text/csv;charset=utf-8,Tanggal,ID Sekolah,ID Menu,Jumlah Porsi,Catatan\n2026-05-01,SEKOLAH_ID,MENU_ID,50,Diantar Pak Budi";
                    const encodedUri = encodeURI(csvContent);
                    const link = document.createElement("a");
@@ -203,9 +214,9 @@ export default function DapurDistribusiPage() {
                    Download Template CSV
                  </Button>
                  
-                 <div className="relative inline-block">
+                 <div className="relative w-full sm:w-auto">
                    <input type="file" accept=".csv" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                   <Button disabled={saving}>{saving?'Uploading...':'Pilih File CSV & Upload'}</Button>
+                   <Button disabled={saving} className="w-full">{saving?'Uploading...':'Pilih File CSV & Upload'}</Button>
                  </div>
               </div>
             </div>

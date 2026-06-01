@@ -5,6 +5,8 @@ import { PageHeader } from '../../../components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
+import { SentimentBadge } from '../../../components/ui/SentimentBadge';
+import { ImageLightbox } from '../../../components/ui/ImageLightbox';
 import { Loader2, School, Users, CheckCircle2, Clock, Truck, ChevronRight, UtensilsCrossed, Flame, Beef, Droplets, Wheat, Leaf, MessageSquare, ClipboardCheck, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -78,25 +80,7 @@ function NutritionPill({ icon, label, value, unit, color }: { icon: React.ReactN
   );
 }
 
-const SENTIMEN_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
-  POSITIF: { label: 'Positif', color: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
-  NETRAL: { label: 'Netral', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400' },
-  NEGATIF: { label: 'Negatif', color: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
-};
-
-function SentimentBadge({ sentimen, skor }: { sentimen: string | null; skor: number | null }) {
-  if (!sentimen || !(sentimen in SENTIMEN_CONFIG)) {
-    return <span className="text-[10px] text-muted-foreground italic">Belum dianalisis</span>;
-  }
-  const cfg = SENTIMEN_CONFIG[sentimen];
-  return (
-    <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.color}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.label}
-      {skor !== null && <span className="opacity-60">({Math.round(skor * 100)}%)</span>}
-    </div>
-  );
-}
+// SentimentBadge & SENTIMEN_CONFIG dipindah ke components/ui/SentimentBadge
 
 export default function GuruDashboard() {
   const [stats, setStats] = useState<GuruStats | null>(null);
@@ -404,24 +388,7 @@ export default function GuruDashboard() {
         </>
       )}
 
-      {/* Image Modal */}
-      {selectedFotoUrl && (
-        <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in"
-          onClick={() => setSelectedFotoUrl(null)}
-        >
-          <div className="relative w-full max-w-4xl max-h-[90vh] flex items-center justify-center">
-            <Image 
-              src={selectedFotoUrl} 
-              alt="Foto diperbesar" 
-              width={1200} 
-              height={1200} 
-              className="max-w-full max-h-[90vh] object-contain rounded-md" 
-              unoptimized 
-            />
-          </div>
-        </div>
-      )}
+      <ImageLightbox src={selectedFotoUrl} alt="Foto menu" onClose={() => setSelectedFotoUrl(null)} />
     </div>
   );
 }

@@ -153,6 +153,17 @@ export default function FormEvaluasiPage() {
     );
   }
 
+  const validationHint = (() => {
+    if (!statusKonsumsi) return '';
+    if (statusKonsumsi === 'KONSUMSI') {
+      if (ratingKeseluruhan === 0) return 'Beri rating kepuasan keseluruhan dulu.';
+      const total = distribusi?.menu?.komponen?.length ?? 0;
+      if (total !== Object.keys(penilaianKomponen).length) return 'Nilai semua komponen makanan dulu.';
+    }
+    if (showFeedbackSection && !feedback && !fotoSourced) return 'Isi masukan atau lampirkan foto (wajib salah satu).';
+    return '';
+  })();
+
   return (
     <div className="max-w-md mx-auto pb-12">
       <div className="flex items-center mb-6">
@@ -345,17 +356,22 @@ export default function FormEvaluasiPage() {
           </Card>
         )}
 
-        <Button 
-          className="w-full h-12 text-base font-semibold shadow-md rounded-xl"
-          disabled={!isFormValid() || submitting}
-          onClick={handleSubmit}
-        >
-          {submitting ? (
-            <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Mengirim...</>
-          ) : (
-            'Kirim Evaluasi'
+        <div className="space-y-2">
+          <Button
+            className="w-full h-12 text-base font-semibold shadow-md rounded-xl"
+            disabled={!isFormValid() || submitting}
+            onClick={handleSubmit}
+          >
+            {submitting ? (
+              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Mengirim...</>
+            ) : (
+              'Kirim Evaluasi'
+            )}
+          </Button>
+          {validationHint && !submitting && (
+            <p className="text-center text-xs text-amber-600">{validationHint}</p>
           )}
-        </Button>
+        </div>
 
       </div>
     </div>

@@ -8,6 +8,10 @@ import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { Badge } from '../../../../components/ui/Badge';
 import { DataTable, Column } from '../../../../components/ui/DataTable';
+import { Tabs } from '../../../../components/ui/Tabs';
+import { toast } from '../../../../components/ui/Toast';
+import { ConfirmDialog } from '../../../../components/ui/ConfirmDialog';
+import { ImageLightbox } from '../../../../components/ui/ImageLightbox';
 import { Plus, BookOpen, Loader2, Edit, Trash2, UtensilsCrossed, Info, Camera, CheckCircle2, X } from 'lucide-react';
 // --- Types ---
 interface Komponen {
@@ -84,6 +88,8 @@ export default function DapurMenuPage() {
   const [savingMenu, setSavingMenu] = useState(false);
   
   const [previewFoto, setPreviewFoto] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ type: 'komponen' | 'menu'; id: string } | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   // --- Fetch Data ---
   const loadMenus = async () => {
@@ -155,26 +161,17 @@ export default function DapurMenuPage() {
       }
       
       setIsKomponenFormOpen(false);
+      toast.success('Komponen berhasil disimpan');
       loadKomponen();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message);
     } finally {
       setSavingKomponen(false);
     }
   };
 
-  const handleDeleteKomponen = async (id: string) => {
-    if (!confirm('Hapus komponen ini?')) return;
-    try {
-      const res = await fetch(`/api/proxy/menu/komponen-master/${id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const errJson = await res.json().catch(()=>({}));
-        throw new Error(errJson.message || 'Gagal menghapus komponen');
-      }
-      loadKomponen();
-    } catch (e: any) {
-      alert(e.message);
-    }
+  const handleDeleteKomponen = (id: string) => {
+    setConfirmDelete({ type: 'komponen', id });
   };
 
   // --- Handlers for Menu ---
@@ -208,7 +205,7 @@ export default function DapurMenuPage() {
   const handleSaveMenu = async (e: React.FormEvent) => {
     e.preventDefault();
     if (menuForm.komponenIds.length === 0) {
-      alert('Pilih minimal 1 komponen untuk menu ini.');
+      toast.warning('Pilih minimal 1 komponen untuk menu ini.');
       return;
     }
 
@@ -257,25 +254,46 @@ export default function DapurMenuPage() {
       }
       
       setIsMenuFormOpen(false);
+      toast.success('Menu berhasil disimpan');
       loadMenus();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message);
     } finally {
       setSavingMenu(false);
     }
   };
 
-  const handleDeleteMenu = async (id: string) => {
-    if (!confirm('Hapus menu ini?')) return;
+  const handleDeleteMenu = (id: string) => {
+    setConfirmDelete({ type: 'menu', id });
+  };
+
+  const executeDelete = async () => {
+    if (!confirmDelete) return;
+    const { type, id } = confirmDelete;
+    setConfirmLoading(true);
     try {
-      const res = await fetch(`/api/proxy/menu/${id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const errJson = await res.json().catch(()=>({}));
-        throw new Error(errJson.message || 'Gagal menghapus menu');
+      if (type === 'komponen') {
+        const res = await fetch(`/api/proxy/menu/komponen-master/${id}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const errJson = await res.json().catch(()=>({}));
+          throw new Error(errJson.message || 'Gagal menghapus komponen');
+        }
+        toast.success('Komponen dihapus');
+        loadKomponen();
+      } else {
+        const res = await fetch(`/api/proxy/menu/${id}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const errJson = await res.json().catch(()=>({}));
+          throw new Error(errJson.message || 'Gagal menghapus menu');
+        }
+        toast.success('Menu dihapus');
+        loadMenus();
       }
-      loadMenus();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message);
+    } finally {
+      setConfirmLoading(false);
+      setConfirmDelete(null);
     }
   };
 
@@ -371,24 +389,14 @@ export default function DapurMenuPage() {
       )}
 
       {/* TABS */}
-      <div className="flex gap-2 p-1 bg-muted/40 rounded-xl w-fit border border-border/50">
-        <button
-          onClick={() => setActiveTab('katalog')}
-          className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-            activeTab === 'katalog' ? 'bg-white shadow-sm text-primary' : 'text-muted-foreground hover:bg-white/50'
-          }`}
-        >
-          Katalog Menu
-        </button>
-        <button
-          onClick={() => setActiveTab('komponen')}
-          className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-            activeTab === 'komponen' ? 'bg-white shadow-sm text-primary' : 'text-muted-foreground hover:bg-white/50'
-          }`}
-        >
-          Daftar Komponen
-        </button>
-      </div>
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as 'katalog' | 'komponen')}
+        items={[
+          { value: 'katalog', label: 'Katalog Menu' },
+          { value: 'komponen', label: 'Daftar Komponen' },
+        ]}
+      />
 
       {/* TAB CONTENT: KATALOG MENU */}
       {activeTab === 'katalog' && (
@@ -654,26 +662,18 @@ export default function DapurMenuPage() {
         </div>
       )}
 
-      {/* MODAL: IMAGE PREVIEW */}
-      {previewFoto && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4 animate-in fade-in" onClick={() => setPreviewFoto(null)}>
-          <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
-            <button 
-              className="absolute -top-12 right-0 md:-right-12 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 rounded-full p-2 transition-all"
-              onClick={() => setPreviewFoto(null)}
-            >
-              <X size={24} />
-            </button>
-            <img 
-              src={previewFoto} 
-              alt="Preview Menu" 
-              className="w-full h-full object-contain rounded-xl shadow-2xl border border-white/10" 
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        </div>
-      )}
+      <ImageLightbox src={previewFoto} alt="Preview Menu" onClose={() => setPreviewFoto(null)} />
 
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title={confirmDelete?.type === 'menu' ? 'Hapus menu ini?' : 'Hapus komponen ini?'}
+        description="Data akan dihapus permanen dan tidak dapat dikembalikan."
+        confirmLabel="Hapus"
+        destructive
+        loading={confirmLoading}
+        onConfirm={executeDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

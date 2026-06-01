@@ -51,8 +51,8 @@ export class DistribusiController {
   @Roles('TIM_DAPUR', 'ADMIN')
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update status (e.g. DIKIRIM) by Dapur' })
-  updateStatus(@Param('id') id: string, @Body() dto: UpdateStatusDto) {
-    return this.distribusiService.updateStatusDapur(id, dto);
+  updateStatus(@Request() req: any, @Param('id') id: string, @Body() dto: UpdateStatusDto) {
+    return this.distribusiService.updateStatusDapur(id, req.user.id, req.user.role, dto);
   }
 
   @Roles('GURU')

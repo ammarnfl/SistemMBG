@@ -12,6 +12,9 @@ async function bootstrap() {
   if (!cachedApp) {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  // Trust proxy headers (Vercel, NGINX, dsb.) agar req.ip = client asli — penting untuk throttler
+  app.set('trust proxy', 1);
+
   // CORS
   app.enableCors({
     origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',

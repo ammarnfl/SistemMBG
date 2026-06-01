@@ -6,7 +6,9 @@ import { PageHeader } from '../../../components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
-import { Loader2, Truck, Star, TrendingDown, MessageSquare, Calendar, RefreshCw, ChevronRight, AlertTriangle, CheckCircle2, Send, FileText, ArrowRight } from 'lucide-react';
+import { StatCard } from '../../../components/ui/StatCard';
+import { SentimentBadge, SENTIMEN_CONFIG } from '../../../components/ui/SentimentBadge';
+import { Loader2, Truck, Star, TrendingDown, MessageSquare, Calendar, RefreshCw, ChevronRight, AlertTriangle, CheckCircle2, Send, FileText, ArrowRight, BookOpen, CalendarDays, ClipboardList } from 'lucide-react';
 
 interface DapurStats {
   totalDistribusi: number;
@@ -23,25 +25,7 @@ interface DapurStats {
   }[];
 }
 
-const SENTIMEN_CONFIG: Record<string, { label: string; color: string; dot: string; bar: string }> = {
-  POSITIF: { label: 'Positif', color: 'bg-green-100 text-green-700', dot: 'bg-green-500', bar: 'bg-green-500' },
-  NETRAL: { label: 'Netral', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400', bar: 'bg-gray-400' },
-  NEGATIF: { label: 'Negatif', color: 'bg-red-100 text-red-700', dot: 'bg-red-500', bar: 'bg-red-500' },
-};
-
-function SentimentBadge({ sentimen, skor }: { sentimen: string | null; skor: number | null }) {
-  if (!sentimen || !(sentimen in SENTIMEN_CONFIG)) {
-    return <span className="text-[10px] text-muted-foreground italic">Belum dianalisis</span>;
-  }
-  const cfg = SENTIMEN_CONFIG[sentimen];
-  return (
-    <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.color}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.label}
-      {skor !== null && <span className="opacity-60">({Math.round(skor * 100)}%)</span>}
-    </div>
-  );
-}
+// SentimentBadge & SENTIMEN_CONFIG dipindah ke components/ui/SentimentBadge
 
 const STATUS_ICON: Record<string, { icon: React.ReactNode; bg: string; text: string }> = {
   DRAFT: { icon: <FileText size={16} />, bg: 'bg-gray-100', text: 'text-gray-600' },
@@ -131,20 +115,23 @@ export default function DapurDashboard() {
         <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest px-1">Akses Cepat</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { href: '/dapur/menu', emoji: '📋', label: 'Kelola Menu', bg: 'bg-indigo-50' },
-            { href: '/dapur/distribusi', emoji: '🚚', label: 'Distribusi', bg: 'bg-blue-50' },
-            { href: '/dapur/jadwal', emoji: '📅', label: 'Jadwal Menu', bg: 'bg-emerald-50' },
-            { href: '/laporan', emoji: '📊', label: 'Unduh Laporan', bg: 'bg-rose-50' },
-          ].map((link) => (
-            <a key={link.href} href={link.href} className="group">
-              <div className="bg-card border border-border/60 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
-                <div className={`w-12 h-12 ${link.bg} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>
-                  <span className="text-2xl">{link.emoji}</span>
+            { href: '/dapur/menu', icon: BookOpen, label: 'Kelola Menu', tint: 'bg-primary/10 text-primary' },
+            { href: '/dapur/distribusi', icon: Truck, label: 'Distribusi', tint: 'bg-blue-50 text-blue-600' },
+            { href: '/dapur/jadwal', icon: CalendarDays, label: 'Jadwal Menu', tint: 'bg-emerald-50 text-emerald-600' },
+            { href: '/laporan', icon: ClipboardList, label: 'Unduh Laporan', tint: 'bg-rose-50 text-rose-600' },
+          ].map((link) => {
+            const Icon = link.icon;
+            return (
+              <a key={link.href} href={link.href} className="group">
+                <div className="bg-card border border-border/60 p-4 rounded-xl shadow-sm hover:shadow-md hover:border-primary/40 hover:-translate-y-1 transition-all text-center">
+                  <div className={`w-12 h-12 ${link.tint} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>
+                    <Icon size={22} />
+                  </div>
+                  <p className="text-xs font-bold text-foreground">{link.label}</p>
                 </div>
-                <p className="text-xs font-bold text-foreground">{link.label}</p>
-              </div>
-            </a>
-          ))}
+              </a>
+            );
+          })}
         </div>
       </div>
 
@@ -165,48 +152,15 @@ export default function DapurDashboard() {
         <>
           {/* Summary Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="relative overflow-hidden border-none shadow-sm hover:shadow-md transition-all group">
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500 group-hover:w-2 transition-all" />
-              <div className="p-6 flex items-center gap-4">
-                <div className="p-4 rounded-2xl bg-blue-50 flex-shrink-0 group-hover:scale-110 transition-transform"><Truck size={28} className="text-blue-600" /></div>
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Total Distribusi</p>
-                  <div className="flex items-baseline gap-2">
-                    <p className="text-4xl font-extrabold text-foreground">{stats.totalDistribusi}</p>
-                    <span className="text-xs text-muted-foreground font-medium italic">Minggu ini</span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-            <Card className="relative overflow-hidden border-none shadow-sm hover:shadow-md transition-all group">
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500 group-hover:w-2 transition-all" />
-              <div className="p-6 flex items-center gap-4">
-                <div className="p-4 rounded-2xl bg-emerald-50 flex-shrink-0 group-hover:scale-110 transition-transform"><Star size={28} className="text-emerald-600" /></div>
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Evaluasi Masuk</p>
-                  <div className="flex items-baseline gap-2">
-                    <p className="text-4xl font-extrabold text-foreground">{stats.totalEvaluasi}</p>
-                    <span className="text-xs text-muted-foreground font-medium italic">Review</span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-            <Card className="relative overflow-hidden border-none shadow-sm bg-gradient-to-br from-amber-500/5 to-transparent">
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-400" />
-              <div className="p-6">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Rating Rata-rata</p>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                      <span className="text-4xl font-extrabold text-foreground">{stats.rataRatingKeseluruhan?.toFixed(1) || '0.0'}</span>
-                      <div className="h-8 w-px bg-border" />
-                      <StarRating value={stats.rataRatingKeseluruhan} size={20} />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground font-medium">Skala 1.0 - 5.0 bintang</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
+            <StatCard icon={Truck} label="Total Distribusi" value={stats.totalDistribusi} accentClass="border-l-blue-500" note="Minggu ini" />
+            <StatCard icon={MessageSquare} label="Evaluasi Masuk" value={stats.totalEvaluasi} accentClass="border-l-emerald-500" note="Review" />
+            <StatCard
+              icon={Star}
+              label="Rating Rata-rata"
+              value={stats.rataRatingKeseluruhan?.toFixed(1) || '0.0'}
+              accentClass="border-l-amber-400"
+              extra={<StarRating value={stats.rataRatingKeseluruhan} size={16} />}
+            />
           </div>
 
           {/* Status Hari Ini & Sentimen Feedback — Side by Side */}
@@ -317,7 +271,7 @@ export default function DapurDashboard() {
                               </div>
                             </div>
                             <div className="w-full h-2 bg-muted/50 rounded-full overflow-hidden">
-                              <div className={`h-full ${cfg.bar} rounded-full transition-all duration-700 ease-out`} style={{ width: `${pct}%` }} />
+                              <div className={`h-full ${cfg.dot} rounded-full transition-all duration-700 ease-out`} style={{ width: `${pct}%` }} />
                             </div>
                           </div>
                         );
@@ -341,7 +295,7 @@ export default function DapurDashboard() {
               <CardHeader className="pb-3 border-b border-border/40 mb-2">
                 <CardTitle className="text-base font-bold flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-red-50"><TrendingDown size={18} className="text-red-500" /></div>
-                  Komponen Paling Disukai
+                  Komponen Perlu Perhatian
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-1">

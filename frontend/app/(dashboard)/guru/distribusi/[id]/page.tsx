@@ -8,18 +8,14 @@ import { StateCard } from '../../../../../components/layout/StateCard';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../../components/ui/Card';
 import { Button } from '../../../../../components/ui/Button';
 import { Input } from '../../../../../components/ui/Input';
-import { Badge } from '../../../../../components/ui/Badge';
+import { StatusBadge } from '../../../../../components/ui/StatusBadge';
+import { toast } from '../../../../../components/ui/Toast';
+import { ImageLightbox } from '../../../../../components/ui/ImageLightbox';
 import { ArrowLeft, Loader2, CheckCircle, AlertTriangle, UtensilsCrossed, Flame, Beef, Droplets, Wheat, Leaf, CalendarDays, Building2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'warning' | 'destructive' | 'success' | 'outline' }> = {
-  DRAFT: { label: 'Draft', variant: 'outline' },
-  DIKIRIM: { label: 'Dalam Perjalanan', variant: 'warning' },
-  DITERIMA: { label: 'Diterima', variant: 'success' },
-  BERMASALAH: { label: 'Bermasalah', variant: 'destructive' },
-  SELESAI: { label: 'Selesai', variant: 'success' },
-};
+// STATUS distribusi kini via components/ui/StatusBadge
 
 export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -49,7 +45,7 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
 
   const handleKonfirmasi = async (statusId: string) => {
     if (statusId === 'BERMASALAH' && !catatan) {
-      alert('Harap isi catatan kendala jika ada masalah.');
+      toast.warning('Harap isi catatan kendala jika ada masalah.');
       return;
     }
     setSaving(true);
@@ -60,8 +56,9 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
         body: JSON.stringify({ status: statusId, catatanGuru: catatan })
       });
       if(!res.ok) throw new Error('Gagal melakukan konfirmasi');
+      toast.success(statusId === 'DITERIMA' ? 'Makanan dikonfirmasi diterima' : 'Masalah dilaporkan ke dapur');
       router.push('/guru/distribusi');
-    } catch(e: any) { alert(e.message); }
+    } catch(e: any) { toast.error(e.message); }
     setSaving(false);
   };
 
@@ -72,7 +69,6 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
   const fotoSrc = menu?.fotoUrl
     ? (menu.fotoUrl.startsWith('http') ? menu.fotoUrl : `${BACKEND_URL}${menu.fotoUrl}`)
     : null;
-  const statusCfg = STATUS_CONFIG[dist.status] || { label: dist.status, variant: 'outline' as const };
   const tanggalStr = new Date(dist.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
@@ -103,7 +99,7 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
               </div>
               <div className="font-bold text-lg text-foreground">{dist.dapur?.nama || 'N/A'}</div>
             </div>
-            <Badge variant={statusCfg.variant} className="shrink-0 text-sm px-3 py-1">{statusCfg.label}</Badge>
+            <StatusBadge status={dist.status} className="shrink-0 text-sm px-3 py-1" />
           </div>
 
           <div className="flex items-center gap-2 text-sm text-muted-foreground border-t pt-4">
@@ -282,24 +278,7 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
         </Card>
       )}
 
-      {/* Image Modal */}
-      {selectedFotoUrl && (
-        <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in"
-          onClick={() => setSelectedFotoUrl(null)}
-        >
-          <div className="relative w-full max-w-4xl max-h-[90vh] flex items-center justify-center">
-            <Image 
-              src={selectedFotoUrl} 
-              alt="Foto diperbesar" 
-              width={1200} 
-              height={1200} 
-              className="max-w-full max-h-[90vh] object-contain rounded-md" 
-              unoptimized 
-            />
-          </div>
-        </div>
-      )}
+      <ImageLightbox src={selectedFotoUrl} alt="Foto menu" onClose={() => setSelectedFotoUrl(null)} />
     </div>
   );
 }
