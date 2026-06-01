@@ -12,6 +12,7 @@ import { toast } from '../../../../components/ui/Toast';
 import {
   Loader2, Search, Filter, RefreshCw, MessageSquare, CheckCircle2,
   ChevronLeft, ChevronRight, X, ArrowLeft, Calendar, School, Tag,
+  User, UtensilsCrossed, GraduationCap,
 } from 'lucide-react';
 
 interface FeedbackItem {
@@ -73,6 +74,35 @@ export default function DapurFeedbackPage() {
   const [resolveTarget, setResolveTarget] = useState<FeedbackItem | null>(null);
   const [resolveText, setResolveText] = useState('');
   const [resolving, setResolving] = useState(false);
+
+  // Tab: 'siswa' (feedback siswa) | 'guru' (observasi guru)
+  const [activeTab, setActiveTab] = useState<'siswa' | 'guru'>('siswa');
+  const [observasi, setObservasi] = useState<any[]>([]);
+  const [obsLoading, setObsLoading] = useState(false);
+  const [obsSekolahId, setObsSekolahId] = useState('');
+  const [obsTanggal, setObsTanggal] = useState('');
+
+  const loadObservasi = useCallback(async () => {
+    setObsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (obsSekolahId) params.set('sekolahId', obsSekolahId);
+      if (obsTanggal) params.set('tanggal', obsTanggal);
+      const res = await fetch(`/api/proxy/observasi?${params.toString()}`);
+      if (!res.ok) throw new Error('Gagal memuat');
+      const json = await res.json();
+      const result = json?.data ?? json;
+      setObservasi(Array.isArray(result) ? result : []);
+    } catch {
+      setObservasi([]);
+    } finally {
+      setObsLoading(false);
+    }
+  }, [obsSekolahId, obsTanggal]);
+
+  useEffect(() => {
+    if (activeTab === 'guru') loadObservasi();
+  }, [activeTab, loadObservasi]);
 
   // Load sekolah list once
   useEffect(() => {
@@ -170,10 +200,33 @@ export default function DapurFeedbackPage() {
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <MessageSquare size={16} />
-          <span className="font-semibold">{total}</span> feedback
+          <span className="font-semibold">{activeTab === 'siswa' ? total : observasi.length}</span>{' '}
+          {activeTab === 'siswa' ? 'feedback' : 'observasi'}
         </div>
       </div>
 
+      {/* Tab switcher: Siswa vs Guru */}
+      <div className="flex gap-1 p-1 bg-muted/40 rounded-xl w-fit">
+        <button
+          onClick={() => setActiveTab('siswa')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            activeTab === 'siswa' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <MessageSquare size={15} /> Feedback Siswa
+        </button>
+        <button
+          onClick={() => setActiveTab('guru')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            activeTab === 'guru' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <GraduationCap size={15} /> Observasi Guru
+        </button>
+      </div>
+
+      {activeTab === 'siswa' ? (
+      <>
       {/* Filters Card */}
       <Card className="border-border/50 shadow-sm">
         <div className="p-5 space-y-5">
@@ -452,6 +505,97 @@ export default function DapurFeedbackPage() {
             </div>
           )}
         </div>
+      )}
+      </>
+      ) : (
+      <>
+        {/* === Observasi Guru === */}
+        <Card className="border-border/50 shadow-sm">
+          <div className="p-5 flex flex-wrap gap-4 items-end">
+            {sekolahList.length > 0 && (
+              <div className="flex items-center gap-2">
+                <School size={14} className="text-muted-foreground shrink-0" />
+                <Select
+                  value={obsSekolahId}
+                  onChange={(e) => setObsSekolahId(e.target.value)}
+                  className="bg-white"
+                  wrapperClassName="min-w-[180px]"
+                  options={[{ label: 'Semua Sekolah', value: '' }, ...sekolahList.map((s) => ({ label: s.nama, value: s.id }))]}
+                />
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Calendar size={14} className="text-muted-foreground shrink-0" />
+              <input
+                type="date"
+                value={obsTanggal}
+                onChange={(e) => setObsTanggal(e.target.value)}
+                className="text-xs bg-white border border-border/60 rounded-lg px-3 py-2 focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all"
+              />
+            </div>
+            {(obsSekolahId || obsTanggal) && (
+              <Button variant="ghost" size="sm" onClick={() => { setObsSekolahId(''); setObsTanggal(''); }} className="h-9 text-xs gap-1.5 text-muted-foreground hover:text-foreground">
+                <RefreshCw size={12} /> Reset
+              </Button>
+            )}
+          </div>
+        </Card>
+
+        {obsLoading ? (
+          <div className="flex flex-col justify-center items-center h-48 gap-3">
+            <Loader2 className="animate-spin text-primary" size={32} />
+            <p className="text-sm text-muted-foreground animate-pulse">Memuat observasi...</p>
+          </div>
+        ) : observasi.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <div className="p-4 rounded-full bg-muted/50 mb-3">
+                <GraduationCap size={28} className="opacity-30" />
+              </div>
+              <p className="text-sm font-medium">Belum ada observasi guru</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {observasi.map((item: any, idx: number) => (
+              <Card key={item.id} className="border-border/50 shadow-sm overflow-hidden" style={{ animationDelay: `${idx * 40}ms` }}>
+                <div className="flex">
+                  <div className="w-1.5 shrink-0 bg-blue-400" />
+                  <CardContent className="p-5 flex-1 space-y-3">
+                    <p className="text-sm text-foreground leading-relaxed italic">&ldquo;{item.isi}&rdquo;</p>
+                    {item.kategori && item.kategori.length > 0 && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {item.kategori.map((kat: string) => (
+                          <span key={kat} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200/60">
+                            <Tag size={8} /> {kat}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <User size={12} />
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-medium text-foreground">{item.guru?.name || 'Guru'}</p>
+                          <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            {item.sekolah?.nama || '-'}
+                            {item.distribusi?.menu && (<><span>·</span><UtensilsCrossed size={9} /> {item.distribusi.menu.nama}</>)}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
+                        {new Date(item.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                  </CardContent>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </>
       )}
 
       {/* Resolve Modal */}

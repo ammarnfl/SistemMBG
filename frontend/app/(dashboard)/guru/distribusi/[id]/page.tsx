@@ -11,7 +11,7 @@ import { Input } from '../../../../../components/ui/Input';
 import { StatusBadge } from '../../../../../components/ui/StatusBadge';
 import { toast } from '../../../../../components/ui/Toast';
 import { ImageLightbox } from '../../../../../components/ui/ImageLightbox';
-import { ArrowLeft, Loader2, CheckCircle, AlertTriangle, UtensilsCrossed, Flame, Beef, Droplets, Wheat, Leaf, CalendarDays, Building2 } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, AlertTriangle, UtensilsCrossed, Flame, Beef, Droplets, Wheat, Leaf, CalendarDays, Building2, MessageSquarePlus, Trash2, Tag } from 'lucide-react';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -60,6 +60,49 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
       router.push('/guru/distribusi');
     } catch(e: any) { toast.error(e.message); }
     setSaving(false);
+  };
+
+  // ── Observasi / komentar guru tentang makanan hari ini (F.10) ──
+  const [observasi, setObservasi] = useState<any[]>([]);
+  const [obsText, setObsText] = useState('');
+  const [obsSubmitting, setObsSubmitting] = useState(false);
+
+  const loadObservasi = async () => {
+    try {
+      const res = await fetch(`/api/proxy/observasi?distribusiId=${id}`);
+      if (res.ok) {
+        const json = await res.json();
+        setObservasi(json?.data || json || []);
+      }
+    } catch {}
+  };
+
+  useEffect(() => { loadObservasi(); }, [id]);
+
+  const handleSubmitObservasi = async () => {
+    if (!obsText.trim()) { toast.warning('Tulis komentar Anda dulu.'); return; }
+    setObsSubmitting(true);
+    try {
+      const res = await fetch('/api/proxy/observasi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ distribusiId: id, isi: obsText }),
+      });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'Gagal mengirim komentar'); }
+      toast.success('Komentar terkirim ke tim dapur');
+      setObsText('');
+      loadObservasi();
+    } catch (e: any) { toast.error(e.message); }
+    setObsSubmitting(false);
+  };
+
+  const handleDeleteObservasi = async (obsId: string) => {
+    try {
+      const res = await fetch(`/api/proxy/observasi/${obsId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Gagal menghapus');
+      toast.success('Komentar dihapus');
+      loadObservasi();
+    } catch (e: any) { toast.error(e.message); }
   };
 
   if (loading) return <StateCard icon={<Loader2 className="animate-spin text-primary" size={32}/>} title="Memuat Data" description=""/>;
@@ -277,6 +320,60 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
           </CardContent>
         </Card>
       )}
+
+      {/* Observasi / Komentar Guru (F.10) — tersedia di status apa pun */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <MessageSquarePlus size={16} className="text-primary" />
+            Komentar tentang Makanan Hari Ini
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Sampaikan observasi tambahan (mis. rasa, porsi, atau keterlambatan). Komentar ini akan dilihat tim dapur.
+          </p>
+          <textarea
+            value={obsText}
+            onChange={(e) => setObsText(e.target.value)}
+            placeholder="Tulis komentar Anda tentang makanan hari ini..."
+            maxLength={1000}
+            className="w-full min-h-[90px] rounded-lg border border-border/60 bg-white px-3 py-2 text-sm focus:ring-1 focus:ring-primary/30 focus:border-primary/50 resize-none transition-all"
+          />
+          <Button disabled={obsSubmitting || !obsText.trim()} onClick={handleSubmitObservasi} className="w-full sm:w-auto">
+            {obsSubmitting ? <><Loader2 size={16} className="mr-2 animate-spin" /> Mengirim...</> : 'Kirim Komentar'}
+          </Button>
+
+          {observasi.length > 0 && (
+            <div className="space-y-2 pt-3 border-t">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Komentar Anda</p>
+              {observasi.map((o) => (
+                <div key={o.id} className="p-3 bg-neutral-50 rounded-lg border text-sm group/obs">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-foreground italic flex-1">&ldquo;{o.isi}&rdquo;</p>
+                    <button
+                      onClick={() => handleDeleteObservasi(o.id)}
+                      className="text-muted-foreground hover:text-red-500 transition-colors opacity-0 group-hover/obs:opacity-100 shrink-0"
+                      title="Hapus komentar"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  {o.kategori && o.kategori.length > 0 && (
+                    <div className="flex gap-1 flex-wrap mt-2">
+                      {o.kategori.map((k: string) => (
+                        <span key={k} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200/60">
+                          <Tag size={8} /> {k}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <ImageLightbox src={selectedFotoUrl} alt="Foto menu" onClose={() => setSelectedFotoUrl(null)} />
     </div>

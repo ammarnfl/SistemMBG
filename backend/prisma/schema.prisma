@@ -23,6 +23,7 @@ model User {
   guruProfile            GuruProfile?
   penerimaManfaatProfile PenerimaManfaatProfile?
   timDapurProfile        TimDapurProfile?
+  observasiGuru          ObservasiGuru[]         @relation("ObservasiGuru")
 
   @@map("users")
 }
@@ -61,6 +62,7 @@ model Sekolah {
   kelas                   Kelas[]
   penerimaManfaatProfiles PenerimaManfaatProfile[]
   dapur                   Dapur?                   @relation(fields: [dapurId], references: [id])
+  observasiGuru           ObservasiGuru[]
 
   @@map("sekolah")
 }
@@ -197,6 +199,7 @@ model Distribusi {
   menu           MenuMaster?      @relation(fields: [menuId], references: [id])
   sekolah        Sekolah          @relation(fields: [sekolahId], references: [id])
   evaluasiHarian EvaluasiHarian[]
+  observasiGuru  ObservasiGuru[]
 
   // Satu sekolah hanya boleh punya satu distribusi per tanggal (cegah dua dapur
   // membuat distribusi ganda untuk sekolah & hari yang sama).
@@ -245,6 +248,25 @@ model PenilaianKomponen {
 
   @@unique([evaluasiId, komponenId])
   @@map("penilaian_komponen")
+}
+
+model ObservasiGuru {
+  id           String      @id @default(cuid())
+  guruId       String
+  sekolahId    String
+  distribusiId String?
+  tanggal      DateTime    @db.Date
+  isi          String
+  kategori     String[]    @default([])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  guru         User        @relation("ObservasiGuru", fields: [guruId], references: [id])
+  sekolah      Sekolah     @relation(fields: [sekolahId], references: [id])
+  distribusi   Distribusi? @relation(fields: [distribusiId], references: [id])
+
+  @@index([sekolahId, tanggal])
+  @@index([guruId])
+  @@map("observasi_guru")
 }
 
 enum Role {
