@@ -1,0 +1,73 @@
+{
+  "model": "w11wo/indonesian-roberta-base-sentiment-classifier",
+  "methodology": "gold-standard manual labels vs model prediction (text-based)",
+  "generatedAt": "2026-06-01T08:07:02.116Z",
+  "labels": [
+    "POSITIF",
+    "NETRAL",
+    "NEGATIF"
+  ],
+  "totalSamples": 75,
+  "evaluated": 75,
+  "apiErrors": 0,
+  "confusionMatrix": [
+    [
+      25,
+      0,
+      0
+    ],
+    [
+      16,
+      1,
+      8
+    ],
+    [
+      0,
+      0,
+      25
+    ]
+  ],
+  "perClass": [
+    {
+      "label": "POSITIF",
+      "tp": 25,
+      "fp": 16,
+      "fn": 0,
+      "support": 25,
+      "precision": 0.6097560975609756,
+      "recall": 1,
+      "f1": 0.7575757575757575
+    },
+    {
+      "label": "NETRAL",
+      "tp": 1,
+      "fp": 0,
+      "fn": 24,
+      "support": 25,
+      "precision": 1,
+      "recall": 0.04,
+      "f1": 0.07692307692307693
+    },
+    {
+      "label": "NEGATIF",
+      "tp": 25,
+      "fp": 8,
+      "fn": 0,
+      "support": 25,
+      "precision": 0.7575757575757576,
+      "recall": 1,
+      "f1": 0.8620689655172413
+    }
+  ],
+  "accuracy": 0.68,
+  "macro": {
+    "precision": 0.789110618378911,
+    "recall": 0.68,
+    "f1": 0.5655226000053586
+  },
+  "weighted": {
+    "precision": 0.789110618378911,
+    "recall": 0.68,
+    "f1": 0.5655226000053585
+  }
+}

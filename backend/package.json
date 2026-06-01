@@ -21,7 +21,8 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "ts-node prisma/seed.ts",
     "db:reset": "prisma migrate reset --force && ts-node prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "eval:sentimen": "ts-node scripts/evaluate-sentiment.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
