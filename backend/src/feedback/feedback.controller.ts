@@ -23,6 +23,7 @@ export class FeedbackController {
   @ApiQuery({ name: 'sentimen', required: false, enum: SentimenLabel })
   @ApiQuery({ name: 'sekolahId', required: false })
   @ApiQuery({ name: 'resolved', required: false })
+  @ApiQuery({ name: 'kategori', required: false })
   listFeedback(
     @Request() req: any,
     @Query('page') page?: string,
@@ -32,6 +33,7 @@ export class FeedbackController {
     @Query('sentimen') sentimen?: SentimenLabel,
     @Query('sekolahId') sekolahId?: string,
     @Query('resolved') resolved?: string,
+    @Query('kategori') kategori?: string,
   ) {
     return this.feedbackService.listFeedback(req.user.id, {
       page: page ? parseInt(page) : 1,
@@ -41,6 +43,7 @@ export class FeedbackController {
       sentimen,
       sekolahId,
       resolved,
+      kategori,
     });
   }
 

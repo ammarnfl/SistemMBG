@@ -172,6 +172,37 @@ export class DashboardService {
       if (s.sentimen) sentimenMap[s.sentimen] = s._count._all;
     });
 
+    // Agregasi kategori keluhan utama (hanya feedback NEGATIF, di-scope ke dapur)
+    let kategoriKeluhan: { kategori: string; jumlah: number }[] = [];
+    try {
+      const kategoriWhere: any = {
+        sentimen: 'NEGATIF',
+        feedback: { not: null },
+        kategori: { isEmpty: false },
+      };
+      if (dapurId) kategoriWhere.distribusi = { dapurId };
+      if (Object.keys(dateFilter).length) kategoriWhere.tanggal = dateFilter;
+
+      const negatifRecords = await this.prisma.evaluasiHarian.findMany({
+        where: kategoriWhere,
+        select: { kategori: true },
+      });
+
+      // Hitung frekuensi tiap kategori (unnest array di sisi aplikasi)
+      const countMap: Record<string, number> = {};
+      for (const record of negatifRecords) {
+        for (const kat of record.kategori) {
+          countMap[kat] = (countMap[kat] || 0) + 1;
+        }
+      }
+      kategoriKeluhan = Object.entries(countMap)
+        .map(([kategori, jumlah]) => ({ kategori, jumlah }))
+        .sort((a, b) => b.jumlah - a.jumlah);
+    } catch {
+      // Jika query gagal (misal kolom belum ada), kembalikan array kosong
+      kategoriKeluhan = [];
+    }
+
     return {
       totalDistribusi,
       totalEvaluasi,
@@ -189,6 +220,7 @@ export class DashboardService {
       })),
       komponenSeringTidakHabis: komponenSering,
       sentimenDistribusi: sentimenMap,
+      kategoriKeluhan,
       feedbackTerbaru: feedbackTerbaru.map((f) => ({
         id: f.id,
         feedback: f.feedback,

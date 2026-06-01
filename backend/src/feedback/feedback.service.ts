@@ -10,6 +10,7 @@ export interface FeedbackListOpts {
   sentimen?: SentimenLabel;
   sekolahId?: string;
   resolved?: string; // 'true' | 'false' | undefined
+  kategori?: string; // salah satu dari KATEGORI_LIST
 }
 
 @Injectable()
@@ -80,6 +81,11 @@ export class FeedbackService {
       where.feedbackResolved = true;
     } else if (opts.resolved === 'false') {
       where.feedbackResolved = false;
+    }
+
+    // Kategori filter (array field — gunakan `has`)
+    if (opts.kategori) {
+      where.kategori = { has: opts.kategori };
     }
 
     // Search by name or feedback text

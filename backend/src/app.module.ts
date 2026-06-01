@@ -18,6 +18,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { LaporanModule } from './laporan/laporan.module';
 import { SentimenModule } from './sentimen/sentimen.module';
 import { FeedbackModule } from './feedback/feedback.module';
+import { KategoriModule } from './kategori/kategori.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { FeedbackModule } from './feedback/feedback.module';
     LaporanModule,
     SentimenModule,
     FeedbackModule,
+    KategoriModule,
   ],
   controllers: [HealthController],
   providers: [

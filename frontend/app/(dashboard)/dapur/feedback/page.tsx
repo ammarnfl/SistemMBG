@@ -11,7 +11,7 @@ import { SentimentBadge } from '../../../../components/ui/SentimentBadge';
 import { toast } from '../../../../components/ui/Toast';
 import {
   Loader2, Search, Filter, RefreshCw, MessageSquare, CheckCircle2,
-  ChevronLeft, ChevronRight, X, ArrowLeft, Calendar, School,
+  ChevronLeft, ChevronRight, X, ArrowLeft, Calendar, School, Tag,
 } from 'lucide-react';
 
 interface FeedbackItem {
@@ -24,6 +24,7 @@ interface FeedbackItem {
   feedbackResolved: boolean;
   feedbackResolution: string | null;
   feedbackResolvedAt: string | null;
+  kategori?: string[];
   penerimaManfaat: { name: string };
   distribusi: {
     sekolah: { id: string; nama: string } | null;
@@ -63,6 +64,7 @@ export default function DapurFeedbackPage() {
   const [sentimen, setSentimen] = useState('');
   const [sekolahId, setSekolahId] = useState('');
   const [resolvedFilter, setResolvedFilter] = useState('');
+  const [kategoriFilter, setKategoriFilter] = useState('');
 
   // Sekolah dropdown
   const [sekolahList, setSekolahList] = useState<SekolahOption[]>([]);
@@ -94,6 +96,7 @@ export default function DapurFeedbackPage() {
       if (sentimen) params.set('sentimen', sentimen);
       if (sekolahId) params.set('sekolahId', sekolahId);
       if (resolvedFilter) params.set('resolved', resolvedFilter);
+      if (kategoriFilter) params.set('kategori', kategoriFilter);
 
       const res = await fetch(`/api/proxy/feedback?${params.toString()}`);
       if (!res.ok) throw new Error('Gagal memuat');
@@ -108,7 +111,7 @@ export default function DapurFeedbackPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, tanggalAwal, tanggalAkhir, sentimen, sekolahId, resolvedFilter]);
+  }, [debouncedSearch, tanggalAwal, tanggalAkhir, sentimen, sekolahId, resolvedFilter, kategoriFilter]);
 
   useEffect(() => {
     loadData(1);
@@ -121,9 +124,10 @@ export default function DapurFeedbackPage() {
     setSentimen('');
     setSekolahId('');
     setResolvedFilter('');
+    setKategoriFilter('');
   };
 
-  const hasFilters = search || tanggalAwal || tanggalAkhir || sentimen || sekolahId || resolvedFilter;
+  const hasFilters = search || tanggalAwal || tanggalAkhir || sentimen || sekolahId || resolvedFilter || kategoriFilter;
 
   const handleResolve = async () => {
     if (!resolveTarget || !resolveText.trim()) return;
@@ -245,6 +249,23 @@ export default function DapurFeedbackPage() {
               ]}
             />
 
+            {/* Kategori Filter */}
+            <Select
+              value={kategoriFilter}
+              onChange={(e) => setKategoriFilter(e.target.value)}
+              className="bg-white"
+              wrapperClassName="min-w-[150px]"
+              options={[
+                { label: 'Semua Kategori', value: '' },
+                { label: '🍽️ Rasa', value: 'RASA' },
+                { label: '📦 Porsi', value: 'PORSI' },
+                { label: '⚡ Kualitas', value: 'KUALITAS' },
+                { label: '🧹 Kebersihan', value: 'KEBERSIHAN' },
+                { label: '🚚 Distribusi', value: 'DISTRIBUSI' },
+                { label: '📌 Lainnya', value: 'LAINNYA' },
+              ]}
+            />
+
             {hasFilters && (
               <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9 text-xs gap-1.5 text-muted-foreground hover:text-foreground">
                 <RefreshCw size={12} /> Reset
@@ -300,6 +321,15 @@ export default function DapurFeedbackPage() {
                       </p>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <SentimentBadge sentimen={item.sentimen} skor={item.sentimenSkor} size="md" />
+                        {item.kategori && item.kategori.length > 0 && item.kategori.map((kat) => (
+                          <span
+                            key={kat}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200/60"
+                          >
+                            <Tag size={8} />
+                            {kat}
+                          </span>
+                        ))}
                         {item.feedbackResolved && (
                           <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
                             <CheckCircle2 size={10} />

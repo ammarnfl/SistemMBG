@@ -10,7 +10,7 @@ import { Select } from '../../../../components/ui/Select';
 import { SentimentBadge } from '../../../../components/ui/SentimentBadge';
 import {
   Loader2, Search, Filter, RefreshCw, MessageSquare, CheckCircle2,
-  ChevronLeft, ChevronRight, X, ArrowLeft, Calendar, School,
+  ChevronLeft, ChevronRight, X, ArrowLeft, Calendar, School, Tag,
 } from 'lucide-react';
 
 interface FeedbackItem {
@@ -23,6 +23,7 @@ interface FeedbackItem {
   feedbackResolved: boolean;
   feedbackResolution: string | null;
   feedbackResolvedAt: string | null;
+  kategori?: string[];
   penerimaManfaat: { name: string };
   distribusi: {
     sekolah: { id: string; nama: string } | null;
@@ -234,6 +235,15 @@ export default function GuruFeedbackPage() {
                       </p>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <SentimentBadge sentimen={item.sentimen} skor={item.sentimenSkor} size="md" />
+                        {item.kategori && item.kategori.length > 0 && item.kategori.map((kat) => (
+                          <span
+                            key={kat}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200/60"
+                          >
+                            <Tag size={8} />
+                            {kat}
+                          </span>
+                        ))}
                         {item.feedbackResolved && (
                           <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
                             <CheckCircle2 size={10} />

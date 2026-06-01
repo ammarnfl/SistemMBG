@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEvaluasiDto } from './dto/create-evaluasi.dto';
+import { categorize } from '../kategori/kategori.service';
 
 @Injectable()
 export class EvaluasiService {
@@ -97,7 +98,10 @@ export class EvaluasiService {
       }
     }
 
-    // 4. Buat record
+    // 4. Kategorisasi feedback otomatis (rule-based keyword tagger)
+    const kategori = categorize(dto.feedback ?? null);
+
+    // 5. Buat record
     return await this.prisma.evaluasiHarian.create({
       data: {
         tanggal: tanggalDistribusi,
@@ -107,6 +111,7 @@ export class EvaluasiService {
         ratingKeseluruhan: dto.ratingKeseluruhan,
         feedback: dto.feedback,
         fotoUrl: dto.fotoUrl,
+        kategori,
         penilaianKomponen: {
           create: dto.penilaianKomponen?.map(k => ({
             komponenId: k.komponenId,

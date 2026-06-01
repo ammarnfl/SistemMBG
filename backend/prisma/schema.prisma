@@ -220,6 +220,7 @@ model EvaluasiHarian {
   feedbackResolved     Boolean             @default(false)
   feedbackResolution   String?
   feedbackResolvedAt   DateTime?
+  kategori             String[]            @default([])
   feedbackResolvedById String?
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt

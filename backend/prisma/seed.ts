@@ -27,6 +27,7 @@ import {
   SentimenLabel,
 } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { categorize } from '../src/kategori/kategori.service';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
@@ -69,6 +70,8 @@ function genNisn(): string {
 }
 
 // ─── Pool teks feedback (gaya siswa SMA) ─────────────────────────────────────
+// Feedback diperkaya agar menghasilkan variasi kategori topik keluhan
+// (RASA, PORSI, KUALITAS, KEBERSIHAN, DISTRIBUSI, LAINNYA).
 const FB_POSITIF = [
   'Makanannya enak banget hari ini, sayurnya seger!',
   'Ayam gorengnya gurih, suka banget sama menunya.',
@@ -85,11 +88,22 @@ const FB_NETRAL = [
   'Lumayan, cuma porsinya agak kurang buat aku.',
 ];
 const FB_NEGATIF = [
-  'Sayurnya terlalu matang dan hampir nggak ada rasanya.',
+  // RASA
+  'Sayurnya terlalu matang dan hampir nggak ada rasanya, hambar banget.',
+  'Kurang suka, bumbunya kemanisan buat aku dan rasanya aneh.',
+  // PORSI
+  'Porsinya dikit dan rasanya hambar, jadi cuma dimakan sedikit.',
+  'Porsi nasinya sedikit banget, belum kenyang udah habis.',
+  // KUALITAS
   'Lauknya hari ini kurang enak, agak amis jadi susah dimakan.',
   'Nasinya keras dan udah dingin pas sampai, jadi nggak habis.',
-  'Kurang suka, bumbunya kemanisan buat aku.',
-  'Porsinya dikit dan rasanya hambar, jadi cuma dimakan sedikit.',
+  'Makanannya basi kayaknya, baunya agak aneh dan lembek.',
+  // KEBERSIHAN
+  'Ada rambut di makanan aku, jadi nggak jadi makan deh.',
+  'Wadah makanannya kotor, jadi males makan jadinya.',
+  // DISTRIBUSI
+  'Makanan datangnya telat banget, udah lewat jam istirahat.',
+  'Distribusi terlambat lagi, makanannya udah dingin pas sampai.',
 ];
 const FB_TIDAK_KONSUMSI = [
   'Lagi nggak enak badan jadi nggak sempat makan, maaf.',
@@ -694,6 +708,9 @@ async function main() {
       sentimenAnalyzedAt = new Date();
     }
 
+    // Kategorisasi otomatis dari teks feedback (rule-based keyword tagger)
+    const kategori = categorize(a.feedback ?? null);
+
     const resolved = !!a.resolvedById;
     await prisma.evaluasiHarian.create({
       data: {
@@ -701,6 +718,7 @@ async function main() {
         statusKonsumsi: a.statusKonsumsi, ratingKeseluruhan: a.rating,
         feedback: a.feedback ?? null, fotoUrl: a.foto ?? null,
         sentimen, sentimenSkor, sentimenLabel, sentimenAnalyzedAt,
+        kategori,
         feedbackResolved: resolved,
         feedbackResolution: resolved ? 'Sudah ditindaklanjuti tim dapur, kualitas menu akan diperbaiki.' : null,
         feedbackResolvedAt: resolved ? new Date() : null,

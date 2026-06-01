@@ -16,7 +16,13 @@ describe('EvaluasiService', () => {
   beforeEach(async () => {
     prismaService = {
       user: { findUnique: jest.fn() } as any,
-      distribusi: { findFirst: jest.fn() } as any,
+      distribusi: {
+        findFirst: jest.fn(),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'dist-1',
+          status: 'DITERIMA',
+        }),
+      } as any,
       evaluasiHarian: {
         findUnique: jest.fn(),
         create: jest.fn(),

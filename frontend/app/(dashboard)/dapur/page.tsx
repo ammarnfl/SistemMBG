@@ -8,7 +8,7 @@ import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { StatCard } from '../../../components/ui/StatCard';
 import { SentimentBadge, SENTIMEN_CONFIG } from '../../../components/ui/SentimentBadge';
-import { Loader2, Truck, Star, TrendingDown, MessageSquare, Calendar, RefreshCw, ChevronRight, AlertTriangle, CheckCircle2, Send, FileText, ArrowRight, BookOpen, CalendarDays, ClipboardList } from 'lucide-react';
+import { Loader2, Truck, Star, TrendingDown, MessageSquare, Calendar, RefreshCw, ChevronRight, AlertTriangle, CheckCircle2, Send, FileText, ArrowRight, BookOpen, CalendarDays, ClipboardList, Tag } from 'lucide-react';
 
 interface DapurStats {
   totalDistribusi: number;
@@ -19,6 +19,7 @@ interface DapurStats {
   distribusiHariIniDetail?: { id: string; status: string; jumlahPorsi: number; sekolah: string; menu: string }[];
   komponenSeringTidakHabis: { komponenId: string; nama: string; rataKeterhabisan: number | null }[];
   sentimenDistribusi: { POSITIF: number; NETRAL: number; NEGATIF: number };
+  kategoriKeluhan?: { kategori: string; jumlah: number }[];
   feedbackTerbaru: {
     id: string; feedback: string; penerimaManfaat: string; sekolah: string;
     tanggal: string; sentimen: 'POSITIF' | 'NETRAL' | 'NEGATIF' | null; sentimenSkor: number | null;
@@ -288,6 +289,55 @@ export default function DapurDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Kategori Keluhan Utama */}
+          {stats.kategoriKeluhan && stats.kategoriKeluhan.length > 0 && (
+            <Card className="border-border/60 shadow-sm overflow-hidden">
+              <CardHeader className="pb-3 border-b border-border/40 bg-gradient-to-r from-orange-50/50 to-transparent">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-orange-100"><Tag size={18} className="text-orange-600" /></div>
+                    Kategori Keluhan Utama
+                  </CardTitle>
+                  <span className="text-[10px] text-muted-foreground font-medium">Berdasarkan feedback negatif</span>
+                </div>
+              </CardHeader>
+              <CardContent className="p-5">
+                <div className="space-y-3">
+                  {stats.kategoriKeluhan.map((item, i) => {
+                    const totalKeluhan = stats.kategoriKeluhan!.reduce((a, b) => a + b.jumlah, 0);
+                    const pct = totalKeluhan > 0 ? (item.jumlah / totalKeluhan) * 100 : 0;
+                    const colors = [
+                      'bg-red-500', 'bg-orange-500', 'bg-amber-500', 'bg-yellow-500', 'bg-lime-500', 'bg-gray-400',
+                    ];
+                    const barColor = colors[i] || colors[colors.length - 1];
+                    return (
+                      <div key={item.kategori} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2.5 h-2.5 rounded-full ${barColor}`} />
+                            <span className="text-xs font-bold text-foreground">{item.kategori}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-extrabold text-foreground">{item.jumlah}</span>
+                            <span className="text-[10px] text-muted-foreground font-medium w-10 text-right">({Math.round(pct)}%)</span>
+                          </div>
+                        </div>
+                        <div className="w-full h-2 bg-muted/50 rounded-full overflow-hidden">
+                          <div className={`h-full ${barColor} rounded-full transition-all duration-700 ease-out`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="pt-3 mt-3 border-t border-border/40">
+                  <p className="text-[11px] text-muted-foreground">
+                    <span className="font-bold text-foreground">{stats.kategoriKeluhan.reduce((a, b) => a + b.jumlah, 0)}</span> keluhan dikategorisasi dari feedback negatif
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Bottom: Komponen + Feedback Terbaru */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
