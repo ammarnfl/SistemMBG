@@ -1,0 +1,12 @@
+{
+  "name": "sistem-mbg",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistem Evaluasi MBG - root scripts untuk UAT",
+  "scripts": {
+    "seed:uat": "cd backend && npx ts-node prisma/seed-uat.ts",
+    "tunnel:uat": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-uat-tunnel.ps1",
+    "env:uat": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/inject-uat-env.ps1",
+    "env:restore": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/restore-uat-env.ps1"
+  }
+}
