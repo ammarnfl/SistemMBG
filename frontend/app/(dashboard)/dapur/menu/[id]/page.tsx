@@ -6,6 +6,7 @@ import { Card, CardContent } from '../../../../../components/ui/Card';
 import { Button } from '../../../../../components/ui/Button';
 import { Badge } from '../../../../../components/ui/Badge';
 import { ArrowLeft, Loader2, UtensilsCrossed, Leaf, Flame, Activity, Droplets, Info } from 'lucide-react';
+import { resolveImgUrl } from '../../../../../lib/image-url';
 
 export default function DetailMenuPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -50,7 +51,7 @@ export default function DetailMenuPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Top Nav */}
       <div className="flex items-center gap-3">
         <Link href="/dapur/menu">
@@ -66,9 +67,9 @@ export default function DetailMenuPage({ params }: { params: Promise<{ id: strin
         <div className="w-full md:w-2/5 lg:w-1/2 bg-muted/30 relative">
           {menu.fotoUrl ? (
             <div className="aspect-square md:aspect-auto md:h-full relative group">
-              <img 
-                src={menu.fotoUrl} 
-                alt={menu.nama} 
+              <img
+                src={resolveImgUrl(menu.fotoUrl)}
+                alt={menu.nama}
                 className="w-full h-full object-cover"
                 onError={(e) => (e.currentTarget.style.display = 'none')}
               />

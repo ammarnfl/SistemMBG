@@ -13,7 +13,7 @@ import { toast } from '../../../../../components/ui/Toast';
 import { ImageLightbox } from '../../../../../components/ui/ImageLightbox';
 import { ArrowLeft, Loader2, CheckCircle, AlertTriangle, UtensilsCrossed, Flame, Beef, Droplets, Wheat, Leaf, CalendarDays, Building2, MessageSquarePlus, Trash2, Tag } from 'lucide-react';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { resolveImgUrl } from '../../../../../lib/image-url';
 
 // STATUS distribusi kini via components/ui/StatusBadge
 
@@ -109,14 +109,12 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
   if (!dist) return <StateCard icon={<ArrowLeft size={32}/>} title="Not Found" description=""/>;
 
   const menu = dist.menu;
-  const fotoSrc = menu?.fotoUrl
-    ? (menu.fotoUrl.startsWith('http') ? menu.fotoUrl : `${BACKEND_URL}${menu.fotoUrl}`)
-    : null;
+  const fotoSrc = menu?.fotoUrl ? resolveImgUrl(menu.fotoUrl) : null;
   const tanggalStr = new Date(dist.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl mx-auto">
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2">
         <Link href="/guru/distribusi">
           <Button variant="ghost" size="icon" className="rounded-full">
             <ArrowLeft size={20} />
@@ -132,7 +130,7 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
 
       {/* Status & Info Card */}
       <Card>
-        <CardContent className="p-6 pt-5 space-y-5">
+        <CardContent className="pt-6 space-y-5">
           {/* Top: dapur, status, date */}
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -282,27 +280,28 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
           <CardContent className="space-y-4">
             <div>
               <label className="text-sm font-semibold block mb-2">Catatan Keadaan Makanan</label>
-              <Input 
-                placeholder="Tulis jika makanan ada yang tumpah, kurang, atau basi..." 
-                value={catatan} 
+              <Input
+                placeholder="Tulis jika makanan ada yang tumpah, kurang, atau basi..."
+                value={catatan}
                 onChange={e=>setCatatan(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground mt-1.5">Catatan wajib diisi jika Anda melaporkan masalah.</p>
             </div>
-            <div className="flex gap-3">
-              <Button 
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white" 
-                disabled={saving} 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <Button
+                className="h-11 gap-2 bg-green-600 hover:bg-green-700 text-white"
+                disabled={saving}
                 onClick={() => handleKonfirmasi('DITERIMA')}
               >
-                <CheckCircle size={18} className="mr-2"/> Terima Makanan
+                <CheckCircle size={18} /> Terima Makanan
               </Button>
-              <Button 
-                variant="destructive" 
-                className="flex-1" 
+              <Button
+                variant="destructive"
+                className="h-11 gap-2"
                 disabled={saving}
                 onClick={() => handleKonfirmasi('BERMASALAH')}
               >
-                <AlertTriangle size={18} className="mr-2"/> Lapor Masalah
+                <AlertTriangle size={18} /> Lapor Masalah
               </Button>
             </div>
           </CardContent>
@@ -312,7 +311,7 @@ export default function KonfirmasiDistribusiPage({ params }: { params: Promise<{
       {/* Existing catatan guru */}
       {(dist.status === 'DITERIMA' || dist.status === 'BERMASALAH') && dist.catatanGuru && (
         <Card>
-          <CardContent className="p-5">
+          <CardContent className="pt-6">
             <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Catatan Anda (Guru)</div>
             <div className="p-3 bg-neutral-50 rounded-lg text-sm italic border text-foreground">
               &ldquo;{dist.catatanGuru}&rdquo;

@@ -7,12 +7,7 @@ import { Loader2, Calendar, Star, CheckCircle2, Camera, X, ZoomIn, MessageSquare
 import { Alert, AlertDescription } from '../../../../components/ui/FormComponents';
 import { Badge } from '../../../../components/ui/Badge';
 import { ImageLightbox } from '../../../../components/ui/ImageLightbox';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-function resolveUrl(url: string) {
-  return url.startsWith('http') ? url : `${BACKEND_URL}${url}`;
-}
+import { resolveImgUrl } from '../../../../lib/image-url';
 
 export default function RiwayatEvaluasiPage() {
   const [riwayat, setRiwayat] = useState<any[]>([]);
@@ -122,7 +117,7 @@ export default function RiwayatEvaluasiPage() {
                     )}
                     {item.fotoUrl && (
                       <button
-                        onClick={() => setSelectedFotoUrl(resolveUrl(item.fotoUrl))}
+                        onClick={() => setSelectedFotoUrl(resolveImgUrl(item.fotoUrl))}
                         className="flex items-center gap-2 text-xs font-medium text-primary bg-primary/5 p-2 rounded-md border border-primary/10 hover:bg-primary/10 transition-colors w-full"
                       >
                         <Camera size={14} />

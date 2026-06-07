@@ -93,24 +93,24 @@ export default function DapurJadwalPage() {
         </CardContent>
       </Card>
 
-      <div className="space-y-3 pt-4">
-        <div className="flex items-center justify-between mb-4">
-           <h3 className="font-bold text-lg px-1">Menu Aktif Pada Tanggal Ini</h3>
-           <Input type="date" className="w-auto h-8 text-xs" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}/>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+           <h2 className="text-lg font-semibold text-foreground">Menu Aktif Pada Tanggal Ini</h2>
+           <Input type="date" className="h-9 w-auto" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}/>
         </div>
         
         {loading ? <StateCard icon={<Loader2 className="animate-spin"/>} title="Memuat" description=""/> : 
          jadwal.length === 0 ? <StateCard icon={<CalendarDays/>} title="Tidak Ada Menu" description="Belum ada menu yang diaktifkan untuk tanggal ini."/> :
          jadwal.map((j: any) => (
            <Card key={j.id} className="border-primary/20 bg-primary/5">
-             <div className="p-5 flex items-center justify-between">
+             <CardContent className="pt-6 flex items-center justify-between">
                <div>
                  <Badge variant="default" className="mb-2">Menu Harian Aktif</Badge>
                  <div className="font-bold text-xl">{j.menu.nama}</div>
                  <div className="text-sm text-muted-foreground mt-1">{j.menu.deskripsi}</div>
                  <div className="text-xs text-muted-foreground mt-2">{j.menu.komponen?.length} komponen masakan.</div>
                </div>
-             </div>
+             </CardContent>
            </Card>
          ))
         }

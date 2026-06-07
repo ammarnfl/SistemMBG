@@ -146,7 +146,7 @@ export default function DapurDistribusiPage() {
       />
 
       <Card>
-        <CardHeader className="pb-4 border-b bg-muted/10">
+        <CardHeader className="border-b border-border/40">
           <Tabs
             value={tab}
             onValueChange={(v) => setTab(v as 'SINGLE' | 'BATCH')}
@@ -156,7 +156,7 @@ export default function DapurDistribusiPage() {
             ]}
           />
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent>
           {tab === 'SINGLE' ? (
             <form onSubmit={handleSingleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -224,12 +224,12 @@ export default function DapurDistribusiPage() {
         </CardContent>
       </Card>
 
-      <div className="space-y-4 pt-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-3 rounded border">
-           <h3 className="font-bold text-lg px-1 flex-1">Status Pengiriman</h3>
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+           <h2 className="text-lg font-semibold text-foreground">Status Pengiriman</h2>
            <div className="flex items-center gap-2">
              <Search size={18} className="text-muted-foreground"/>
-             <Input type="date" className="h-8 max-w-[150px]" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}/>
+             <Input type="date" className="h-9 w-auto max-w-[160px]" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}/>
            </div>
         </div>
 
@@ -237,7 +237,7 @@ export default function DapurDistribusiPage() {
          distribusi.length===0 ? <StateCard icon={<Truck/>} title="Belum Ada Distribusi" description="Tidak ada jadwal untuk sekolah manapun."/> :
          distribusi.map((d: any) => (
            <Card key={d.id}>
-             <div className="p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+             <CardContent className="pt-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div>
                   <div className="font-bold flex items-center gap-2">
                     {d.sekolah?.nama}
@@ -252,9 +252,9 @@ export default function DapurDistribusiPage() {
                     <Button size="sm" onClick={() => updateStatus(d.id, 'DIKIRIM')}><Send size={14} className="mr-1"/> Kirim Makanan</Button>
                   )}
                 </div>
-             </div>
+             </CardContent>
              {d.catatanGuru && (
-               <div className="bg-destructive/10 px-4 py-2 border-t border-destructive/20 text-xs text-destructive flex flex-col gap-1">
+               <div className="border-t border-destructive/20 bg-destructive/10 px-6 py-3 text-xs text-destructive flex flex-col gap-1">
                  <strong>Catatan Guru:</strong> {d.catatanGuru}
                </div>
              )}

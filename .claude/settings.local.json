@@ -12,7 +12,8 @@
       "Bash(node -e ' *)",
       "Bash(rm -f uploads/file-1779481513096-743306347.png)",
       "Bash(npm run *)",
-      "Bash(npm test *)"
+      "Bash(npm test *)",
+      "Bash([ -f \"uploads/$f\" ])"
     ]
   }
 }

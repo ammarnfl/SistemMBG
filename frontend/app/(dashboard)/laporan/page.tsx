@@ -12,10 +12,8 @@ import { toast } from '../../../components/ui/Toast';
 import { ImageLightbox } from '../../../components/ui/ImageLightbox';
 import { Download, Loader2, FileText, CheckCircle2, Search, Filter, RefreshCw, Camera, X, ZoomIn, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-function resolveImgUrl(url: string) {
-  return url.startsWith('http') ? url : `${BACKEND_URL}${url}`;
-}
+import { resolveImgUrl } from '../../../lib/image-url';
+
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -220,7 +218,7 @@ export default function LaporanPage() {
     colsFeedback;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader
         title="Laporan & Ekspor Data"
         description="Pantau dan unduh berbagai laporan performa sistem MBG."
@@ -229,8 +227,8 @@ export default function LaporanPage() {
       {/* HEADER SECTION: Filter & Search */}
       <Card className="border-border/60 shadow-sm overflow-hidden">
         <div className="bg-muted/30 border-b border-border/40 p-4">
-          <div className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="flex-1 w-full relative">
+          <div className="flex flex-col md:flex-row gap-4 md:items-end">
+            <div className="flex-1 w-full">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">
                 Pencarian
               </label>
@@ -244,8 +242,8 @@ export default function LaporanPage() {
                 />
               </div>
             </div>
-            <div className="flex gap-3 w-full md:w-auto">
-              <div>
+            <div className="flex gap-3">
+              <div className="flex-1 md:flex-none">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">
                   Dari Tanggal
                 </label>
@@ -253,10 +251,10 @@ export default function LaporanPage() {
                   type="date"
                   value={tanggalAwal}
                   onChange={(e) => setTanggalAwal(e.target.value)}
-                  className="bg-white"
+                  className="bg-white md:w-[150px]"
                 />
               </div>
-              <div>
+              <div className="flex-1 md:flex-none">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">
                   Sampai Tanggal
                 </label>
@@ -264,15 +262,15 @@ export default function LaporanPage() {
                   type="date"
                   value={tanggalAkhir}
                   onChange={(e) => setTanggalAkhir(e.target.value)}
-                  className="bg-white"
+                  className="bg-white md:w-[150px]"
                 />
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleResetFilter} className="gap-2">
+              <Button variant="outline" onClick={handleResetFilter} className="flex-1 md:flex-none gap-2">
                 <RefreshCw size={14} /> Reset
               </Button>
-              <Button onClick={handleApplyFilter} className="gap-2">
+              <Button onClick={handleApplyFilter} className="flex-1 md:flex-none gap-2">
                 <Filter size={14} /> Filter
               </Button>
             </div>

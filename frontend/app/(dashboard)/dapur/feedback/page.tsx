@@ -189,7 +189,7 @@ export default function DapurFeedbackPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -229,7 +229,7 @@ export default function DapurFeedbackPage() {
       <>
       {/* Filters Card */}
       <Card className="border-border/50 shadow-sm">
-        <div className="p-5 space-y-5">
+        <CardContent className="pt-6 space-y-3">
           {/* Search Row */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
@@ -241,23 +241,23 @@ export default function DapurFeedbackPage() {
             />
           </div>
 
-          {/* Filter Row */}
-          <div className="flex flex-wrap gap-4 items-end">
+          {/* Filter Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Date Range */}
-            <div className="flex items-center gap-2">
-              <Calendar size={14} className="text-muted-foreground shrink-0" />
+            <div className="col-span-2 flex items-center gap-2">
+              <Calendar size={16} className="text-muted-foreground shrink-0" />
               <input
                 type="date"
                 value={tanggalAwal}
                 onChange={(e) => setTanggalAwal(e.target.value)}
-                className="text-xs bg-white border border-border/60 rounded-lg px-3 py-2 focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                className="h-9 flex-1 min-w-0 bg-white border border-input rounded-md px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all"
               />
-              <span className="text-xs text-muted-foreground">—</span>
+              <span className="text-muted-foreground shrink-0">—</span>
               <input
                 type="date"
                 value={tanggalAkhir}
                 onChange={(e) => setTanggalAkhir(e.target.value)}
-                className="text-xs bg-white border border-border/60 rounded-lg px-3 py-2 focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                className="h-9 flex-1 min-w-0 bg-white border border-input rounded-md px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all"
               />
             </div>
 
@@ -266,7 +266,6 @@ export default function DapurFeedbackPage() {
               value={sentimen}
               onChange={(e) => setSentimen(e.target.value)}
               className="bg-white"
-              wrapperClassName="min-w-[150px]"
               options={[
                 { label: 'Semua Label', value: '' },
                 { label: '🟢 Positif', value: 'POSITIF' },
@@ -277,16 +276,12 @@ export default function DapurFeedbackPage() {
 
             {/* Sekolah Filter */}
             {sekolahList.length > 0 && (
-              <div className="flex items-center gap-2">
-                <School size={14} className="text-muted-foreground shrink-0" />
-                <Select
-                  value={sekolahId}
-                  onChange={(e) => setSekolahId(e.target.value)}
-                  className="bg-white"
-                  wrapperClassName="min-w-[180px]"
-                  options={[{ label: 'Semua Sekolah', value: '' }, ...sekolahList.map((s) => ({ label: s.nama, value: s.id }))]}
-                />
-              </div>
+              <Select
+                value={sekolahId}
+                onChange={(e) => setSekolahId(e.target.value)}
+                className="bg-white"
+                options={[{ label: 'Semua Sekolah', value: '' }, ...sekolahList.map((s) => ({ label: s.nama, value: s.id }))]}
+              />
             )}
 
             {/* Status Filter */}
@@ -294,7 +289,6 @@ export default function DapurFeedbackPage() {
               value={resolvedFilter}
               onChange={(e) => setResolvedFilter(e.target.value)}
               className="bg-white"
-              wrapperClassName="min-w-[150px]"
               options={[
                 { label: 'Semua Status', value: '' },
                 { label: 'Belum Ditanggapi', value: 'false' },
@@ -307,7 +301,6 @@ export default function DapurFeedbackPage() {
               value={kategoriFilter}
               onChange={(e) => setKategoriFilter(e.target.value)}
               className="bg-white"
-              wrapperClassName="min-w-[150px]"
               options={[
                 { label: 'Semua Kategori', value: '' },
                 { label: '🍽️ Rasa', value: 'RASA' },
@@ -318,14 +311,16 @@ export default function DapurFeedbackPage() {
                 { label: '📌 Lainnya', value: 'LAINNYA' },
               ]}
             />
+          </div>
 
-            {hasFilters && (
+          {hasFilters && (
+            <div className="flex justify-end">
               <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9 text-xs gap-1.5 text-muted-foreground hover:text-foreground">
                 <RefreshCw size={12} /> Reset
               </Button>
-            )}
-          </div>
-        </div>
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       {/* Content */}
@@ -365,7 +360,7 @@ export default function DapurFeedbackPage() {
                   'bg-muted/60'
                 }`} />
 
-                <CardContent className="p-5 pt-6 flex-1 space-y-4">
+                <CardContent className="pt-6 flex-1 space-y-4">
                   {/* Top Row: Feedback text + badges */}
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
@@ -511,7 +506,7 @@ export default function DapurFeedbackPage() {
       <>
         {/* === Observasi Guru === */}
         <Card className="border-border/50 shadow-sm">
-          <div className="p-5 flex flex-wrap gap-4 items-end">
+          <CardContent className="pt-6 flex flex-wrap gap-4 items-end">
             {sekolahList.length > 0 && (
               <div className="flex items-center gap-2">
                 <School size={14} className="text-muted-foreground shrink-0" />
@@ -538,7 +533,7 @@ export default function DapurFeedbackPage() {
                 <RefreshCw size={12} /> Reset
               </Button>
             )}
-          </div>
+          </CardContent>
         </Card>
 
         {obsLoading ? (
@@ -561,7 +556,7 @@ export default function DapurFeedbackPage() {
               <Card key={item.id} className="border-border/50 shadow-sm overflow-hidden" style={{ animationDelay: `${idx * 40}ms` }}>
                 <div className="flex">
                   <div className="w-1.5 shrink-0 bg-blue-400" />
-                  <CardContent className="p-5 flex-1 space-y-3">
+                  <CardContent className="pt-6 flex-1 space-y-3">
                     <p className="text-sm text-foreground leading-relaxed italic">&ldquo;{item.isi}&rdquo;</p>
                     {item.kategori && item.kategori.length > 0 && (
                       <div className="flex items-center gap-2 flex-wrap">

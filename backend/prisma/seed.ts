@@ -111,8 +111,15 @@ const FB_TIDAK_KONSUMSI = [
   'Telat masuk kelas, makanannya keburu dingin jadi nggak dimakan.',
 ];
 
-const FOTO_BASE = 'https://storage.mbg.go.id/validasi';
-const genFoto = () => `${FOTO_BASE}/${uid()}.jpg`;
+// Foto validasi seed memakai PATH RELATIF ke placeholder nyata di backend/uploads
+// (host-independent; dirender via proxy same-origin frontend). File placeholder
+// di-generate sekali; lihat catatan di README/seed. JANGAN pakai URL ber-host.
+const FOTO_PLACEHOLDERS = [
+  '/uploads/seed-feedback-1.png',
+  '/uploads/seed-feedback-2.png',
+  '/uploads/seed-feedback-3.png',
+];
+const genFoto = () => pick(FOTO_PLACEHOLDERS);
 
 function sentimenSkorFor(label: SentimenLabel): number {
   if (label === SentimenLabel.POSITIF) return +(0.78 + Math.random() * 0.2).toFixed(2);
@@ -150,6 +157,8 @@ async function main() {
   const hashAdmin = await bcrypt.hash(ADMIN_PASSWORD, 10);
 
   // ── 1. RESET (urutan terbalik dependency) ──────────────────────────────────
+  // ObservasiGuru punya FK ke distribusi, sekolah, & user → hapus paling awal.
+  await prisma.observasiGuru.deleteMany();
   await prisma.penilaianKomponen.deleteMany();
   await prisma.evaluasiHarian.deleteMany();
   await prisma.distribusi.deleteMany();

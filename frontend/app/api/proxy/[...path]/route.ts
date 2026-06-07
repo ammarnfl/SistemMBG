@@ -44,15 +44,19 @@ export async function anyMethod(req: NextRequest, { params }: { params: Promise<
       body: hasBody ? body : undefined,
     });
 
-    // proxy response back
-    const resBody = await res.text();
-    const isJson = res.headers.get('content-type')?.includes('application/json');
-    
-    return new NextResponse(resBody, {
+    // Proxy response back. PENTING: gunakan arrayBuffer (bukan text()) supaya
+    // data biner (gambar /uploads) tidak rusak akibat decode teks. Pertahankan
+    // Content-Type asli agar browser merender gambar dengan benar.
+    const buf = Buffer.from(await res.arrayBuffer());
+    const resHeaders = new Headers();
+    const contentType = res.headers.get('content-type');
+    if (contentType) resHeaders.set('Content-Type', contentType);
+    const cacheControl = res.headers.get('cache-control');
+    if (cacheControl) resHeaders.set('Cache-Control', cacheControl);
+
+    return new NextResponse(buf, {
       status: res.status,
-      headers: {
-        'Content-Type': isJson ? 'application/json' : 'text/plain'
-      }
+      headers: resHeaders,
     });
 
   } catch (err: any) {

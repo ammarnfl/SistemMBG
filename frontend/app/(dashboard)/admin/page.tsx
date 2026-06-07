@@ -82,7 +82,7 @@ export default function AdminDashboardPage() {
       {stats && (
         <>
           {/* Stat Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard icon={Users} label="Total Pengguna" value={stats.totalUser} color="border-l-primary" href="/admin/users" />
             <StatCard icon={UtensilsCrossed} label="Total Dapur" value={stats.totalDapur} color="border-l-orange-400" href="/admin/dapur" />
             <StatCard icon={School} label="Total Sekolah" value={stats.totalSekolah} color="border-l-blue-400" href="/admin/sekolah" />
@@ -148,7 +148,7 @@ export default function AdminDashboardPage() {
       {/* Quick Navigation */}
       <div>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Menu Cepat</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {menuItems.map((m, i) => {
             const Icon = m.icon;
             return (

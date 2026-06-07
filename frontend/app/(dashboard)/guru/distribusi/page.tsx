@@ -10,7 +10,7 @@ import { Input } from '../../../../components/ui/Input';
 import { StatusBadge } from '../../../../components/ui/StatusBadge';
 import { Inbox, Loader2, UtensilsCrossed, CalendarDays, Flame, Beef, Droplets, Wheat, Leaf, ChevronRight } from 'lucide-react';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { resolveImgUrl } from '../../../../lib/image-url';
 
 function NutritionTag({ value, unit, label, color }: { value: number | null; unit: string; label: string; color: string }) {
   if (value == null) return null;
@@ -57,15 +57,13 @@ export default function GuruDistribusiPage() {
         <Input type="date" className="h-9 w-auto" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}/>
       </div>
 
-      <div className="space-y-4 pt-2">
+      <div className="space-y-4">
         {loading ? <StateCard icon={<Loader2 className="animate-spin"/>} title="Memuat" description=""/> :
          error ? <StateCard icon={<Inbox/>} title="Gagal Memuat" description={error} action={<Button variant="outline" onClick={loadData}>Coba Lagi</Button>}/> :
          distribusi.length===0 ? <StateCard icon={<Inbox/>} title="Belum Ada Distribusi" description="Tidak ada jadwal kiriman MBG pada tanggal ini."/> :
          distribusi.map((d: any) => {
            const menu = d.menu;
-           const fotoSrc = menu?.fotoUrl
-             ? (menu.fotoUrl.startsWith('http') ? menu.fotoUrl : `${BACKEND_URL}${menu.fotoUrl}`)
-             : null;
+           const fotoSrc = menu?.fotoUrl ? resolveImgUrl(menu.fotoUrl) : null;
            const tanggalStr = new Date(d.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
            return (

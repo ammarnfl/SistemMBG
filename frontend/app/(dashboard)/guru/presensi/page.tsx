@@ -140,7 +140,7 @@ export default function GuruPresensiPage() {
   const sudahFeedback = siswa.filter((s) => s.sudahFeedback).length;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <PageHeader
@@ -157,8 +157,8 @@ export default function GuruPresensiPage() {
 
       {/* Filters */}
       <Card className="border-border/50 shadow-sm">
-        <div className="p-5 space-y-5">
-          <div className="relative">
+        <CardContent className="pt-6 flex flex-col sm:flex-row gap-3 sm:items-center">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
             <Input
               placeholder="Cari nama siswa..."
@@ -168,14 +168,14 @@ export default function GuruPresensiPage() {
             />
           </div>
 
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <Calendar size={14} className="text-muted-foreground shrink-0" />
+          <div className="flex gap-3 shrink-0">
+            <div className="relative flex-1 sm:flex-none">
+              <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 type="date"
                 value={tanggal}
                 onChange={(e) => setTanggal(e.target.value)}
-                className="text-xs bg-white border border-border/60 rounded-lg px-3 py-2 focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                className="h-9 w-full sm:w-auto bg-white border border-input rounded-md pl-9 pr-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all"
               />
             </div>
 
@@ -183,11 +183,11 @@ export default function GuruPresensiPage() {
               value={kelasId}
               onChange={(e) => setKelasId(e.target.value)}
               className="bg-white"
-              wrapperClassName="min-w-[150px]"
+              wrapperClassName="flex-1 sm:w-[170px] sm:flex-none"
               options={[{ label: 'Semua Kelas', value: '' }, ...kelasOptions.map((k) => ({ label: k.nama, value: k.id }))]}
             />
           </div>
-        </div>
+        </CardContent>
       </Card>
 
       {/* MBG menu banner */}

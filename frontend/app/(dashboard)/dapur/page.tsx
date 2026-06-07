@@ -92,21 +92,19 @@ export default function DapurDashboard() {
   const totalSentimen = stats?.sentimenDistribusi ? Object.values(stats.sentimenDistribusi).reduce((a, b) => a + b, 0) : 0;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <PageHeader
           title="Dashboard Tim Dapur"
           description="Pantau kinerja distribusi dan evaluasi makanan dari dapur Anda."
         />
-        <div className="flex items-center gap-2 bg-muted/40 p-2 rounded-xl border border-border/50">
-          <div className="flex items-center gap-2 px-2">
-            <Calendar size={16} className="text-muted-foreground" />
-            <input type="date" value={tanggalAwal} onChange={(e) => setTanggalAwal(e.target.value)} className="bg-transparent border-none text-xs focus:ring-0 w-28" />
-            <span className="text-muted-foreground">—</span>
-            <input type="date" value={tanggalAkhir} onChange={(e) => setTanggalAkhir(e.target.value)} className="bg-transparent border-none text-xs focus:ring-0 w-28" />
-          </div>
-          <Button onClick={fetchStats} size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-lg">
-            <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Update
+        <div className="flex w-full md:w-auto items-center gap-2 bg-muted/40 p-2 rounded-xl border border-border/50">
+          <Calendar size={16} className="text-muted-foreground shrink-0 ml-1" />
+          <input type="date" value={tanggalAwal} onChange={(e) => setTanggalAwal(e.target.value)} className="bg-transparent border-none text-xs focus:ring-0 flex-1 min-w-0 md:flex-none md:w-28" />
+          <span className="text-muted-foreground shrink-0">—</span>
+          <input type="date" value={tanggalAkhir} onChange={(e) => setTanggalAkhir(e.target.value)} className="bg-transparent border-none text-xs focus:ring-0 flex-1 min-w-0 md:flex-none md:w-28" />
+          <Button onClick={fetchStats} size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-lg shrink-0">
+            <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> <span className="hidden sm:inline">Update</span>
           </Button>
         </div>
       </div>

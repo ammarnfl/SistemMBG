@@ -165,7 +165,7 @@ export default function FormEvaluasiPage() {
   })();
 
   return (
-    <div className="max-w-md mx-auto pb-12">
+    <div className="max-w-md mx-auto">
       <div className="flex items-center mb-6">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="mr-2">
           <ArrowLeft className="h-5 w-5" />

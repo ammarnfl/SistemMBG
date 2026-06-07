@@ -8,8 +8,7 @@ import { Button } from '../../../components/ui/Button';
 import { Loader2, Utensils, CheckCircle2, Clock, Star, CalendarDays, ChevronRight, AlertCircle, Info, Flame, Beef, Droplets, Wheat, Leaf } from 'lucide-react';
 import Image from 'next/image';
 import { ImageLightbox } from '../../../components/ui/ImageLightbox';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { resolveImgUrl } from '../../../lib/image-url';
 
 function NutritionPill({ icon, label, value, unit, color }: { icon: React.ReactNode; label: string; value: number | null | undefined; unit: string; color: string }) {
   if (value == null) return null;
@@ -99,7 +98,7 @@ export default function BerandaPenerimaManfaat() {
   const tanggalHariIni = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
-    <div className="max-w-md mx-auto space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+    <div className="max-w-md mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Beranda</h1>
         <p className="text-muted-foreground text-sm mt-1">{tanggalHariIni}</p>
@@ -118,7 +117,7 @@ export default function BerandaPenerimaManfaat() {
       {stats && (
         stats.sudahIsiHariIni ? (
           <Card className="border-l-4 border-l-green-400 bg-green-50/30">
-            <div className="p-4 flex items-center gap-3">
+            <CardContent className="pt-6 flex items-center gap-3">
               <CheckCircle2 size={24} className="text-green-600 shrink-0" />
               <div>
                 <p className="font-semibold text-foreground">Evaluasi Hari Ini Sudah Diisi</p>
@@ -131,11 +130,11 @@ export default function BerandaPenerimaManfaat() {
                   </div>
                 )}
               </div>
-            </div>
+            </CardContent>
           </Card>
         ) : distribusi && (distribusi.status === 'DITERIMA' || distribusi.status === 'SELESAI' || distribusi.status === 'BERMASALAH') ? (
-          <Card className="border-l-4 border-l-amber-500 bg-amber-50 shadow-sm mt-4">
-            <div className="p-4">
+          <Card className="border-l-4 border-l-amber-500 bg-amber-50 shadow-sm">
+            <CardContent className="pt-6">
               <div className="flex items-start gap-3">
                 <Clock size={24} className="text-amber-600 shrink-0 mt-0.5" />
                 <div className="flex-1">
@@ -150,7 +149,7 @@ export default function BerandaPenerimaManfaat() {
                   </Button>
                 </div>
               </div>
-            </div>
+            </CardContent>
           </Card>
         ) : null
       )}
@@ -171,15 +170,13 @@ export default function BerandaPenerimaManfaat() {
           <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-primary to-primary/50" />
           
           {distribusi.menu.fotoUrl && (
-            <div 
+            <div
               className="w-full h-48 bg-muted border-b border-border/50 cursor-pointer hover:opacity-90 transition-opacity"
-              onClick={() => setSelectedFotoUrl(
-                distribusi.menu.fotoUrl!.startsWith('http') ? distribusi.menu.fotoUrl! : `${BACKEND_URL}${distribusi.menu.fotoUrl}`
-              )}
+              onClick={() => setSelectedFotoUrl(resolveImgUrl(distribusi.menu.fotoUrl))}
             >
-              <img 
-                src={distribusi.menu.fotoUrl.startsWith('http') ? distribusi.menu.fotoUrl : `${BACKEND_URL}${distribusi.menu.fotoUrl}`} 
-                alt={distribusi.menu.nama} 
+              <img
+                src={resolveImgUrl(distribusi.menu.fotoUrl)}
+                alt={distribusi.menu.nama}
                 className="w-full h-full object-cover"
                 onError={(e) => (e.currentTarget.style.display = 'none')}
               />

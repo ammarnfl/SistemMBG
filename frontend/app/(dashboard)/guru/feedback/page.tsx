@@ -104,7 +104,7 @@ export default function GuruFeedbackPage() {
   const hasFilters = search || tanggalAwal || tanggalAkhir || sentimen || resolvedFilter;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -121,7 +121,7 @@ export default function GuruFeedbackPage() {
 
       {/* Filters Card */}
       <Card className="border-border/50 shadow-sm">
-        <div className="p-5 space-y-5">
+        <CardContent className="pt-6 space-y-3">
           {/* Search Row */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
@@ -133,32 +133,31 @@ export default function GuruFeedbackPage() {
             />
           </div>
 
-          {/* Filter Row */}
-          <div className="flex flex-wrap gap-4 items-end">
-            {/* Date Range */}
-            <div className="flex items-center gap-2">
-              <Calendar size={14} className="text-muted-foreground shrink-0" />
-              <input
-                type="date"
-                value={tanggalAwal}
-                onChange={(e) => setTanggalAwal(e.target.value)}
-                className="text-xs bg-white border border-border/60 rounded-lg px-3 py-2 focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all"
-              />
-              <span className="text-xs text-muted-foreground">—</span>
-              <input
-                type="date"
-                value={tanggalAkhir}
-                onChange={(e) => setTanggalAkhir(e.target.value)}
-                className="text-xs bg-white border border-border/60 rounded-lg px-3 py-2 focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all"
-              />
-            </div>
+          {/* Date Range */}
+          <div className="flex items-center gap-2">
+            <Calendar size={16} className="text-muted-foreground shrink-0" />
+            <input
+              type="date"
+              value={tanggalAwal}
+              onChange={(e) => setTanggalAwal(e.target.value)}
+              className="h-9 flex-1 min-w-0 bg-white border border-input rounded-md px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all"
+            />
+            <span className="text-muted-foreground shrink-0">—</span>
+            <input
+              type="date"
+              value={tanggalAkhir}
+              onChange={(e) => setTanggalAkhir(e.target.value)}
+              className="h-9 flex-1 min-w-0 bg-white border border-input rounded-md px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all"
+            />
+          </div>
 
-            {/* Sentimen Filter */}
+          {/* Label + Status side by side */}
+          <div className="flex gap-3">
             <Select
               value={sentimen}
               onChange={(e) => setSentimen(e.target.value)}
               className="bg-white"
-              wrapperClassName="min-w-[150px]"
+              wrapperClassName="flex-1"
               options={[
                 { label: 'Semua Label', value: '' },
                 { label: '🟢 Positif', value: 'POSITIF' },
@@ -166,27 +165,27 @@ export default function GuruFeedbackPage() {
                 { label: '🔴 Negatif', value: 'NEGATIF' },
               ]}
             />
-
-            {/* Status Filter */}
             <Select
               value={resolvedFilter}
               onChange={(e) => setResolvedFilter(e.target.value)}
               className="bg-white"
-              wrapperClassName="min-w-[150px]"
+              wrapperClassName="flex-1"
               options={[
                 { label: 'Semua Status', value: '' },
                 { label: 'Belum Ditanggapi', value: 'false' },
                 { label: 'Sudah Ditanggapi', value: 'true' },
               ]}
             />
+          </div>
 
-            {hasFilters && (
-               <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9 text-xs gap-1.5 text-muted-foreground hover:text-foreground">
+          {hasFilters && (
+            <div className="flex justify-end">
+              <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9 text-xs gap-1.5 text-muted-foreground hover:text-foreground">
                 <RefreshCw size={12} /> Reset
               </Button>
-            )}
-          </div>
-        </div>
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       {/* Content */}
@@ -226,7 +225,7 @@ export default function GuruFeedbackPage() {
                   'bg-muted/60'
                 }`} />
 
-                <CardContent className="p-5 pt-6 flex-1 space-y-4">
+                <CardContent className="pt-6 flex-1 space-y-4">
                   {/* Top Row: Feedback text + badges */}
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">

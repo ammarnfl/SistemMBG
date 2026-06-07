@@ -146,6 +146,11 @@ async function main() {
 
   // ── 2. RESET SESI HARI INI (scoped ke entitas UAT) ───────────────────────────
   await prisma.$transaction(async (tx) => {
+    // ObservasiGuru punya FK ke distribusi & sekolah → hapus dulu agar
+    // penghapusan distribusi di bawah tidak melanggar foreign key.
+    await tx.observasiGuru.deleteMany({
+      where: { sekolahId: sekolah.id, tanggal: TODAY },
+    });
     // Evaluasi hari ini milik siswa UAT (PenilaianKomponen ikut terhapus via cascade).
     await tx.evaluasiHarian.deleteMany({
       where: { penerimaManfaatId: siswa.id, tanggal: TODAY },

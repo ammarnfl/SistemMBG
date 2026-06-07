@@ -10,6 +10,7 @@ import { ImageLightbox } from '../../../components/ui/ImageLightbox';
 import { Loader2, School, Users, CheckCircle2, Clock, Truck, ChevronRight, UtensilsCrossed, Flame, Beef, Droplets, Wheat, Leaf, MessageSquare, ClipboardCheck, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { resolveImgUrl } from '../../../lib/image-url';
 
 interface MenuKomponen {
   id: string;
@@ -68,8 +69,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   SELESAI: { label: 'Selesai', color: 'bg-green-100 text-green-700' },
 };
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 function NutritionPill({ icon, label, value, unit, color }: { icon: React.ReactNode; label: string; value: number | null; unit: string; color: string }) {
   if (value == null) return null;
   return (
@@ -109,12 +108,10 @@ export default function GuruDashboard() {
     : null;
 
   const menu = stats?.distribusiHariIni?.menu;
-  const fotoSrc = menu?.fotoUrl
-    ? (menu.fotoUrl.startsWith('http') ? menu.fotoUrl : `${BACKEND_URL}${menu.fotoUrl}`)
-    : null;
+  const fotoSrc = menu?.fotoUrl ? resolveImgUrl(menu.fotoUrl) : null;
 
   return (
-    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader
         title="Dashboard Guru"
         description={stats?.sekolah ? `${stats.sekolah.nama}` : 'Pantau distribusi dan pengisian evaluasi siswa hari ini.'}

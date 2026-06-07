@@ -13,6 +13,7 @@ import { toast } from '../../../../components/ui/Toast';
 import { ConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 import { ImageLightbox } from '../../../../components/ui/ImageLightbox';
 import { Plus, BookOpen, Loader2, Edit, Trash2, UtensilsCrossed, Info, Camera, CheckCircle2, X } from 'lucide-react';
+import { resolveImgUrl } from '../../../../lib/image-url';
 // --- Types ---
 interface Komponen {
   id: string;
@@ -326,11 +327,11 @@ export default function DapurMenuPage() {
     {
       header: 'Foto',
       cell: (row) => row.fotoUrl ? (
-        <img 
-          src={row.fotoUrl} 
-          alt={row.nama} 
-          className="w-12 h-12 rounded-md object-cover border cursor-pointer hover:opacity-80 transition hover:ring-2 ring-primary/50" 
-          onClick={() => setPreviewFoto(row.fotoUrl)}
+        <img
+          src={resolveImgUrl(row.fotoUrl)}
+          alt={row.nama}
+          className="w-12 h-12 rounded-md object-cover border cursor-pointer hover:opacity-80 transition hover:ring-2 ring-primary/50"
+          onClick={() => setPreviewFoto(resolveImgUrl(row.fotoUrl))}
           title="Klik untuk memperbesar"
         />
       ) : (
@@ -376,7 +377,7 @@ export default function DapurMenuPage() {
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <PageHeader 
         title="Pengelolaan Menu Master" 
         description="Kelola komponen bahan dasar dan buat menu masakan yang akan didistribusikan."
@@ -552,7 +553,7 @@ export default function DapurMenuPage() {
                             ) : menuForm.fotoUrl ? (
                               <div className="flex flex-col items-center">
                                 <div className="mt-2 rounded-xl overflow-hidden border w-24 h-24 relative group mb-2">
-                                  <img src={menuForm.fotoUrl} className="w-full h-full object-cover" alt="Preview" />
+                                  <img src={resolveImgUrl(menuForm.fotoUrl)} className="w-full h-full object-cover" alt="Preview" />
                                 </div>
                                 <span className="text-xs text-muted-foreground underline">Ganti Foto</span>
                               </div>

@@ -198,7 +198,7 @@ export default function AdminDapurPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2">
         <Link href="/admin">
           <Button variant="ghost" size="icon" className="rounded-full">
             <ArrowLeft size={20} />
@@ -218,8 +218,8 @@ export default function AdminDapurPage() {
       />
 
       <div className="space-y-6">
-        <div className="flex flex-col gap-3 px-1 mb-4">
-          <h3 className="font-bold text-xl text-foreground">Daftar Dapur</h3>
+        <div className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold text-foreground">Daftar Dapur</h2>
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative w-full sm:w-[250px]">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
