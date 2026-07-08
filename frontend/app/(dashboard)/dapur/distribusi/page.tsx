@@ -10,36 +10,48 @@ import { StatusBadge } from '../../../../components/ui/StatusBadge';
 import { Select } from '../../../../components/ui/Select';
 import { Tabs } from '../../../../components/ui/Tabs';
 import { toast } from '../../../../components/ui/Toast';
-import { Truck, Upload, Plus, FileSpreadsheet, Send, Search } from 'lucide-react';
+import { Truck, Upload, Plus, FileSpreadsheet, Send, Search, Pencil, X } from 'lucide-react';
 
 export default function DapurDistribusiPage() {
   const [distribusi, setDistribusi] = useState<any[]>([]);
   const [sekolah, setSekolah] = useState<any[]>([]);
   const [dapur, setDapur] = useState<any[]>([]);
   const [jadwal, setJadwal] = useState<any[]>([]);
+  const [listJadwal, setListJadwal] = useState<any[]>([]);
+  const [editingMenuId, setEditingMenuId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'SINGLE' | 'BATCH'>('SINGLE');
 
   const [filterDate, setFilterDate] = useState(() => new Date().toISOString().split('T')[0]);
 
+  useEffect(() => {
+    if (!filterDate) { setListJadwal([]); return; }
+    let active = true;
+    fetch(`/api/proxy/menu/jadwal/list?tanggal=${filterDate}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (!active) return;
+        setListJadwal(Array.isArray(j?.data) ? j.data : (Array.isArray(j) ? j : []));
+      })
+      .catch(() => { if (active) setListJadwal([]); });
+    return () => { active = false; };
+  }, [filterDate]);
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [resDist, resSekolah, resDapur, resJadwal] = await Promise.all([
+      const [resDist, resSekolah, resDapur] = await Promise.all([
         fetch(`/api/proxy/distribusi?tanggal=${filterDate}`),
         fetch('/api/proxy/sekolah'),
         fetch('/api/proxy/dapur'),
-        fetch(`/api/proxy/menu/jadwal/list?tanggal=${filterDate}`)
       ]);
       const distJson = await resDist.json();
       const sekolahJson = await resSekolah.json();
       const dapurJson = await resDapur.json();
-      const jadwalJson = await resJadwal.json();
-      
+
       setDistribusi(Array.isArray(distJson?.data) ? distJson.data : (Array.isArray(distJson) ? distJson : []));
       setSekolah(Array.isArray(sekolahJson?.data) ? sekolahJson.data : (Array.isArray(sekolahJson) ? sekolahJson : []));
       setDapur(Array.isArray(dapurJson?.data) ? dapurJson.data : (Array.isArray(dapurJson) ? dapurJson : []));
-      setJadwal(Array.isArray(jadwalJson?.data) ? jadwalJson.data : (Array.isArray(jadwalJson) ? jadwalJson : []));
     } catch(e) {}
     setLoading(false);
   };
@@ -49,6 +61,21 @@ export default function DapurDistribusiPage() {
   // Form Single
   const [form, setForm] = useState({ tanggal: filterDate, sekolahId: '', menuId: '', jumlahPorsi: '', catatanDapur: '' });
   const [saving, setSaving] = useState(false);
+
+  // Menu dropdown follows the form's date (the date the distribusi is created for),
+  // not the list filter date below — so menus activated for a future date show up.
+  useEffect(() => {
+    if (!form.tanggal) { setJadwal([]); return; }
+    let active = true;
+    fetch(`/api/proxy/menu/jadwal/list?tanggal=${form.tanggal}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (!active) return;
+        setJadwal(Array.isArray(j?.data) ? j.data : (Array.isArray(j) ? j : []));
+      })
+      .catch(() => { if (active) setJadwal([]); });
+    return () => { active = false; };
+  }, [form.tanggal]);
 
   const handleSingleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,6 +152,20 @@ export default function DapurDistribusiPage() {
     reader.readAsText(file);
   };
 
+  const updateMenu = async (id: string, newMenuId: string) => {
+    try {
+      const res = await fetch(`/api/proxy/distribusi/${id}/menu`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ menuId: newMenuId || null })
+      });
+      if (!res.ok) throw new Error('Gagal memperbarui menu');
+      toast.success('Menu distribusi diperbarui');
+      setEditingMenuId(null);
+      loadData();
+    } catch(e: any) { toast.error(e.message); }
+  };
+
   const updateStatus = async (id: string, newStatus: string) => {
     try {
       const res = await fetch(`/api/proxy/distribusi/${id}/status`, {
@@ -162,7 +203,7 @@ export default function DapurDistribusiPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Tanggal</label>
-                  <Input type="date" value={form.tanggal} onChange={e=>setForm({...form, tanggal: e.target.value})} required/>
+                  <Input type="date" value={form.tanggal} onChange={e=>setForm({...form, tanggal: e.target.value, menuId: ''})} required/>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Menu (Dari Jadwal Aktif)</label>
@@ -238,18 +279,49 @@ export default function DapurDistribusiPage() {
          distribusi.map((d: any) => (
            <Card key={d.id}>
              <CardContent className="pt-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div>
+                <div className="flex-1 min-w-[200px]">
                   <div className="font-bold flex items-center gap-2">
                     {d.sekolah?.nama}
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">Dapur: {d.dapur?.nama}</div>
                   <div className="text-sm font-medium mt-1 text-primary">{d.jumlahPorsi} Porsi</div>
+                  {editingMenuId === d.id ? (
+                    <div className="mt-4 max-w-md bg-muted/40 p-4 rounded-lg border border-border/50 animate-in fade-in slide-in-from-top-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-semibold text-foreground">Ganti Menu Makanan</label>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => setEditingMenuId(null)}>
+                          <X size={14} />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3 leading-relaxed">Silakan pilih menu pengganti dari daftar jadwal aktif pada tanggal ini. Pembaruan akan langsung tersimpan secara otomatis setelah Anda memilih.</p>
+                      <Select
+                        value={d.menu?.id ?? ''}
+                        onChange={(e) => updateMenu(d.id, e.target.value)}
+                        placeholder="-- Pilih Menu --"
+                        options={listJadwal.map(j => ({ label: j.menu?.nama ?? '', value: j.menu?.id ?? '' }))}
+                        className="h-9 text-sm w-full bg-background"
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Menu: <span className="font-medium text-foreground">{d.menu?.nama || 'Belum diatur'}</span>
+                    </div>
+                  )}
                 </div>
                 
-                <div className="flex w-full sm:w-auto flex-row sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
-                  <StatusBadge status={d.status} />
+                <div className="flex w-full sm:w-auto flex-row sm:flex-col items-center sm:items-end justify-between gap-3 shrink-0">
+                  <div className="flex items-center gap-2">
+                    {d.status === 'DRAFT' && editingMenuId !== d.id && (
+                      <Button variant="outline" size="sm" onClick={() => setEditingMenuId(d.id)} className="h-7 text-xs px-2.5 gap-1.5 shadow-sm bg-background">
+                        <Pencil size={12} /> Ubah Menu
+                      </Button>
+                    )}
+                    <StatusBadge status={d.status} />
+                  </div>
                   {d.status === 'DRAFT' && (
-                    <Button size="sm" onClick={() => updateStatus(d.id, 'DIKIRIM')}><Send size={14} className="mr-1"/> Kirim Makanan</Button>
+                    <Button size="sm" onClick={() => updateStatus(d.id, 'DIKIRIM')} className="w-full sm:w-auto shadow-sm">
+                      <Send size={14} className="mr-1.5"/> Kirim Makanan
+                    </Button>
                   )}
                 </div>
              </CardContent>

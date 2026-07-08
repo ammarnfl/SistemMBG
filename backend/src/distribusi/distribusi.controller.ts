@@ -55,6 +55,13 @@ export class DistribusiController {
     return this.distribusiService.updateStatusDapur(id, req.user.id, req.user.role, dto);
   }
 
+  @Roles('TIM_DAPUR', 'ADMIN')
+  @Patch(':id/menu')
+  @ApiOperation({ summary: 'Update menu of a distribution by Dapur' })
+  updateMenu(@Request() req: any, @Param('id') id: string, @Body() dto: any) {
+    return this.distribusiService.updateMenuDapur(id, req.user.id, req.user.role, dto.menuId);
+  }
+
   @Roles('GURU')
   @Patch(':id/konfirmasi')
   @ApiOperation({ summary: 'Confirm receipt of distribution by Guru' })

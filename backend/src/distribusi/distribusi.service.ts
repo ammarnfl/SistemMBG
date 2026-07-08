@@ -240,6 +240,30 @@ export class DistribusiService {
     });
   }
 
+  async updateMenuDapur(id: string, userId: string, userRole: string, menuId?: string | null) {
+    const dist = await this.prisma.distribusi.findUnique({ where: { id } });
+    if (!dist) throw new NotFoundException('Distribusi tidak ditemukan');
+
+    if (userRole === 'TIM_DAPUR') {
+      const profile = await this.prisma.timDapurProfile.findUnique({ where: { userId } });
+      if (!profile?.dapurId) {
+        throw new ForbiddenException('Akun Anda belum dipetakan ke Dapur manapun. Hubungi Admin.');
+      }
+      if (profile.dapurId !== dist.dapurId) {
+        throw new ForbiddenException('Distribusi ini bukan milik dapur Anda.');
+      }
+    }
+
+    if (dist.status !== 'DRAFT') {
+      throw new BadRequestException('Hanya distribusi dengan status DRAFT yang dapat diubah.');
+    }
+
+    return this.prisma.distribusi.update({
+      where: { id },
+      data: { menuId: menuId || null }
+    });
+  }
+
   async konfirmasiGuru(id: string, userId: string, dto: KonfirmasiDistribusiDto) {
     // find first and verify ownership
     const dist = await this.findOne(id);

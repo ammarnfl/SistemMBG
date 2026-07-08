@@ -1,0 +1,655 @@
+{
+  "ringkasan": {
+    "total_sampel": 75,
+    "berhasil_diprediksi": 75,
+    "gagal_diprediksi": 0
+  },
+  "confusion_matrix": {
+    "POSITIF": {
+      "POSITIF": 25,
+      "NETRAL": 0,
+      "NEGATIF": 0
+    },
+    "NETRAL": {
+      "POSITIF": 16,
+      "NETRAL": 1,
+      "NEGATIF": 8
+    },
+    "NEGATIF": {
+      "POSITIF": 0,
+      "NETRAL": 0,
+      "NEGATIF": 25
+    }
+  },
+  "metrik_per_kelas": {
+    "POSITIF": {
+      "precision": 0.6097560975609756,
+      "recall": 1,
+      "f1": 0.7575757575757575,
+      "support": 25
+    },
+    "NETRAL": {
+      "precision": 1,
+      "recall": 0.04,
+      "f1": 0.07692307692307693,
+      "support": 25
+    },
+    "NEGATIF": {
+      "precision": 0.7575757575757576,
+      "recall": 1,
+      "f1": 0.8620689655172413,
+      "support": 25
+    }
+  },
+  "overall": {
+    "accuracy": 0.68,
+    "macro_avg": {
+      "precision": 0.789110618378911,
+      "recall": 0.68,
+      "f1": 0.5655226000053586
+    },
+    "weighted_avg": {
+      "precision": 0.789110618378911,
+      "recall": 0.68,
+      "f1": 0.5655226000053585
+    }
+  },
+  "salah_prediksi": [
+    {
+      "teks": "Biasa aja sih, nggak enak tapi nggak jelek juga",
+      "seharusnya": "NETRAL",
+      "prediksi": "NEGATIF",
+      "confidence_score": 0.7684047222137451
+    },
+    {
+      "teks": "Lumayan, tapi nasinya kebanyakan buat aku",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.6764144897460938
+    },
+    {
+      "teks": "Standar lah kayak hari-hari biasanya",
+      "seharusnya": "NETRAL",
+      "prediksi": "NEGATIF",
+      "confidence_score": 0.9973492622375488
+    },
+    {
+      "teks": "Rasanya oke, cuma porsinya agak kebanyakan",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.8702622056007385
+    },
+    {
+      "teks": "Lauknya enak tapi sayurnya kurang matang",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.9849731922149658
+    },
+    {
+      "teks": "Cukup mengenyangkan walaupun rasanya standar",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.9932482242584229
+    },
+    {
+      "teks": "Menunya sama kayak minggu lalu, gitu-gitu aja",
+      "seharusnya": "NETRAL",
+      "prediksi": "NEGATIF",
+      "confidence_score": 0.9983258843421936
+    },
+    {
+      "teks": "Nasinya pas, lauknya biasa, nggak ada yang spesial",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.6175836324691772
+    },
+    {
+      "teks": "Ya cukup buat ganjel perut, nggak istimewa",
+      "seharusnya": "NETRAL",
+      "prediksi": "NEGATIF",
+      "confidence_score": 0.9844414591789246
+    },
+    {
+      "teks": "Setengah enak setengah engga, tergantung lauknya",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.8532055020332336
+    },
+    {
+      "teks": "Porsinya pas tapi kurang variasi menunya",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.9175611138343811
+    },
+    {
+      "teks": "Lumayan lah daripada nggak makan siang",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.9441018104553223
+    },
+    {
+      "teks": "Rasanya oke, cuma kurang sayuran aja",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.9124706387519836
+    },
+    {
+      "teks": "Hari ini menunya nasi ayam sama sup, seperti biasa",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.7580733299255371
+    },
+    {
+      "teks": "Nggak terlalu enak tapi masih bisa dimakan kok",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.9533652067184448
+    },
+    {
+      "teks": "Cukup oke, mungkin lain kali tambah buah ya",
+      "seharusnya": "NETRAL",
+      "prediksi": "NEGATIF",
+      "confidence_score": 0.6537540555000305
+    },
+    {
+      "teks": "Biasa aja, tapi tadi dibaginya agak telat dikit",
+      "seharusnya": "NETRAL",
+      "prediksi": "NEGATIF",
+      "confidence_score": 0.6165555119514465
+    },
+    {
+      "teks": "Lauknya enak, sayurnya kurang, jadi seimbang aja",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.9978892207145691
+    },
+    {
+      "teks": "Nasi sama tempe, porsinya standar, ya gitu deh",
+      "seharusnya": "NETRAL",
+      "prediksi": "NEGATIF",
+      "confidence_score": 0.9746688008308411
+    },
+    {
+      "teks": "Rasanya netral, nggak ada yang menonjol",
+      "seharusnya": "NETRAL",
+      "prediksi": "NEGATIF",
+      "confidence_score": 0.6471483111381531
+    },
+    {
+      "teks": "Lumayan ngenyangin walau agak hambar dikit",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.7676369547843933
+    },
+    {
+      "teks": "Menunya cukup, nggak bikin kecewa tapi nggak wow",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.9951560497283936
+    },
+    {
+      "teks": "Hari ini agak beda dari biasa tapi tetap standar rasanya",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.7159704566001892
+    },
+    {
+      "teks": "Oke lah, masih wajar buat makan siang gratis",
+      "seharusnya": "NETRAL",
+      "prediksi": "POSITIF",
+      "confidence_score": 0.6907742619514465
+    }
+  ],
+  "hasil_lengkap": [
+    {
+      "teks_feedback": "Enak banget makanannya hari ini, ayamnya bumbunya meresap sampai dalam",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9924699664115906
+    },
+    {
+      "teks_feedback": "Nasinya pulen, sayur bayamnya seger, aku suka banget",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9988285899162292
+    },
+    {
+      "teks_feedback": "Rendangnya mantap, sampai nambah nasi dua kali",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.998246431350708
+    },
+    {
+      "teks_feedback": "Porsinya pas dan rasanya enak, makasih tim dapur",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9981568455696106
+    },
+    {
+      "teks_feedback": "Menunya makin variatif tiap minggu, salut deh",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9815161228179932
+    },
+    {
+      "teks_feedback": "Pisangnya manis, seneng ada buah segarnya",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9970467686653137
+    },
+    {
+      "teks_feedback": "Telur balado matengnya pas, bumbunya nendang",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9988535642623901
+    },
+    {
+      "teks_feedback": "Alhamdulillah kenyang dan enak, semoga besok begini lagi",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9960808157920837
+    },
+    {
+      "teks_feedback": "Sup ayamnya hangat dan gurih, ini menu favoritku",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9983693957328796
+    },
+    {
+      "teks_feedback": "Tempe orek garing manisnya pas, juara",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9930611252784729
+    },
+    {
+      "teks_feedback": "Semua dimakan habis, nggak ada yang nyisa di ompreng",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.604531466960907
+    },
+    {
+      "teks_feedback": "Ikannya fresh nggak amis, gorengnya kering enak",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9244258403778076
+    },
+    {
+      "teks_feedback": "Puas banget hari ini, rasanya pas di lidah",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9898275136947632
+    },
+    {
+      "teks_feedback": "Konsisten enak dari kemarin-kemarin, pertahankan ya",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9922788143157959
+    },
+    {
+      "teks_feedback": "Sayur sopnya seger, kuahnya bening enak",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9990376234054565
+    },
+    {
+      "teks_feedback": "Dagingnya empuk gampang dikunyah, mantap",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.995576024055481
+    },
+    {
+      "teks_feedback": "Bersih, rapi, dan rasanya enak, terima kasih banyak",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9964591860771179
+    },
+    {
+      "teks_feedback": "Hari ini paling enak sih menurutku, lauknya lengkap",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9975869655609131
+    },
+    {
+      "teks_feedback": "Bumbu semurnya medok, nasi anget, perfect",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9924606680870056
+    },
+    {
+      "teks_feedback": "Seneng banget menunya sehat tapi tetap enak",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9990166425704956
+    },
+    {
+      "teks_feedback": "Ayam gorengnya kriuk, sambelnya pas, top markotop",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9986811280250549
+    },
+    {
+      "teks_feedback": "Makanannya masih hangat pas dibagiin, enak",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9956480860710144
+    },
+    {
+      "teks_feedback": "Gizinya kerasa lengkap, ada protein sayur sama buah",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9969658255577087
+    },
+    {
+      "teks_feedback": "Enak dan mengenyangkan, cocok buat sebelum belajar",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9960116147994995
+    },
+    {
+      "teks_feedback": "Mantul, porsinya cukup dan rasanya bikin nagih",
+      "label_manual": "POSITIF",
+      "prediksi": "POSITIF",
+      "score": 0.9898397922515869
+    },
+    {
+      "teks_feedback": "Nasinya keras kayak belum matang, susah ditelan",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9214455485343933
+    },
+    {
+      "teks_feedback": "Makanannya udah dingin pas sampai, jadi nggak enak",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.967678427696228
+    },
+    {
+      "teks_feedback": "Porsinya sedikit banget, sama sekali nggak kenyang",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9436668157577515
+    },
+    {
+      "teks_feedback": "Sayurnya hambar, kayak nggak dikasih bumbu sama sekali",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9976344108581543
+    },
+    {
+      "teks_feedback": "Ayamnya bau, kayaknya udah nggak fresh, takut basi",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9933670163154602
+    },
+    {
+      "teks_feedback": "Datangnya telat banget, jam istirahat keburu habis",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9966129660606384
+    },
+    {
+      "teks_feedback": "Sambalnya kepedesan parah sampai nggak bisa dimakan",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9867821931838989
+    },
+    {
+      "teks_feedback": "Lauknya cuma tahu doang, kurang bergizi",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9985604882240295
+    },
+    {
+      "teks_feedback": "Bau makanannya aneh, aku nggak berani makan",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9984402060508728
+    },
+    {
+      "teks_feedback": "Kuahnya basi, baunya asem, langsung aku buang",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9900800585746765
+    },
+    {
+      "teks_feedback": "Asin banget nggak ketulungan, kebanyakan garam",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9982579350471497
+    },
+    {
+      "teks_feedback": "Nasinya bau apek kayak beras lama",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9873099327087402
+    },
+    {
+      "teks_feedback": "Dingin dan lembek, rasanya kayak makanan sisa",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.8893961906433105
+    },
+    {
+      "teks_feedback": "Nggak aku habisin karena bener-bener nggak enak",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.998248815536499
+    },
+    {
+      "teks_feedback": "Porsinya beda-beda, punyaku paling sedikit, nggak adil",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9928295016288757
+    },
+    {
+      "teks_feedback": "Tahunya udah basi, ada rasa asem-asemnya",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.5670874118804932
+    },
+    {
+      "teks_feedback": "Sayur kangkungnya masih kotor, ada pasirnya",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9034140706062317
+    },
+    {
+      "teks_feedback": "Makanannya tumpah karena wadahnya bocor",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.8056753277778625
+    },
+    {
+      "teks_feedback": "Telurnya amis banget, kayak belum mateng dalemnya",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9981099367141724
+    },
+    {
+      "teks_feedback": "Rasanya hambar semua, lauk sama sayur nggak ada rasa",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9873170256614685
+    },
+    {
+      "teks_feedback": "Kebanyakan minyak, bikin enek pas dimakan",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.7293362617492676
+    },
+    {
+      "teks_feedback": "Daging ayamnya alot, susah dikunyah",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.973813533782959
+    },
+    {
+      "teks_feedback": "Nasinya basi, baru sesuap langsung aku tinggal",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9733860492706299
+    },
+    {
+      "teks_feedback": "Kecewa, hari ini menunya paling parah dari biasanya",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9986134767532349
+    },
+    {
+      "teks_feedback": "Porsi kecil, dingin, dan nggak ada rasanya, parah",
+      "label_manual": "NEGATIF",
+      "prediksi": "NEGATIF",
+      "score": 0.9947611689567566
+    },
+    {
+      "teks_feedback": "Biasa aja sih, nggak enak tapi nggak jelek juga",
+      "label_manual": "NETRAL",
+      "prediksi": "NEGATIF",
+      "score": 0.7684047222137451
+    },
+    {
+      "teks_feedback": "Lumayan, tapi nasinya kebanyakan buat aku",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.6764144897460938
+    },
+    {
+      "teks_feedback": "Standar lah kayak hari-hari biasanya",
+      "label_manual": "NETRAL",
+      "prediksi": "NEGATIF",
+      "score": 0.9973492622375488
+    },
+    {
+      "teks_feedback": "Rasanya oke, cuma porsinya agak kebanyakan",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.8702622056007385
+    },
+    {
+      "teks_feedback": "Lauknya enak tapi sayurnya kurang matang",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.9849731922149658
+    },
+    {
+      "teks_feedback": "Cukup mengenyangkan walaupun rasanya standar",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.9932482242584229
+    },
+    {
+      "teks_feedback": "Menunya sama kayak minggu lalu, gitu-gitu aja",
+      "label_manual": "NETRAL",
+      "prediksi": "NEGATIF",
+      "score": 0.9983258843421936
+    },
+    {
+      "teks_feedback": "Nasinya pas, lauknya biasa, nggak ada yang spesial",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.6175836324691772
+    },
+    {
+      "teks_feedback": "Ya cukup buat ganjel perut, nggak istimewa",
+      "label_manual": "NETRAL",
+      "prediksi": "NEGATIF",
+      "score": 0.9844414591789246
+    },
+    {
+      "teks_feedback": "Setengah enak setengah engga, tergantung lauknya",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.8532055020332336
+    },
+    {
+      "teks_feedback": "Porsinya pas tapi kurang variasi menunya",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.9175611138343811
+    },
+    {
+      "teks_feedback": "Lumayan lah daripada nggak makan siang",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.9441018104553223
+    },
+    {
+      "teks_feedback": "Rasanya oke, cuma kurang sayuran aja",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.9124706387519836
+    },
+    {
+      "teks_feedback": "Hari ini menunya nasi ayam sama sup, seperti biasa",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.7580733299255371
+    },
+    {
+      "teks_feedback": "Nggak terlalu enak tapi masih bisa dimakan kok",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.9533652067184448
+    },
+    {
+      "teks_feedback": "Cukup oke, mungkin lain kali tambah buah ya",
+      "label_manual": "NETRAL",
+      "prediksi": "NEGATIF",
+      "score": 0.6537540555000305
+    },
+    {
+      "teks_feedback": "Biasa aja, tapi tadi dibaginya agak telat dikit",
+      "label_manual": "NETRAL",
+      "prediksi": "NEGATIF",
+      "score": 0.6165555119514465
+    },
+    {
+      "teks_feedback": "Lauknya enak, sayurnya kurang, jadi seimbang aja",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.9978892207145691
+    },
+    {
+      "teks_feedback": "Nasi sama tempe, porsinya standar, ya gitu deh",
+      "label_manual": "NETRAL",
+      "prediksi": "NEGATIF",
+      "score": 0.9746688008308411
+    },
+    {
+      "teks_feedback": "Rasanya netral, nggak ada yang menonjol",
+      "label_manual": "NETRAL",
+      "prediksi": "NEGATIF",
+      "score": 0.6471483111381531
+    },
+    {
+      "teks_feedback": "Mungkin enak buat sebagian orang, buat aku biasa",
+      "label_manual": "NETRAL",
+      "prediksi": "NETRAL",
+      "score": 0.3542347848415375
+    },
+    {
+      "teks_feedback": "Lumayan ngenyangin walau agak hambar dikit",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.7676369547843933
+    },
+    {
+      "teks_feedback": "Menunya cukup, nggak bikin kecewa tapi nggak wow",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.9951560497283936
+    },
+    {
+      "teks_feedback": "Hari ini agak beda dari biasa tapi tetap standar rasanya",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.7159704566001892
+    },
+    {
+      "teks_feedback": "Oke lah, masih wajar buat makan siang gratis",
+      "label_manual": "NETRAL",
+      "prediksi": "POSITIF",
+      "score": 0.6907742619514465
+    }
+  ]
+}
